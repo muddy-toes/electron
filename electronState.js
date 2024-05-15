@@ -6,6 +6,7 @@ class ElectronState {
     constructor() {
         this.driverTokens = {};     // stores the authentication tokens of drivers
         this.driverSockets = {};    // stores sockets for people driving sessions
+        this.driverStartStamp = {}; // stores timestamp at which driver registered
         this.riders = {};           // stores all sockets for people riding each session
         this.lastMessages = {};     // storage of incoming messages (setting waveform parameters, pain tool, etc.)
         this.automatedDrivers = {}; // stores automated drivers by their session ids
@@ -15,6 +16,8 @@ class ElectronState {
     addDriverToken(sessId, token, socket) {
         this.driverTokens[sessId] = token;
         this.driverSockets[sessId] = socket;
+        this.driverStartStamp[sessId] = Date.now();
+        this.lastMessages[sessId] = {};
     }
 
     driverTokenExists(sessId) {
@@ -51,7 +54,9 @@ class ElectronState {
         if (!this.lastMessages[sessId]) {
             this.lastMessages[sessId] = {};
         }
-        this.lastMessages[sessId][channel] = message;
+        const stamp_offset = Date.now() - this.driverStartStamp[sessId];
+        this.lastMessages[sessId][channel] ||= [];
+        this.lastMessages[sessId][channel].push({ stamp: stamp_offset, message: message });
     }
 
     setRiderTrafficLight(sessId, socket, color) {
@@ -72,10 +77,20 @@ class ElectronState {
     }
 
     getLastMessage(sessId, channel) {
-        if (!(sessId in this.lastMessages) || !(channel in this.lastMessages[sessId])) {
+        if (!(sessId in this.lastMessages) || !(channel in this.lastMessages[sessId]) || !(typeof(this.lastMessages[sessId][channel]) === 'object') || !(0 in this.lastMessages[sessId][channel])) {
             return null;
         }
-        return this.lastMessages[sessId][channel];
+        return this.lastMessages[sessId][channel].slice(-1)[0];
+    }
+
+    getSessionMessages(sessId) {
+        if (!(sessId in this.lastMessages)) {
+            return "No messages stored";
+        }
+        return JSON.stringify({
+          'left': this.lastMessages[sessId]['left'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
+          'right': this.lastMessages[sessId]['right'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
+        });
     }
 
     getRiderData(sessId) {

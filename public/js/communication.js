@@ -119,6 +119,37 @@ $(function () {
                 // update the rider count on the page
                 $('#rider-count-number').text(total);
             });
+
+            $('#save-session-messages').on('click', function() {
+              socket.emit('getSessionMessages', { sessId: sessId });
+            });
+
+            socket.on('sessionMessages', function(msg) {
+              if (window.File && window.FileReader && window.FileList && window.Blob) {
+                let element = document.createElement('a');
+                element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(msg));
+                element.setAttribute('download', `${sessId}.json`);
+                element.style.display = 'none';
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+              } else {
+                $('#messages-target').text(msg);
+                alert('The File APIs are not fully supported by your browser.');
+              }
+
+/*        $("#fileInput").change(function(){
+          if(this.files && this.files[0]) {
+            reader = new FileReader();
+            reader.onload = function (e) {
+              // do parsing here. e.target.result is file contents
+              $("#contents").html(e.target.result);
+            };
+            reader.readAsText(this.files[0]);
+          };
+        });
+*/
+            });
         });
 
         socket.on('driverRejected', function () {

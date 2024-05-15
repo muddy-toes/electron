@@ -53,6 +53,11 @@ module.exports = function (electronState) {
             }
         });
 
+        socket.on('getSessionMessages', function(msg) {
+          const sessId = msg.sessId;
+          socket.emit('sessionMessages', electronState.getSessionMessages(sessId));
+        });
+
         // ====== left ======
         // left channel updates... send them over to all riders
         socket.on('left', function (msg) {
