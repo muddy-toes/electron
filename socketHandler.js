@@ -54,8 +54,11 @@ module.exports = function (electronState) {
         });
 
         socket.on('getSessionMessages', function(msg) {
-          const sessId = msg.sessId;
-          socket.emit('sessionMessages', electronState.getSessionMessages(sessId));
+            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                return;
+            }
+            const sessId = msg.sessId;
+            socket.emit('sessionMessages', electronState.getSessionMessages(sessId));
         });
 
         // ====== left ======
