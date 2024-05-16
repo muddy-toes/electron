@@ -13,6 +13,8 @@ $(function () {
     const socket = io();
     let driverToken = '';
     let script = {};
+    let scriptTimeouts = { 'left': 0, 'right': 0 };
+    let timers = { 'left': 0, 'right': 0 };
 
     function script_next_step(channel) {
         try {
@@ -21,14 +23,15 @@ $(function () {
                 $('#status-message').text("Script complete");
                 return;
             }
-            setTimeout(function(){ apply_step(channel, step['message']) }, step['stamp']);
+            timers[channel] = Math.floor(step['stamp'] / 1000);
+            scriptTimeouts[channel] = setTimeout(function(){ apply_step(channel, step['message']) }, step['stamp']);
         } catch(e) {
             $('#status-message').text(`Invalid script, cannot run.  Error: ${e}`);
         }
     }
 
     function apply_step(channel, step) {
-        console.log("Step %s: %o", channel, step);
+        if( window.console ) console.log("Step %s: %o", channel, step);
         const channelSel = '#' + channel + '-channel-column ';
 
         $(channelSel + 'input[name="volume"]').val(step['volume']);
@@ -44,6 +47,20 @@ $(function () {
         $(channelSel + '.apply-btn').click();
         script_next_step(channel);
     }
+
+    function step_timers() {
+        let min = Object.values(timers).sort()[0]
+        if (min < 0) min = 0;
+        if (min == 0)
+            $("#cancel-script").hide();
+        else
+            $("#cancel-script").show();
+
+        $('#step-timer').text(min);
+        timers['left'] -= 1;
+        timers['right'] -= 1;
+    }
+    setInterval(step_timers, 1000);
 
     if (mode == 'play') {
         if (sessId == 'solo') {
@@ -156,6 +173,18 @@ $(function () {
 
             $('#save-session-messages').on('click', function() {
                 socket.emit('getSessionMessages', { sessId: sessId, driverToken: driverToken });
+            });
+
+            $('#cancel-script').on('click', function() {
+                try {
+                    clearTimeout(scriptTimeouts['left']);
+                    clearTimeout(scriptTimeouts['right']);
+                    timers['left'] = 0;
+                    timers['right'] = 0;
+                    script = {};
+                } catch(e) {
+                  $('#status-message').text('Cancelled script');
+                };
             });
 
             socket.on('sessionMessages', function(msg) {
