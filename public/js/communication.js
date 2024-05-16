@@ -12,6 +12,38 @@ $(function () {
     const sessId = pathParts[3];
     const socket = io();
     let driverToken = '';
+    let script = {};
+
+    function script_next_step(channel) {
+        try {
+            const step = script[channel].shift();
+            if (!step) {
+                $('#status-message').text("Script complete");
+                return;
+            }
+            setTimeout(function(){ apply_step(channel, step['message']) }, step['stamp']);
+        } catch(e) {
+            $('#status-message').text(`Invalid script, cannot run.  Error: ${e}`);
+        }
+    }
+
+    function apply_step(channel, step) {
+        console.log("Step %s: %o", channel, step);
+        const channelSel = '#' + channel + '-channel-column ';
+
+        $(channelSel + 'input[name="volume"]').val(step['volume']);
+        $(channelSel + 'input[name="frequency"]').val(step['freq']);
+        $(channelSel + 'select[name="am-type"]').val(step['amType']);
+        $(channelSel + 'input[name="am-depth"]').val(step['amDepth']);
+        $(channelSel + 'input[name="am-frequency"]').val(step['amFreq']);
+        $(channelSel + 'select[name="fm-type"]').val(step['fmType']);
+        $(channelSel + 'input[name="fm-depth"]').val(step['fmDepth']);
+        $(channelSel + 'input[name="fm-frequency"]').val(step['fmFreq']);
+        $(channelSel + 'input[name="ramp-target"]').val(step['rampTarget']);
+        $(channelSel + 'input[name="ramp-rate"]').val(step['rampRate']);
+        $(channelSel + '.apply-btn').click();
+        script_next_step(channel);
+    }
 
     if (mode == 'play') {
         if (sessId == 'solo') {
@@ -95,6 +127,8 @@ $(function () {
             const line2 = 'Send the following link to the people you want to drive:<br>' + '<strong>' + link + '</strong>';
             $('#status-message').html(line1 + '<br>' + line2);
 
+            $('.save-load-bar').show();
+
             // initialize box that displays how many riders are connected and update it every 5 seconds
             $('#rider-count').show();
             setInterval(function () {
@@ -121,35 +155,41 @@ $(function () {
             });
 
             $('#save-session-messages').on('click', function() {
-              socket.emit('getSessionMessages', { sessId: sessId });
+                socket.emit('getSessionMessages', { sessId: sessId, driverToken: driverToken });
             });
 
             socket.on('sessionMessages', function(msg) {
-              if (window.File && window.FileReader && window.FileList && window.Blob) {
-                let element = document.createElement('a');
-                element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(msg));
-                element.setAttribute('download', `${sessId}.json`);
-                element.style.display = 'none';
-                document.body.appendChild(element);
-                element.click();
-                document.body.removeChild(element);
-              } else {
-                $('#messages-target').text(msg);
-                alert('The File APIs are not fully supported by your browser.');
-              }
-
-/*        $("#fileInput").change(function(){
-          if(this.files && this.files[0]) {
-            reader = new FileReader();
-            reader.onload = function (e) {
-              // do parsing here. e.target.result is file contents
-              $("#contents").html(e.target.result);
-            };
-            reader.readAsText(this.files[0]);
-          };
-        });
-*/
+                if (window.File && window.FileReader && window.FileList && window.Blob) {
+                    let element = document.createElement('a');
+                    element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(msg));
+                    element.setAttribute('download', `${sessId}.json`);
+                    element.style.display = 'none';
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                } else {
+                    $('#messages-target').text(msg);
+                    $('#status-message').text('The File APIs are not fully supported by your browser.');
+                }
             });
+
+            $("#load-file-picker").change(function(){
+                if(this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        try {
+                            script = JSON.parse(e.target.result);
+                            script_stamp = Date.now();
+                            script_next_step('left');
+                            script_next_step('right');
+                        } catch(e) {
+                            $('#status-message').html(`Error parsing script file: ${e}`);
+                        }
+                    };
+                    reader.readAsText(this.files[0]);
+                };
+            });
+
         });
 
         socket.on('driverRejected', function () {

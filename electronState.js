@@ -4,19 +4,19 @@ const AutomatedDriver = require('./automatedDriver');
 
 class ElectronState {
     constructor() {
-        this.driverTokens = {};     // stores the authentication tokens of drivers
-        this.driverSockets = {};    // stores sockets for people driving sessions
-        this.driverStartStamp = {}; // stores timestamp at which driver registered
-        this.riders = {};           // stores all sockets for people riding each session
-        this.lastMessages = {};     // storage of incoming messages (setting waveform parameters, pain tool, etc.)
-        this.automatedDrivers = {}; // stores automated drivers by their session ids
-        this.trafficLights = {};    // dictionary binding sockets to red / yellow / green traffic lights
+        this.driverTokens = {};         // stores the authentication tokens of drivers
+        this.driverSockets = {};        // stores sockets for people driving sessions
+        this.riders = {};               // stores all sockets for people riding each session
+        this.previousMessageStamp = {}; // stores timestamp of previous message for calculating offsets
+        this.lastMessages = {};         // storage of incoming messages (setting waveform parameters, pain tool, etc.)
+        this.automatedDrivers = {};     // stores automated drivers by their session ids
+        this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
     }
 
     addDriverToken(sessId, token, socket) {
         this.driverTokens[sessId] = token;
         this.driverSockets[sessId] = socket;
-        this.driverStartStamp[sessId] = Date.now();
+        this.previousMessageStamp[sessId] = { 'left': Date.now(), 'right': Date.now() };
         this.lastMessages[sessId] = {};
     }
 
@@ -54,7 +54,9 @@ class ElectronState {
         if (!this.lastMessages[sessId]) {
             this.lastMessages[sessId] = {};
         }
-        const stamp_offset = Date.now() - this.driverStartStamp[sessId];
+        const now = Date.now();
+        const stamp_offset = now - this.previousMessageStamp[sessId][channel];
+        this.previousMessageStamp[sessId][channel] = now;
         this.lastMessages[sessId][channel] ||= [];
         this.lastMessages[sessId][channel].push({ stamp: stamp_offset, message: message });
     }
@@ -84,12 +86,12 @@ class ElectronState {
     }
 
     getSessionMessages(sessId) {
-        if (!(sessId in this.lastMessages)) {
+        if (!(sessId in this.lastMessages) || !('left' in this.lastMessages[sessId]) || !('right' in this.lastMessages[sessId])) {
             return "No messages stored";
         }
         return JSON.stringify({
-          'left': this.lastMessages[sessId]['left'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
-          'right': this.lastMessages[sessId]['right'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
+            'left': this.lastMessages[sessId]['left'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
+            'right': this.lastMessages[sessId]['right'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
         });
     }
 

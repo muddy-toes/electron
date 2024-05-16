@@ -49,8 +49,16 @@
     <a href="#">Click here to start audio output for this session</a>
   </div>
 
-  <div id="save-session-messages">
-    <a href="#">Save Session Script</a>
+  <div class='save-load-bar' style='display: none'>
+    <div class='slb-left'>
+      <button id="save-session-messages" class="roundy-btn">Save Session Script</button>
+    </div>
+    <div class='slb-right'>
+      <div class='load-file-picker-container'>
+        <input type="file" id="load-file-picker" accept="application/json" />
+        <span id="load-session">Load Session Script</span>
+      </div>
+    </div>
     <div id="messages-target"></div>
   </div>
 
