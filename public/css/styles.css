@@ -459,12 +459,22 @@ div.mode-selector-box p {
 
 .save-load-bar .slb-left {
     display: flex;
-    flex-grow: 1
+}
+
+.save-load-bar .slb-middle {
+    display: flex;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+}
+
+#step-timer {
+  font-family: monospace;
+  font-size: 2em;
 }
 
 .save-load-bar .slb-right {
     display: flex;
-    align-items: baseline;
 }
 
 .load-file-picker-container {
@@ -480,4 +490,8 @@ div.mode-selector-box p {
     line-height: 20px;
     padding: 10px 20px;
     position: relative;
+}
+
+#cancel-script {
+  scale: 66%;
 }
