@@ -146,6 +146,11 @@ $(function () {
 
             $('.save-load-bar').show();
 
+            $('#public-session').on('change', function(e) {
+                let new_state = $(e.currentTarget).is(":checked");
+                socket.emit('setPublicSession', { sessId: sessId, driverToken: driverToken, publicSession: new_state });
+            });
+
             // initialize box that displays how many riders are connected and update it every 5 seconds
             $('#rider-count').show();
             setInterval(function () {

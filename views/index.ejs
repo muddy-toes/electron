@@ -38,6 +38,24 @@
         </div>
       </div>
 
+      <div id="public-sessions" class="mode-selector-box">
+        <div>
+          <h1>Public Sessions</h1>
+          <p>Click a session to join as a rider</p>
+        </div>
+        <div class="home-btn-wrapper">
+          <ul class="public-session-list">
+            <% if (publicSessions.length == 0) { %>
+              <li><i>No public sessions</i></li>
+            <% } else { %>
+              <% publicSessions.forEach(function(ps) { %>
+                <li><a href="/player/play/<%= ps %>"><%= ps %></a></li>
+              <% }); %>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+
       <div id="new-session" class="mode-selector-box">
         <div>
           <h1>Create Session</h1>

@@ -61,6 +61,16 @@ module.exports = function (electronState) {
             socket.emit('sessionMessages', electronState.getSessionMessages(sessId));
         });
 
+        socket.on('setPublicSession', function(msg) {
+            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                return;
+            }
+            const sessId = msg.sessId;
+            const publicSession = msg.publicSession;
+            console.log("publicSession=%o, sessId=%s", publicSession, sessId);
+            electronState.setPublicSession(sessId, msg.publicSession);
+        });
+
         // ====== left ======
         // left channel updates... send them over to all riders
         socket.on('left', function (msg) {

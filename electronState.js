@@ -11,6 +11,18 @@ class ElectronState {
         this.lastMessages = {};         // storage of incoming messages (setting waveform parameters, pain tool, etc.)
         this.automatedDrivers = {};     // stores automated drivers by their session ids
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
+        this.publicSessions = {};       // stores public session list - {sessId: true}
+    }
+
+    setPublicSession(sessId, publicSession) {
+      if (publicSession)
+        this.publicSessions[sessId] = true;
+      else
+        delete this.publicSessions[sessId];
+    }
+
+    getPublicSessions() {
+        return Object.keys(this.publicSessions);
     }
 
     addDriverToken(sessId, token, socket) {
@@ -135,6 +147,7 @@ class ElectronState {
     unregisterAutomatedDriver(sessId) {
         delete this.automatedDrivers[sessId];
         delete this.lastMessages[sessId];
+        delete this.previousMessageStamp[sessId];
     }
 
 }
