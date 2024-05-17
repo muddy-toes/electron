@@ -23,7 +23,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 // home page
 app.get('/', function (req, res) {
-    res.render('index');
+    res.render('index', { publicSessions: electronState.getPublicSessions() });
 });
 
 // actually start new automated driver
