@@ -128,6 +128,14 @@ class ElectronState {
             }
         }
         delete this.trafficLights[socket.id];
+
+        for (const sessId in this.driverSockets) {
+          if (this.driverSockets[sessId] === socket) {
+            console.log('Driver disconnected for ' + sessId);
+            delete this.driverSockets[sessId];
+            delete this.driverTokens[sessId];
+          }
+        }
     }
 
     startAutomatedDriver(sessId, automatedDriverConfig) {
