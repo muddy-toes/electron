@@ -14,38 +14,43 @@ $(function () {
     let driverToken = '';
     let script = {};
     let scriptTimeouts = { 'left': 0, 'right': 0 };
-    let timers = { 'left': 0, 'right': 0 };
+    let timers = { 'left': 0, 'right': 0, 'pain-left': 0, 'pain-right': 0 };
+    let authorizedPlaying = false;
 
     function script_next_step(channel) {
         try {
             const step = script[channel].shift();
             if (!step) {
-                $('#status-message').text("Script complete");
+                $('#status-message').append('<p>Script complete</p>');
                 return;
             }
             timers[channel] = Math.floor(step['stamp'] / 1000);
             scriptTimeouts[channel] = setTimeout(function(){ apply_step(channel, step['message']) }, step['stamp']);
         } catch(e) {
-            $('#status-message').text(`Invalid script, cannot run.  Error: ${e}`);
+            $('#status-message').append(`<p>Invalid script, cannot run.  Error: ${e}</p>`);
         }
     }
 
     function apply_step(channel, step) {
         if( window.console ) console.log("Step %s: %o", channel, step);
-        const channelSel = '#' + channel + '-channel-column ';
-
-        $(channelSel + 'input[name="volume"]').val(step['volume']);
-        $(channelSel + 'input[name="frequency"]').val(step['freq']);
-        $(channelSel + 'select[name="am-type"]').val(step['amType']);
-        $(channelSel + 'input[name="am-depth"]').val(step['amDepth']);
-        $(channelSel + 'input[name="am-frequency"]').val(step['amFreq']);
-        $(channelSel + 'select[name="fm-type"]').val(step['fmType']);
-        $(channelSel + 'input[name="fm-depth"]').val(step['fmDepth']);
-        $(channelSel + 'input[name="fm-frequency"]').val(step['fmFreq']);
-        $(channelSel + 'input[name="ramp-target"]').val(step['rampTarget']);
-        $(channelSel + 'input[name="ramp-rate"]').val(step['rampRate']);
-        $(channelSel + '.apply-btn').click();
-        script_next_step(channel);
+        if (channel.match(/^pain-/)) {
+            const channelName = channel == 'pain-left' ? 'left' : 'right';
+            executePain(channelName, step);
+        } else {
+            const channelSel = '#' + channel + '-channel-column ';
+            $(channelSel + 'input[name="volume"]').val(step['volume']);
+            $(channelSel + 'input[name="frequency"]').val(step['freq']);
+            $(channelSel + 'select[name="am-type"]').val(step['amType']);
+            $(channelSel + 'input[name="am-depth"]').val(step['amDepth']);
+            $(channelSel + 'input[name="am-frequency"]').val(step['amFreq']);
+            $(channelSel + 'select[name="fm-type"]').val(step['fmType']);
+            $(channelSel + 'input[name="fm-depth"]').val(step['fmDepth']);
+            $(channelSel + 'input[name="fm-frequency"]').val(step['fmFreq']);
+            $(channelSel + 'input[name="ramp-target"]').val(step['rampTarget']);
+            $(channelSel + 'input[name="ramp-rate"]').val(step['rampRate']);
+            $(channelSel + '.apply-btn').click();
+          }
+      script_next_step(channel);
     }
 
     function step_timers() {
@@ -56,24 +61,52 @@ $(function () {
         else
             $("#cancel-script").show();
 
-        $('#step-timer').text(min);
+        $('#step-timer').text(min == 0 ? "" : min);
         timers['left'] -= 1;
         timers['right'] -= 1;
+        timers['pain-left'] -= 1;
+        timers['pain-right'] -= 1;
     }
     setInterval(step_timers, 1000);
+
+
+    ['left', 'right'].forEach(function (channel) {
+        socket.on(channel, function (msg) {
+            // console.log("UPD %s, %s, %o, %o, %o, %o", channel, mode, authorizedPlaying, msg, msg.volume, msg['volume']);
+            if (!authorizedPlaying && mode == 'play') return;
+
+            const $channelCol = $(`#${channel}-channel-column`);
+            // console.log("SET %s volume=%o, clamped to %o", channelSel, msg.volume, clamp(msg.volume, 0, 100));
+            $channelCol.find('input[name="volume"]').val(clamp(msg.volume, 0, 100));
+            $channelCol.find('input[name="frequency"]').val(clamp(msg.freq, 100, 3000));
+            $channelCol.find('select[name="am-type"]').val(msg.amType).selectmenu('refresh');
+            $channelCol.find('input[name="am-depth"]').val(clamp(msg.amDepth, 0, 100));
+            $channelCol.find('input[name="am-frequency"]').val(clamp(msg.amFreq, 0, 100));
+            $channelCol.find('select[name="fm-type"]').val(msg.fmType).selectmenu('refresh');
+            $channelCol.find('input[name="fm-depth"]').val(clamp(msg.fmDepth, 0, 1000));
+            $channelCol.find('input[name="fm-frequency"]').val(clamp(msg.fmFreq, 0, 100));
+            $channelCol.find('input[name="ramp-rate"]').val(clamp(msg.rampRate, 0, 10));
+            $channelCol.find('input[name="ramp-target"]').val(clamp(msg.rampTarget, 0, 100));
+            if (msg.active) {
+                applyChanges(channel);
+            } else {
+                stopChannel(channel);
+            }
+        });
+    });
+
 
     if (mode == 'play') {
         if (sessId == 'solo') {
             return;
         }
 
-        let authorizedPlaying = false;
         // let the server know we want to join this session and display an error
         // message if it fails
-        $('#status-message').text('Joined session with Session ID ' + sessId + '. To start riding, click the button below.');
+        $('#status-message').html('<p>Joined session with Session ID ' + sessId + '. To start riding, click the button below.</p>');
         socket.emit('registerRider', { sessId: sessId });
         socket.on('riderRejected', function () {
-            $('#status-message').text('Could not join session ' + sessId + '. Please check the Session ID.');
+            $('#status-message').html('<p>Could not join session ' + sessId + '. Please check the Session ID.</p>');
         });
 
         $('#initialize-audio').show();
@@ -95,35 +128,18 @@ $(function () {
             return false;
         });
 
-        // ---RIDER---
-        // receive events and populate input fields
-        ['left', 'right'].forEach(function (channel) {
-            socket.on(channel, function (msg) {
-                if (!authorizedPlaying) {
-                    return;
-                }
-                const channelSel = '#' + channel + '-channel-column ';
-                $(channelSel + 'input[name="volume"]').val(clamp(msg.volume, 0, 100));
-                $(channelSel + 'input[name="frequency"]').val(clamp(msg.freq, 100, 3000));
-                $(channelSel + 'select[name="am-type"]').val(msg.amType).selectmenu('refresh');
-                $(channelSel + 'input[name="am-depth"]').val(clamp(msg.amDepth, 0, 100));
-                $(channelSel + 'input[name="am-frequency"]').val(clamp(msg.amFreq, 0, 100));
-                $(channelSel + 'select[name="fm-type"]').val(msg.fmType).selectmenu('refresh');
-                $(channelSel + 'input[name="fm-depth"]').val(clamp(msg.fmDepth, 0, 1000));
-                $(channelSel + 'input[name="fm-frequency"]').val(clamp(msg.fmFreq, 0, 100));
-                $(channelSel + 'input[name="ramp-rate"]').val(clamp(msg.rampRate, 0, 10));
-                $(channelSel + 'input[name="ramp-target"]').val(clamp(msg.rampTarget, 0, 100));
-                if (msg.active) {
-                    applyChanges(channel);
-                } else {
-                    stopChannel(channel);
-                }
-            });
+        socket.on('driverLost', function() {
+          $('#status-message').html(`<p>The driver has left.  Give this url to someone else and they can become the driver:<br/><b>${document.location.href.replace('/play/', '/drive/')}</b></p>`);
+        });
+
+        socket.on('driverGained', function() {
+          $('#status-message').html('<p>A new driver has arrived!</p>');
         });
 
         // receive pain events
         ['pain-left', 'pain-right'].forEach(function (channel) {
             socket.on(channel, function (msg) {
+                if (!authorizedPlaying && mode == 'play') return;
                 const channelName = channel == 'pain-left' ? 'left' : 'right';
                 executePain(channelName, msg);
             });
@@ -134,7 +150,7 @@ $(function () {
         $('button.stop-btn').remove();
     } else {
         // ---DRIVER---
-        $('#status-message').text('Attempting to register as driver of Session ID ' + sessId + '.');
+        $('#status-message').html('<p>Attempting to register as driver of Session ID ' + sessId + '.</p>');
         socket.emit('registerDriver', { sessId: sessId });
 
         socket.on('driverToken', function (msg) {
@@ -142,7 +158,7 @@ $(function () {
             const link = ('' + window.location).replace('/drive/', '/play/');
             const line1 = 'Registered successfully on the network! Driving session with Session ID ' + sessId + '.';
             const line2 = 'Send the following link to the people you want to drive:<br>' + '<strong>' + link + '</strong>';
-            $('#status-message').html(line1 + '<br>' + line2);
+            $('#status-message').html('<p>' + line1 + '<br>' + line2 + '</p>');
 
             $('.save-load-bar').show();
 
@@ -153,6 +169,8 @@ $(function () {
 
             // initialize box that displays how many riders are connected and update it every 5 seconds
             $('#rider-count').show();
+            socket.emit('getRiderCount', { sessId: sessId, driverToken: driverToken });
+            socket.emit('requestLast', { sessId: sessId });
             setInterval(function () {
                 socket.emit('getRiderCount', { sessId: sessId, driverToken: driverToken });
             }, 5000);
@@ -188,7 +206,7 @@ $(function () {
                     timers['right'] = 0;
                     script = {};
                 } catch(e) {
-                  $('#status-message').text('Cancelled script');
+                  $('#status-message').append('<p>Cancelled script</p>');
                 };
             });
 
@@ -203,7 +221,7 @@ $(function () {
                     document.body.removeChild(element);
                 } else {
                     $('#messages-target').text(msg);
-                    $('#status-message').text('The File APIs are not fully supported by your browser.');
+                    $('#status-message').append('<p>The File APIs are not fully supported by your browser.</p>');
                 }
             });
 
@@ -217,7 +235,7 @@ $(function () {
                             script_next_step('left');
                             script_next_step('right');
                         } catch(e) {
-                            $('#status-message').html(`Error parsing script file: ${e}`);
+                            $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
                         }
                     };
                     reader.readAsText(this.files[0]);
@@ -227,7 +245,7 @@ $(function () {
         });
 
         socket.on('driverRejected', function () {
-            $('#status-message').html('Someone else is already driving this session. Please create a new one.<br>Any changes you make will NOT be sent to riders.');
+            $('#status-message').append('<p>Someone else is already driving this session. Please create a new one.<br>Any changes you make will NOT be sent to riders.</p>');
         });
 
         // set listeners to send events to the server
@@ -290,5 +308,4 @@ $(function () {
             });
         });
     }
-
-});;
+});
