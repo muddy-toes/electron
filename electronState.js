@@ -11,7 +11,7 @@ class ElectronState {
         this.lastMessages = {};         // storage of incoming messages (setting waveform parameters, pain tool, etc.)
         this.automatedDrivers = {};     // stores automated drivers by their session ids
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
-        this.publicSessions = {};       // stores public session list - {sessId: true}
+        this.publicSessions = {};       // stores public session list - publicSessions[sessId] == true
     }
 
     setPublicSession(sessId, publicSession) {
@@ -28,8 +28,8 @@ class ElectronState {
     addDriverToken(sessId, token, socket) {
         this.driverTokens[sessId] = token;
         this.driverSockets[sessId] = socket;
-        this.previousMessageStamp[sessId] = { 'left': Date.now(), 'right': Date.now() };
-        this.lastMessages[sessId] = {};
+        this.previousMessageStamp[sessId] ||= { 'left': Date.now(), 'right': Date.now() };
+        this.lastMessages[sessId] ||= {};
     }
 
     driverTokenExists(sessId) {
@@ -121,20 +121,31 @@ class ElectronState {
     }
 
     onDisconnect(socket) {
+        let found_rider = false;
+
         for (const sessId in this.riders) {
             const index = this.riders[sessId].indexOf(socket);
             if (index > -1) {
+                found_rider = true;
                 this.riders[sessId].splice(index, 1);
+                delete this.trafficLights[socket.id];
             }
         }
-        delete this.trafficLights[socket.id];
 
-        for (const sessId in this.driverSockets) {
-          if (this.driverSockets[sessId] === socket) {
-            console.log('Driver disconnected for ' + sessId);
-            delete this.driverSockets[sessId];
-            delete this.driverTokens[sessId];
-          }
+        if (! found_rider) {
+            for (const sessId in this.driverSockets) {
+                if (this.driverSockets[sessId] === socket) {
+                    console.log('Driver disconnected for ' + sessId);
+                    delete this.driverSockets[sessId];
+                    delete this.driverTokens[sessId];
+                    if (this.riders[sessId]) {
+                        this.riders[sessId].forEach(function(s) {
+                            console.log('Send driverLost to rider socket id ' + s.id);
+                            s.emit('driverLost');
+                        });
+                    }
+                }
+            }
         }
     }
 

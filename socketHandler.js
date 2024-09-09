@@ -28,11 +28,13 @@ module.exports = function (electronState) {
             const sessId = msg.sessId;
             const lastLeft = electronState.getLastMessage(sessId, 'left');
             const lastRight = electronState.getLastMessage(sessId, 'right');
+            // console.log("SID %s, sending lastLeft: %o", sessId, lastLeft);
+            // console.log("SID %s, sending lastRight: %o", sessId, lastRight);
             if (lastLeft) {
-                socket.emit('left', lastLeft);
+                socket.emit('left', lastLeft.message);
             }
             if (lastRight) {
-                socket.emit('right', lastRight);
+                socket.emit('right', lastRight.message);
             }
         });
 
@@ -47,6 +49,9 @@ module.exports = function (electronState) {
                 electronState.addDriverToken(sessId, token, socket);
                 socket.emit('driverToken', token);
                 console.log('User APPROVED as driver for ' + sessId);
+                electronState.getRiderSockets(msg.sessId).forEach(function (s) {
+                    s.emit('driverGained');
+                });
             } else {
                 socket.emit('driverRejected');
                 console.log('User REJECTED as driver for ' + sessId);
@@ -78,6 +83,8 @@ module.exports = function (electronState) {
                 return;
             }
 
+            delete msg.driverToken;
+
             // store the current status of the left channel for the future
             electronState.storeLastMessage(msg.sessId, 'left', msg);
             // send real time updates to all riders
@@ -93,6 +100,8 @@ module.exports = function (electronState) {
                 return;
             }
 
+            delete msg.driverToken;
+
             // store the current status of the right channel for the future
             electronState.storeLastMessage(msg.sessId, 'right', msg);
             // send real time updates to all riders
@@ -105,6 +114,8 @@ module.exports = function (electronState) {
         // left pain tool updates... send them over to all riders
         socket.on('pain-left', function (msg) {
             if (electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                delete msg.driverToken;
+                electronState.storeLastMessage(msg.sessId, 'pain-left', msg);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('pain-left', msg);
                 });
@@ -115,6 +126,8 @@ module.exports = function (electronState) {
         // right pain tool updates... send them over to all riders
         socket.on('pain-right', function (msg) {
             if (electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                delete msg.driverToken;
+                electronState.storeLastMessage(msg.sessId, 'pain-right', msg);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('pain-right', msg);
                 });
