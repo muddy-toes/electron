@@ -504,3 +504,8 @@ ul.public-session-list {
 ul.public-session-list li {
 }
 
+#nocontrols {
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.2em;
+}
