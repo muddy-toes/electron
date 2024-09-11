@@ -11,18 +11,31 @@ class ElectronState {
         this.lastMessages = {};         // storage of incoming messages (setting waveform parameters, pain tool, etc.)
         this.automatedDrivers = {};     // stores automated drivers by their session ids
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
-        this.publicSessions = {};       // stores public session list - publicSessions[sessId] == true
+        console.log("start");
+        this.sessionFlags = {};         // sessionFlags[sessId][flagname]
+                                        // flagnames in use: blindfoldRiders, publicSession
     }
 
-    setPublicSession(sessId, publicSession) {
-      if (publicSession)
-        this.publicSessions[sessId] = true;
-      else
-        delete this.publicSessions[sessId];
+    setSessionFlag(sessId, flagname, flagval) {
+      this.sessionFlags[sessId] ||= {};
+      this.sessionFlags[sessId][flagname] = flagval;
+    }
+
+    getSessionFlags(sessId) {
+      return this.sessionFlags[sessId];
     }
 
     getPublicSessions() {
-        return Object.keys(this.publicSessions);
+        const publiclist = [];
+        const sessionFlags = this.sessionFlags; // because 'this' changes inside the forEach
+        Object.keys(this.sessionFlags).forEach(function(sessId) {
+          if (! sessionFlags[sessId])
+            return;
+
+          if (sessionFlags[sessId]['publicSession'])
+            publiclist.push(sessId);
+        });
+        return publiclist;
     }
 
     addDriverToken(sessId, token, socket) {
@@ -30,6 +43,7 @@ class ElectronState {
         this.driverSockets[sessId] = socket;
         this.previousMessageStamp[sessId] ||= { 'left': Date.now(), 'right': Date.now() };
         this.lastMessages[sessId] ||= {};
+        this.sessionFlags[sessId] ||= {};
     }
 
     driverTokenExists(sessId) {
@@ -147,6 +161,19 @@ class ElectronState {
                 }
             }
         }
+
+        // If everybody's gone, the session is over, so clean it up
+        for (const sessId in this.riders) {
+          if (sessId && this.riders[sessId].length == 0 && !this.driverSockets[sessId]) {
+            console.log(`Session ended, ${sessId}`);
+            delete this.lastMessages[sessId];
+            delete this.previousMessageStamp[sessId];
+            delete this.sessionFlags[sessId];
+            delete this.driverTokens[sessId];
+            delete this.previousMessageStamp[sessId];
+            delete this.riders[sessId];
+          }
+        }
     }
 
     startAutomatedDriver(sessId, automatedDriverConfig) {
@@ -167,6 +194,7 @@ class ElectronState {
         delete this.automatedDrivers[sessId];
         delete this.lastMessages[sessId];
         delete this.previousMessageStamp[sessId];
+        delete this.sessionFlags[sessId];
     }
 
 }

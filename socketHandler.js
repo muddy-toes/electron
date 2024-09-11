@@ -4,6 +4,13 @@ module.exports = function (electronState) {
     return function (socket) {
         console.log('User connected');
 
+        function updateRidersFlags(sessId) {
+            const flags = electronState.getSessionFlags(sessId)
+            electronState.getRiderSockets(sessId).forEach(function (s) {
+                s.emit('updateFlags', flags);
+            });
+        }
+
         // ====== registerRider ======
         // a rider trying to join a session driven by someone else
         // (or an automated session)
@@ -36,6 +43,7 @@ module.exports = function (electronState) {
             if (lastRight) {
                 socket.emit('right', lastRight.message);
             }
+            socket.emit('updateFlags', electronState.getSessionFlags(sessId));
         });
 
         // ====== registerDriver ======
@@ -48,6 +56,7 @@ module.exports = function (electronState) {
                 const token = generateToken();
                 electronState.addDriverToken(sessId, token, socket);
                 socket.emit('driverToken', token);
+                socket.emit('updateFlags', electronState.getSessionFlags(sessId));
                 console.log('User APPROVED as driver for ' + sessId);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('driverGained');
@@ -70,10 +79,18 @@ module.exports = function (electronState) {
             if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 return;
             }
-            const sessId = msg.sessId;
-            const publicSession = msg.publicSession;
-            console.log("publicSession=%o, sessId=%s", publicSession, sessId);
-            electronState.setPublicSession(sessId, msg.publicSession);
+            console.log("publicSession=%o, sessId=%s", msg.publicSession, msg.sessId);
+            electronState.setSessionFlag(msg.sessId, 'publicSession', msg.publicSession ? true : false);
+        });
+
+        socket.on('setBlindfoldRiders', function(msg) {
+            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                return;
+            }
+            console.log("blindfoldRiders=%o, sessId=%s", msg.blindfoldRiders, msg.sessId);
+            electronState.setSessionFlag(msg.sessId, 'blindfoldRiders', msg.blindfoldRiders ? true : false);
+            
+            updateRidersFlags(msg.sessId);
         });
 
         // ====== left ======

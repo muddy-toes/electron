@@ -43,9 +43,12 @@
       <div class="traffic-bar yellow"></div>
       <div class="traffic-bar red"></div>
     </div>
-    <div class="public-toggle-container">
+    <div class="toggles-container">
       <label for="public-session">Public Session</label>
       <input type="checkbox" id="public-session" title="Check box to show this session on the public list" />
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <label for="blindfold-riders">Blindfold Riders (hide controls)</label>
+      <input type="checkbox" id="blindfold-riders" title="Check box to hide controls on riders' screens and only show the graphs." />
     </div>
   </div>
 
@@ -88,90 +91,95 @@
       </div>
     </div>
 
-    <div id="left-channel-column">
-      <div class="color-header">
-        <h2>Left Channel</h2>
-        <button class="stop-btn">STOP [Esc]</button>
-        <div style="clear:both;"></div>
+    <div id="controls">
+      <div id="left-channel-column">
+        <div class="color-header">
+          <h2>Left Channel</h2>
+          <button class="stop-btn">STOP [Esc]</button>
+          <div style="clear:both;"></div>
+        </div>
+        <div class="content">
+          <h3>Basic Parameters</h3>
+          <div class="form-row">
+            <label title="How intense the signal is, from 0% to 100%." style="cursor:help">Volume</label>
+            <input name="volume" value="50" class="spinner-volume"> %
+          </div>
+          <div class="form-row">
+            <div class="slider-wrapper" data-target-field="volume" data-slider-type="volume"></div>
+          </div>
+          <div class="form-row">
+            <label title="The number of times per second the wave oscillates. Higher values usually feel smoother and lower values feel harsher." style="cursor:help">Frequency</label>
+            <input name="frequency" value="2000" class="spinner-frequency"> Hz.
+          </div>
+          <div class="form-row">
+            <div class="slider-wrapper" data-target-field="frequency" data-slider-type="frequency"></div>
+          </div>
+
+          <h3>Volume Ramp</h3>
+          <div class="form-row">
+            <label title="The volume will automatically change until this value is reached." style="cursor:help">Target Volume</label>
+            <input name="ramp-target" value="50" class="spinner-volume"> %
+          </div>
+          <div class="form-row">
+            <label title="The number of percentage points per second the volume will actually change. For example if you set target volume at 60% and change rate to 1% / sec when the current volume is 50%, the ramp will take 10 seconds to complete." style="cursor:help">Change Rate (% per second)</label>
+            <input name="ramp-rate" value="0" class="spinner-change-rate"> %/sec
+          </div>
+
+          <h3>Amplitude Modulation</h3>
+          <div class="form-row">
+            <label title="The type of waveform to use for amplitude (volume) modulation." style="cursor:help">A.M. Type</label>
+            <select name="am-type">
+              <option value="none">None</option>
+              <option value="sine">Sine</option>
+              <option value="sawtooth">Sawtooth</option>
+              <option value="square">Square</option>
+              <option value="triangle">Triangle</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label title="How many times per second the amplitude (volume) modulation will be performed." style="cursor:help">A.M. Frequency</label>
+            <input name="am-frequency" value="0" class="spinner-change-rate"> Hz.
+          </div>
+          <div class="form-row">
+            <label title="How many percentage points the amplitude (volume) will be altered by in each cycle. For example, if your current volume is 75% and you set the A.M. Depth to 5% the volume will oscillate between 70% and 80%." style="cursor:help">A.M. Depth</label>
+            <input name="am-depth" value="10" class="spinner-change-rate"> %
+          </div>
+
+          <h3>Frequency Modulation</h3>
+          <div class="form-row">
+            <label title="The type of waveform to use for frequency modulation." style="cursor:help">F.M.
+              Type</label>
+            <select name="fm-type">
+              <option value="none">None</option>
+              <option value="sine">Sine</option>
+              <option value="sawtooth">Sawtooth</option>
+              <option value="square">Square</option>
+              <option value="triangle">Triangle</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label title="How many times per second the frequency modulation will be performed." style="cursor:help">F.M. Frequency</label>
+            <input name="fm-frequency" value="0" class="spinner-change-rate"> Hz.
+          </div>
+          <div class="form-row">
+            <label title="How many hertz the frequency will be altered by in each cycle. For example, if your current frequency is 2000 Hz and you set the F.M. Depth to 50 Hz the frequency will oscillate between 1950 and 2050 Hz." style="cursor:help">F.M. Depth</label>
+            <input name="fm-depth" value="10" class="spinner-change-rate"> Hz.
+          </div>
+
+          <button class="pain-btn">Pain Tool</button>
+          <button class="apply-btn">Apply [Return] ›</button>
+        </div>
       </div>
-      <div class="content">
-        <h3>Basic Parameters</h3>
-        <div class="form-row">
-          <label title="How intense the signal is, from 0% to 100%." style="cursor:help">Volume</label>
-          <input name="volume" value="50" class="spinner-volume"> %
+      <div id="right-channel-column">
+        <div class="color-header">
+          <h2>Right Channel</h2>
+          <button class="stop-btn">STOP [Esc]</button>
+          <div style="clear:both;"></div>
         </div>
-        <div class="form-row">
-          <div class="slider-wrapper" data-target-field="volume" data-slider-type="volume"></div>
-        </div>
-        <div class="form-row">
-          <label title="The number of times per second the wave oscillates. Higher values usually feel smoother and lower values feel harsher." style="cursor:help">Frequency</label>
-          <input name="frequency" value="2000" class="spinner-frequency"> Hz.
-        </div>
-        <div class="form-row">
-          <div class="slider-wrapper" data-target-field="frequency" data-slider-type="frequency"></div>
-        </div>
-
-        <h3>Volume Ramp</h3>
-        <div class="form-row">
-          <label title="The volume will automatically change until this value is reached." style="cursor:help">Target Volume</label>
-          <input name="ramp-target" value="50" class="spinner-volume"> %
-        </div>
-        <div class="form-row">
-          <label title="The number of percentage points per second the volume will actually change. For example if you set target volume at 60% and change rate to 1% / sec when the current volume is 50%, the ramp will take 10 seconds to complete." style="cursor:help">Change Rate (% per second)</label>
-          <input name="ramp-rate" value="0" class="spinner-change-rate"> %/sec
-        </div>
-
-        <h3>Amplitude Modulation</h3>
-        <div class="form-row">
-          <label title="The type of waveform to use for amplitude (volume) modulation." style="cursor:help">A.M. Type</label>
-          <select name="am-type">
-            <option value="none">None</option>
-            <option value="sine">Sine</option>
-            <option value="sawtooth">Sawtooth</option>
-            <option value="square">Square</option>
-            <option value="triangle">Triangle</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label title="How many times per second the amplitude (volume) modulation will be performed." style="cursor:help">A.M. Frequency</label>
-          <input name="am-frequency" value="0" class="spinner-change-rate"> Hz.
-        </div>
-        <div class="form-row">
-          <label title="How many percentage points the amplitude (volume) will be altered by in each cycle. For example, if your current volume is 75% and you set the A.M. Depth to 5% the volume will oscillate between 70% and 80%." style="cursor:help">A.M. Depth</label>
-          <input name="am-depth" value="10" class="spinner-change-rate"> %
-        </div>
-
-        <h3>Frequency Modulation</h3>
-        <div class="form-row">
-          <label title="The type of waveform to use for frequency modulation." style="cursor:help">F.M.
-            Type</label>
-          <select name="fm-type">
-            <option value="none">None</option>
-            <option value="sine">Sine</option>
-            <option value="sawtooth">Sawtooth</option>
-            <option value="square">Square</option>
-            <option value="triangle">Triangle</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <label title="How many times per second the frequency modulation will be performed." style="cursor:help">F.M. Frequency</label>
-          <input name="fm-frequency" value="0" class="spinner-change-rate"> Hz.
-        </div>
-        <div class="form-row">
-          <label title="How many hertz the frequency will be altered by in each cycle. For example, if your current frequency is 2000 Hz and you set the F.M. Depth to 50 Hz the frequency will oscillate between 1950 and 2050 Hz." style="cursor:help">F.M. Depth</label>
-          <input name="fm-depth" value="10" class="spinner-change-rate"> Hz.
-        </div>
-
-        <button class="pain-btn">Pain Tool</button>
-        <button class="apply-btn">Apply [Return] ›</button>
       </div>
     </div>
-    <div id="right-channel-column">
-      <div class="color-header">
-        <h2>Right Channel</h2>
-        <button class="stop-btn">STOP [Esc]</button>
-        <div style="clear:both;"></div>
-      </div>
+    <div id="nocontrols" style="display:none">
+      The driver has blindfolded you.  Controls hidden.
     </div>
 
 

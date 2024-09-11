@@ -114,6 +114,7 @@ $(function () {
             authorizedPlaying = true;
             socket.emit('requestLast', { sessId: sessId });
             $('#initialize-audio').hide();
+            $('#status-message').html('<p>Have a good ride!</p>');
         });
 
         // show traffic light container
@@ -139,10 +140,20 @@ $(function () {
         // receive pain events
         ['pain-left', 'pain-right'].forEach(function (channel) {
             socket.on(channel, function (msg) {
-                if (!authorizedPlaying && mode == 'play') return;
+                if (!authorizedPlaying) return;
                 const channelName = channel == 'pain-left' ? 'left' : 'right';
                 executePain(channelName, msg);
             });
+        });
+
+        socket.on('updateFlags', function(msg) {
+          if (msg['blindfoldRiders']) {
+            $("#controls").slideUp();
+            $("#nocontrols").fadeIn();
+          } else if (msg['blindfoldRiders'] == false) {
+            $("#nocontrols").fadeOut();
+            $("#controls").slideDown();
+          }
         });
 
         $('button.apply-btn').remove();
@@ -163,8 +174,18 @@ $(function () {
             $('.save-load-bar').show();
 
             $('#public-session').on('change', function(e) {
-                let new_state = $(e.currentTarget).is(":checked");
+                const new_state = $(e.currentTarget).is(":checked");
                 socket.emit('setPublicSession', { sessId: sessId, driverToken: driverToken, publicSession: new_state });
+            });
+
+            $('#blindfold-riders').on('change', function(e) {
+                const new_state = $(e.currentTarget).is(":checked");
+                socket.emit('setBlindfoldRiders', { sessId: sessId, driverToken: driverToken, blindfoldRiders: new_state });
+            });
+
+            socket.on('updateFlags', function(msg) {
+                $("#blindfold-riders").prop('checked',  msg['blindfoldRiders'] ? true : false);
+                $("#public-session").prop('checked',  msg['publicSession'] ? true : false);
             });
 
             // initialize box that displays how many riders are connected and update it every 5 seconds
