@@ -117,6 +117,8 @@ $(function () {
             $('#status-message').html('<p>Have a good ride!</p>');
         });
 
+        $('#driver-nametag').show();
+
         // show traffic light container
         $('#traffic-light').show();
         // event listeners for traffic light system
@@ -154,6 +156,9 @@ $(function () {
             $("#nocontrols").fadeOut();
             $("#controls").slideDown();
           }
+
+          const name = (msg['driverName'] || 'Anonymous').replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+          $("#driver-nametag .nametag").text(name);
         });
 
         $('button.apply-btn').remove();
@@ -183,9 +188,15 @@ $(function () {
                 socket.emit('setBlindfoldRiders', { sessId: sessId, driverToken: driverToken, blindfoldRiders: new_state });
             });
 
+            $('#set-driver-name').on('click', function(e) {
+              const name = $('#driver-name').val().replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+              socket.emit('setDriverName', { sessId: sessId, driverToken: driverToken, driverName: name });
+            });
+
             socket.on('updateFlags', function(msg) {
                 $("#blindfold-riders").prop('checked',  msg['blindfoldRiders'] ? true : false);
                 $("#public-session").prop('checked',  msg['publicSession'] ? true : false);
+                $("#driver-name").val(msg['driverName']);
             });
 
             // initialize box that displays how many riders are connected and update it every 5 seconds

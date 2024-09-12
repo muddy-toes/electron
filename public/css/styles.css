@@ -17,6 +17,7 @@ body {
 #main-container,
 #status-message,
 #initialize-audio,
+#driver-nametag,
 #rider-count {
     background: #FFF;
     border: 0;
@@ -28,6 +29,7 @@ body {
 
 #status-message,
 #initialize-audio,
+#driver-nametag,
 #rider-count {
     background: #e0e8ff;
     border: 1px solid #555999;
@@ -509,3 +511,8 @@ ul.public-session-list li {
   text-align: center;
   font-size: 1.2em;
 }
+
+#driver-nametag .nametag {
+  font-weight: bold;
+}
+
