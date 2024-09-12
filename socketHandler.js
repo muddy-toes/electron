@@ -93,6 +93,22 @@ module.exports = function (electronState) {
             updateRidersFlags(msg.sessId);
         });
 
+        socket.on('setDriverName', function(msg) {
+            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                return;
+            }
+            let name = msg.driverName;
+            if (!name)
+              name = ""
+            else
+              name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+
+            console.log("setDriverName=%o, sessId=%s", msg.driverName, msg.sessId);
+            electronState.setSessionFlag(msg.sessId, 'driverName', name);
+            updateRidersFlags(msg.sessId);
+            socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
+        });
+
         // ====== left ======
         // left channel updates... send them over to all riders
         socket.on('left', function (msg) {
