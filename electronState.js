@@ -13,7 +13,7 @@ class ElectronState {
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
         console.log("start");
         this.sessionFlags = {};         // sessionFlags[sessId][flagname]
-                                        // flagnames in use: blindfoldRiders, publicSession
+                                        // flagnames in use: blindfoldRiders, publicSession, driverName
     }
 
     setSessionFlag(sessId, flagname, flagval) {
@@ -33,7 +33,7 @@ class ElectronState {
             return;
 
           if (sessionFlags[sessId]['publicSession'])
-            publiclist.push(sessId);
+            publiclist.push({ sessId: sessId, name: sessionFlags[sessId]['driverName'] || sessId });
         });
         return publiclist;
     }
