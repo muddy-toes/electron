@@ -49,7 +49,7 @@
               <li><i>No public sessions</i></li>
             <% } else { %>
               <% publicSessions.forEach(function(ps) { %>
-                <li><a href="/player/play/<%= ps %>"><%= ps %></a></li>
+                <li><a href="/player/play/<%= ps['sessId'] %>"><%= ps['name'] %></a></li>
               <% }); %>
             <% } %>
           </ul>
