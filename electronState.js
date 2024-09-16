@@ -16,6 +16,20 @@ class ElectronState {
                                         // flagnames in use: blindfoldRiders, publicSession, driverName
     }
 
+    initSessionData(sessId) {
+        this.previousMessageStamp[sessId] ||= { 'left': Date.now(), 'right': Date.now() };
+        this.lastMessages[sessId] ||= {};
+        this.sessionFlags[sessId] ||= {};
+    }
+
+    cleanupSessionData(sessId) {
+        delete this.lastMessages[sessId];
+        delete this.previousMessageStamp[sessId];
+        delete this.sessionFlags[sessId];
+        delete this.driverTokens[sessId];
+        delete this.riders[sessId];
+    }
+
     setSessionFlag(sessId, flagname, flagval) {
       this.sessionFlags[sessId] ||= {};
       this.sessionFlags[sessId][flagname] = flagval;
@@ -41,9 +55,7 @@ class ElectronState {
     addDriverToken(sessId, token, socket) {
         this.driverTokens[sessId] = token;
         this.driverSockets[sessId] = socket;
-        this.previousMessageStamp[sessId] ||= { 'left': Date.now(), 'right': Date.now() };
-        this.lastMessages[sessId] ||= {};
-        this.sessionFlags[sessId] ||= {};
+        this.initSessionData(sessId);
     }
 
     driverTokenExists(sessId) {
@@ -166,12 +178,7 @@ class ElectronState {
         for (const sessId in this.riders) {
           if (sessId && this.riders[sessId].length == 0 && !this.driverSockets[sessId]) {
             console.log(`Session ended, ${sessId}`);
-            delete this.lastMessages[sessId];
-            delete this.previousMessageStamp[sessId];
-            delete this.sessionFlags[sessId];
-            delete this.driverTokens[sessId];
-            delete this.previousMessageStamp[sessId];
-            delete this.riders[sessId];
+            this.cleanupSessionData(sessId);
           }
         }
     }
@@ -183,6 +190,8 @@ class ElectronState {
 
         if (!this.automatedDrivers[sessId]) {
             this.automatedDrivers[sessId] = new AutomatedDriver(sessId, automatedDriverConfig);
+            this.initSessionData(sessId);
+            this.setSessionFlag(sessId, 'driverName', 'Autodriver');
             this.automatedDrivers[sessId].run(this);
             return true;
         } else {
@@ -192,9 +201,7 @@ class ElectronState {
 
     unregisterAutomatedDriver(sessId) {
         delete this.automatedDrivers[sessId];
-        delete this.lastMessages[sessId];
-        delete this.previousMessageStamp[sessId];
-        delete this.sessionFlags[sessId];
+        this.cleanupSessionData(sessId);
     }
 
 }
