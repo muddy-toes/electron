@@ -27,6 +27,7 @@ class ElectronState {
         delete this.previousMessageStamp[sessId];
         delete this.sessionFlags[sessId];
         delete this.driverTokens[sessId];
+        delete this.driverSockets[sessId];
         delete this.riders[sessId];
     }
 
@@ -93,6 +94,8 @@ class ElectronState {
             this.lastMessages[sessId] = {};
         }
         const now = Date.now();
+        this.previousMessageStamp[sessId] ||= {};
+        this.previousMessageStamp[sessId][channel] ||= now;
         const stamp_offset = now - this.previousMessageStamp[sessId][channel];
         this.previousMessageStamp[sessId][channel] = now;
         this.lastMessages[sessId][channel] ||= [];
@@ -155,6 +158,10 @@ class ElectronState {
                 found_rider = true;
                 this.riders[sessId].splice(index, 1);
                 delete this.trafficLights[socket.id];
+                if (! this.driverSockets[sessId]) {
+                    console.log(`Last rider left, no driver present, session ended, ${sessId}`);
+                    this.cleanupSessionData(sessId);
+                }
             }
         }
 
@@ -164,22 +171,17 @@ class ElectronState {
                     console.log('Driver disconnected for ' + sessId);
                     delete this.driverSockets[sessId];
                     delete this.driverTokens[sessId];
-                    if (this.riders[sessId]) {
+                    if (this.riders[sessId] && this.riders[sessId].length > 0) {
                         this.riders[sessId].forEach(function(s) {
                             console.log('Send driverLost to rider socket id ' + s.id);
                             s.emit('driverLost');
                         });
+                    } else {
+                        console.log(`Driver left, no riders present, session ended, ${sessId}`);
+                        this.cleanupSessionData(sessId);
                     }
                 }
             }
-        }
-
-        // If everybody's gone, the session is over, so clean it up
-        for (const sessId in this.riders) {
-          if (sessId && this.riders[sessId].length == 0 && !this.driverSockets[sessId]) {
-            console.log(`Session ended, ${sessId}`);
-            this.cleanupSessionData(sessId);
-          }
         }
     }
 
