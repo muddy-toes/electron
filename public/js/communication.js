@@ -13,21 +13,47 @@ $(function () {
     const socket = io();
     let driverToken = '';
     let script = {};
-    let scriptTimeouts = { 'left': 0, 'right': 0 };
-    let timers = { 'left': 0, 'right': 0, 'pain-left': 0, 'pain-right': 0 };
+    let scriptTimeouts = { 'left': 0, 'right': 0, 'pain-left': 0, 'pain-right': 0 };
     let authorizedPlaying = false;
+    let scriptStepCurrent = 0;
+    let scriptStepCount = 1;
+    const spinnersteps = ['\\', '|', '/', '|']
+    let spinnerstep = 0;
+
+    $('#playback-progress-bar').progressbar({
+      value: false,
+      change: function() {
+        const bar = $('#playback-progress-bar');
+        const label = bar.find('.progress-label');
+        label.text(bar.progressbar('value') + '%');
+      },
+      complete: function() {
+        const bar = $('#playback-progress-bar');
+        const label = bar.find('.progress-label');
+        label.text('Script complete');
+      }
+    });
 
     function script_next_step(channel) {
         try {
+            if (!script[channel]) return;
+
             const step = script[channel].shift();
             if (!step) {
                 $('#status-message').append('<p>Script complete</p>');
+                $('#cancel-script').hide();
+                $('#step-ticker').hide();
                 return;
             }
-            timers[channel] = Math.floor(step['stamp'] / 1000);
+            scriptStepCurrent++;
+            percent = (scriptStepCurrent / scriptStepCount * 100).toFixed(0);
+            console.log("%d / %d -> %d", scriptStepCurrent, scriptStepCount, percent);
+            $('#playback-progress-bar').progressbar('value', parseInt(percent));
             scriptTimeouts[channel] = setTimeout(function(){ apply_step(channel, step['message']) }, step['stamp']);
         } catch(e) {
-            $('#status-message').append(`<p>Invalid script, cannot run.  Error: ${e}</p>`);
+            console.log("Load script error: %o", e);
+            const errmsg = `<p>Invalid script, cannot run.  Error: ${e}</p>`;
+            $('#status-message').append(errmsg);
         }
     }
 
@@ -54,20 +80,80 @@ $(function () {
     }
 
     function step_timers() {
-        let min = Object.values(timers).sort()[0]
-        if (min < 0) min = 0;
-        if (min == 0)
-            $("#cancel-script").hide();
-        else
-            $("#cancel-script").show();
-
-        $('#step-timer').text(min == 0 ? "" : min);
-        timers['left'] -= 1;
-        timers['right'] -= 1;
-        timers['pain-left'] -= 1;
-        timers['pain-right'] -= 1;
+        spinnerstep++;
+        if( spinnerstep >= spinnersteps.length ) spinnerstep = 0
+        $('#step-ticker').text(spinnersteps[spinnerstep]);
     }
     setInterval(step_timers, 1000);
+
+    function initSaveLoadScript() {
+      initLoadScriptOnly();
+
+      $('#save-session-messages').on('click', function() {
+          socket.emit('getSessionMessages', { sessId: sessId, driverToken: driverToken });
+      });
+      $('#save-session-messages').show();
+
+      socket.on('sessionMessages', function(msg) {
+          if (window.File && window.FileReader && window.FileList && window.Blob) {
+              let element = document.createElement('a');
+              element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(msg));
+              element.setAttribute('download', `${sessId}.json`);
+              element.style.display = 'none';
+              document.body.appendChild(element);
+              element.click();
+              document.body.removeChild(element);
+          } else {
+              $('#messages-target').text(msg);
+              $('#status-message').append('<p>The File APIs are not fully supported by your browser.</p>');
+          }
+      });
+    }
+
+    function initLoadScriptOnly() {
+        $('.save-load-bar').show();
+
+        $('#cancel-script').on('click', function() {
+            try {
+                clearTimeout(scriptTimeouts['left']);
+                clearTimeout(scriptTimeouts['right']);
+                clearTimeout(scriptTimeouts['pain-left']);
+                clearTimeout(scriptTimeouts['pain-right']);
+                script = {};
+                $('#cancel-script').hide();
+                $('#step-ticker').hide();
+                $('#playback-progress-bar').hide();
+                $('#status-message').append('<p class="transient">Cancelled script</p>');
+                setTimeout(() => $('#status-message .transient').slideUp(1000, () => $(this).remove()), 5000);
+            } catch(e) {
+                $('#status-message').append(`<p>Error cancelling script: ${e}</p>`);
+            };
+        });
+
+      $("#load-file-picker").change(function(){
+          if(this.files && this.files[0]) {
+              const reader = new FileReader();
+              reader.onload = function (e) {
+                  try {
+                      script = JSON.parse(e.target.result);
+                      window.dbgscript = script;
+                      scriptStepCurrent = 0
+                      scriptStepCount = Object.keys(script).map((channel) => script[channel].length).reduce((i, j) => i + j)
+                      $('#playback-progress-bar').show();
+                      $("#cancel-script").show();
+                      $('#step-ticker').show();
+                      script_next_step('left', true);
+                      script_next_step('right', true);
+                      script_next_step('pain-left');
+                      script_next_step('pain-right');
+                  } catch(e) {
+                      $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
+                  }
+              };
+              reader.readAsText(this.files[0]);
+          };
+      });
+    }
 
 
     ['left', 'right'].forEach(function (channel) {
@@ -98,6 +184,7 @@ $(function () {
 
     if (mode == 'play') {
         if (sessId == 'solo') {
+            initLoadScriptOnly();
             return;
         }
 
@@ -176,8 +263,6 @@ $(function () {
             const line2 = 'Send the following link to the people you want to drive:<br>' + '<strong>' + link + '</strong>';
             $('#status-message').html('<p>' + line1 + '<br>' + line2 + '</p>');
 
-            $('.save-load-bar').show();
-
             $('#public-session').on('change', function(e) {
                 const new_state = $(e.currentTarget).is(":checked");
                 socket.emit('setPublicSession', { sessId: sessId, driverToken: driverToken, publicSession: new_state });
@@ -226,53 +311,7 @@ $(function () {
                 $('#rider-count-number').text(total);
             });
 
-            $('#save-session-messages').on('click', function() {
-                socket.emit('getSessionMessages', { sessId: sessId, driverToken: driverToken });
-            });
-
-            $('#cancel-script').on('click', function() {
-                try {
-                    clearTimeout(scriptTimeouts['left']);
-                    clearTimeout(scriptTimeouts['right']);
-                    timers['left'] = 0;
-                    timers['right'] = 0;
-                    script = {};
-                } catch(e) {
-                  $('#status-message').append('<p>Cancelled script</p>');
-                };
-            });
-
-            socket.on('sessionMessages', function(msg) {
-                if (window.File && window.FileReader && window.FileList && window.Blob) {
-                    let element = document.createElement('a');
-                    element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(msg));
-                    element.setAttribute('download', `${sessId}.json`);
-                    element.style.display = 'none';
-                    document.body.appendChild(element);
-                    element.click();
-                    document.body.removeChild(element);
-                } else {
-                    $('#messages-target').text(msg);
-                    $('#status-message').append('<p>The File APIs are not fully supported by your browser.</p>');
-                }
-            });
-
-            $("#load-file-picker").change(function(){
-                if(this.files && this.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        try {
-                            script = JSON.parse(e.target.result);
-                            script_stamp = Date.now();
-                            script_next_step('left');
-                            script_next_step('right');
-                        } catch(e) {
-                            $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
-                        }
-                    };
-                    reader.readAsText(this.files[0]);
-                };
-            });
+            initSaveLoadScript();
 
         });
 

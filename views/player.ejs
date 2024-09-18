@@ -66,10 +66,13 @@
 
   <div class='save-load-bar' style='display: none'>
     <div class='slb-left'>
-      <button id="save-session-messages" class="roundy-btn">Save Session Script</button>
+      <button id="save-session-messages" class="roundy-btn" style='display: none'>Save Session Script</button>
     </div>
     <div class='slb-middle'>
-      <span id="step-timer"></span>
+      <div id='playback-progress-bar' style='display: none; width: 80%'>
+        <div class='progress-label'></div>
+      </div>
+      <span id="step-ticker" style='display: none'></span>
       <button id="cancel-script" class="roundy-btn" style="display: none">Cancel</button>
     </div>
     <div class='slb-right'>

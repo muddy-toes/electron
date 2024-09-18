@@ -72,6 +72,7 @@ app.get('/player/:mode/:sessId', function (req, res) {
         // joining or driving a session
         res.render('player');
     } else if (mode === 'play' && sessId === 'solo') {
+        console.log('User playing solo');
         // solo play
         res.render('player');
     } else {
