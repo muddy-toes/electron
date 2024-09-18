@@ -470,7 +470,8 @@ div.mode-selector-box p {
     align-items: center;
 }
 
-#step-timer {
+#step-ticker {
+  margin-left: 1em;
   font-family: monospace;
   font-size: 2em;
 }
@@ -516,3 +517,14 @@ ul.public-session-list li {
   font-weight: bold;
 }
 
+#playback-progress-bar {
+  position: relative;
+}
+
+#playback-progress-bar .progress-label {
+  position: absolute;
+  left: 48%;
+  top: 6px;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 #fff;
+}

@@ -29,6 +29,7 @@ class ElectronState {
         delete this.driverTokens[sessId];
         delete this.driverSockets[sessId];
         delete this.riders[sessId];
+        console.log("Active sessions: %d", Object.keys(this.lastMessages).length);
     }
 
     setSessionFlag(sessId, flagname, flagval) {

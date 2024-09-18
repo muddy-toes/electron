@@ -164,3 +164,8 @@ html .ui-button.ui-state-disabled:active {
     border: 1px solid #888;
     color: #ccc;
 }
+
+#step-ticker {
+  color: #ccc;
+}
+
