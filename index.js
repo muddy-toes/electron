@@ -14,6 +14,10 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+function remote_ip(req) {
+  return req.header('x-forwarded-for') || req.socket.remoteAddress;
+}
+
 // middleware we need for form submission
 app.use(express.urlencoded({ extended: false }));
 
@@ -23,12 +27,14 @@ app.set('views', path.join(__dirname, 'views'));
 
 // home page
 app.get('/', function (req, res) {
+    console.log("%s GET /", remote_ip(req));
     res.render('index', { publicSessions: electronState.getPublicSessions() });
 });
 
 // actually start new automated driver
 app.use('/start-automated-driver', inputValidationMiddleware.validateAutomatedDriverInput);
 app.post('/start-automated-driver', function (req, res) {
+    console.log("%s GET /start-automated-driver", remote_ip(req));
     const minFrequency = parseInt(req.body['min-frequency']);
     const maxFrequency = parseInt(req.body['max-frequency']);
     const startFrequency = parseInt(req.body['start-frequency']);
@@ -61,6 +67,7 @@ app.post('/start-automated-driver', function (req, res) {
 
 // set parameters for new automated driver
 app.get('/config-automated-driver', function (req, res) {
+    console.log('%s GET /config-automated-driver', remote_ip(req));
     res.render('cfgautomated');
 });
 
@@ -68,6 +75,7 @@ app.get('/config-automated-driver', function (req, res) {
 app.get('/player/:mode/:sessId', function (req, res) {
     const mode = req.params.mode;
     const sessId = req.params.sessId;
+    console.log('%s GET /player/%s/%s', remote_ip(req), mode, sessId);
     if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
         // joining or driving a session
         res.render('player');
