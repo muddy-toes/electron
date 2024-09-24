@@ -44,12 +44,15 @@ class ElectronState {
     getPublicSessions() {
         const publiclist = [];
         const sessionFlags = this.sessionFlags; // because 'this' changes inside the forEach
+        const riders = this.riders;
         Object.keys(this.sessionFlags).forEach(function(sessId) {
           if (! sessionFlags[sessId])
             return;
 
-          if (sessionFlags[sessId]['publicSession'])
-            publiclist.push({ sessId: sessId, name: sessionFlags[sessId]['driverName'] || sessId });
+          if (sessionFlags[sessId]['publicSession']) {
+            const ridercount = (riders[sessId] || []).length;
+            publiclist.push({ sessId: sessId, name: sessionFlags[sessId]['driverName'] || sessId, riders: ridercount });
+          }
         });
         return publiclist;
     }
