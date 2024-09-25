@@ -183,8 +183,9 @@ $(function () {
 
             const $channelCol = $(`#${channel}-channel-column`);
             // console.log("SET %s volume=%o, clamped to %o", channelSel, msg.volume, clamp(msg.volume, 0, 100));
+            // NOTE: If you change any of these ranges, also change it in applyChanges in public/js/electron.js
             $channelCol.find('input[name="volume"]').val(clamp(msg.volume, 0, 100));
-            $channelCol.find('input[name="frequency"]').val(clamp(msg.freq, 100, 3000));
+            $channelCol.find('input[name="frequency"]').val(clamp(msg.freq, 10, 3000));
             $channelCol.find('select[name="am-type"]').val(msg.amType).selectmenu('refresh');
             $channelCol.find('input[name="am-depth"]').val(clamp(msg.amDepth, 0, 100));
             $channelCol.find('input[name="am-frequency"]').val(clamp(msg.amFreq, 0, 100));
