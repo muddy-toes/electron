@@ -49,6 +49,7 @@ $(document).ready(function () {
     function applyChanges(channelName, osc, ampModulator, freqModulator) {
         const chSelector = '#' + channelName + '-channel-column ';
 
+        // NOTE: If you change any of these ranges, also change it in in the socket.on in public/js/communication.js
         validateRange($(chSelector + 'input[name="frequency"]'), 10, 3000);
         validateRange($(chSelector + 'input[name="volume"]'), 0, 100);
         validateRange($(chSelector + 'input[name="am-depth"]'), 0, 100);
