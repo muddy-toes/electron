@@ -45,13 +45,9 @@ $(function () {
                 $('#step-ticker').hide();
                 return;
             }
-            scriptStepCurrent++;
-            percent = (scriptStepCurrent / scriptStepCount * 100).toFixed(0);
-            console.log("%d / %d -> %d", scriptStepCurrent, scriptStepCount, percent);
-            $('#playback-progress-bar').progressbar('value', parseInt(percent));
             scriptTimeouts[channel] = setTimeout(function(){ apply_step(channel, step['message']) }, step['stamp']);
         } catch(e) {
-            console.log("Load script error: %o", e);
+            if( window.console ) console.log("Load script error: %o", e);
             const errmsg = `<p>Invalid script, cannot run.  Error: ${e}</p>`;
             $('#status-message').append(errmsg);
         }
@@ -59,6 +55,9 @@ $(function () {
 
     function apply_step(channel, step) {
         if( window.console ) console.log("Step %s: %o", channel, step);
+        scriptStepCurrent++;
+        percent = (scriptStepCurrent / scriptStepCount * 100).toFixed(0);
+        $('#playback-progress-bar').progressbar('value', parseInt(percent));
         if (channel.match(/^pain-/)) {
             const channelName = channel == 'pain-left' ? 'left' : 'right';
             executePain(channelName, step);
@@ -136,6 +135,27 @@ $(function () {
               reader.onload = function (e) {
                   try {
                       script = JSON.parse(e.target.result);
+
+                      // Reduce the first step's start time to 1000ms and the other channel's start time to the difference in delay + 1000,
+                      // so they still start within the appropriate seconds of each other to get something going.  This will affect the delay
+                      // between the first and second sets of changes, but at least something is playing.  Also, we can't just adjust all the
+                      // steps by however much the first step stamp is over 1000, because that could be like 60,000 and maybe the delay between
+                      // some later steps is only 5000 so we'd end up with negative delays... it's just a mess, so unless we're going to lay
+                      // all the steps on a timeline with offsets from the timestamp at the start of the session, this is the easiest solution
+                      // to get some stimming happening ASAP.
+                      try {
+                        if (script['left'] && script['left'][0] && script['left'][0]['stamp'] &&
+                            script['right'] && script['right'][0] && script['right'][0]['stamp']) {
+                          const chan_first = (script['left'][0]['stamp'] <= script['right'][0]['stamp']) ? 'left' : 'right';
+                          const chan_diff = Math.abs(script['left'][0]['stamp'] - script['right'][0]['stamp']);
+                          script[chan_first][0]['stamp'] = 1000;
+                          script[(chan_first == 'left') ? 'right' : 'left'][0]['stamp'] = chan_diff + 1000;
+
+                        }
+                      } catch(e) {
+                        if (window.console) console.log("Failed to adjust first step start times: %o", e);
+                      }
+                        
                       window.dbgscript = script;
                       scriptStepCurrent = 0
                       scriptStepCount = Object.keys(script).map((channel) => script[channel].length).reduce((i, j) => i + j)
