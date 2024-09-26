@@ -123,7 +123,7 @@ $(function () {
                 $('#step-ticker').hide();
                 $('#playback-progress-bar').hide();
                 $('#status-message').append('<p class="transient">Cancelled script</p>');
-                setTimeout(() => $('#status-message .transient').slideUp(1000, () => $(this).remove()), 5000);
+                setTimeout(function() { $('#status-message .transient').slideUp(1000, function() { $(this).remove() }) }, 5000);
             } catch(e) {
                 $('#status-message').append(`<p>Error cancelling script: ${e}</p>`);
             };
