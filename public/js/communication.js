@@ -261,25 +261,25 @@ $(function () {
         });
 
         socket.on('updateFlags', function(msg) {
-          if (msg['blindfoldRiders']) {
-            $("#controls").slideUp();
-            $("#nocontrols").fadeIn();
-          } else if (msg['blindfoldRiders'] == false) {
-            $("#nocontrols").fadeOut();
-            $("#controls").slideDown();
-          }
+            if (msg['blindfoldRiders']) {
+                $("#controls").slideUp();
+                $("#nocontrols").fadeIn();
+            } else if (msg['blindfoldRiders'] == false) {
+                $("#nocontrols").fadeOut();
+                $("#controls").slideDown();
+            }
 
-          const name = (msg['driverName'] || 'Anonymous').replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
-          $("#driver-nametag .nametag").text(name);
+            const name = (msg['driverName'] || 'Anonymous').replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+            $("#driver-nametag .nametag").text(name);
 
-          if (msg['camUrl']) {
-            $('#cam-url .cam-url-link').html(`<a target="_blank" href="${msg['camUrl']}">${msg['camUrl']}</a>`);
-            initialize_cam_url_warning_dismissal();
-            $('#cam-url .cam-url-warning').show();
-            $('#cam-url').show();
-          } else {
-            $('#cam-url').hide();
-          }
+            if (msg['camUrl']) {
+                $('#cam-url .cam-url-link').html(`<a target="_blank" href="${msg['camUrl']}">${msg['camUrl']}</a>`);
+                initialize_cam_url_warning_dismissal();
+                $('#cam-url .cam-url-warning').show();
+                $('#cam-url').show();
+            } else {
+                $('#cam-url').hide();
+            }
         });
 
         $('button.apply-btn').remove();
