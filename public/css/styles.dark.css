@@ -9,12 +9,14 @@ a {
 #main-container,
 #status-message,
 #initialize-audio,
+#ride-info,
 #rider-count {
     background: #303030;
 }
 
 #status-message,
 #initialize-audio,
+#ride-info,
 #rider-count {
     background: #404040;
     border: 1px solid #888;
