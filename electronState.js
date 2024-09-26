@@ -19,7 +19,8 @@ class ElectronState {
     initSessionData(sessId) {
         this.previousMessageStamp[sessId] ||= { 'left': Date.now(), 'right': Date.now() };
         this.lastMessages[sessId] ||= {};
-        this.sessionFlags[sessId] ||= {};
+        this.sessionFlags[sessId] ||= { driverName: 'Anonymous' };
+        this.driverSockets[sessId].emit('updateFlags', this.getSessionFlags(sessId));
     }
 
     cleanupSessionData(sessId) {

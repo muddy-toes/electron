@@ -276,12 +276,13 @@ $(function () {
                 $('#cam-url .cam-url-link').html(`<a target="_blank" href="${msg['camUrl']}">${msg['camUrl']}</a>`);
                 initialize_cam_url_warning_dismissal();
                 $('#cam-url .cam-url-warning').show();
-                $('#cam-url').show();
+                $('#cam-url').fadeIn();
             } else {
-                $('#cam-url').hide();
+                $('#cam-url').fadeOut();
             }
         });
 
+        initialize_cam_url_warning_dismissal() 
         $('button.apply-btn').remove();
         $('button.pain-btn').remove();
         $('button.stop-btn').remove();
@@ -322,6 +323,7 @@ $(function () {
             });
 
             socket.on('updateFlags', function(msg) {
+                // console.log("updateFlags %o", msg);
                 $("#blindfold-riders").prop('checked',  msg['blindfoldRiders'] ? true : false);
                 $("#public-session").prop('checked',  msg['publicSession'] ? true : false);
                 $("#driver-name").val(msg['driverName']);

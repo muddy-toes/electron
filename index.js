@@ -8,8 +8,6 @@ const inputValidationMiddleware = require('./inputValidation');
 const socketHandler = require('./socketHandler');
 const { generateAutomatedSessId } = require('./utils');
 
-const defaultDriverName = 'Anonymous';
-
 const PORT = process.env.PORT || 5000;
 const electronState = new ElectronState();
 const app = express();
@@ -80,18 +78,12 @@ app.get('/player/:mode/:sessId', function (req, res) {
     console.log('%s GET /player/%s/%s', remote_ip(req), mode, sessId);
     if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
         // joining or driving a session
-        const flags = electronState.getSessionFlags(sessId);
-        let driverName = defaultDriverName;
-        let camUrl = null;
-        if (flags) {
-          driverName = flags['driverName'];
-          camUrl = flags['camUrl'];
-        }
-        res.render('player', { driverName: driverName, camUrl: camUrl });
+        const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
+        res.render('player', { flags: flags });
     } else if (mode === 'play' && sessId === 'solo') {
         console.log('User playing solo');
         // solo play
-        res.render('player', { driverName: defaultDriverName });
+        res.render('player', { flags: { driverName: 'Yourself' } });
     } else {
         // something went wrong -> 404!
         res.status(404);
