@@ -124,6 +124,23 @@ module.exports = function (electronState) {
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
         });
 
+        socket.on('setFilePlaying', function(msg) {
+            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                return;
+            }
+            let fileinfo = msg.filePlaying;
+            if (!fileinfo)
+                fileinfo = '';
+            else
+                fileinfo = fileinfo.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+
+            console.log("setFilePlaying, raw=%o, processed=%o, sessId=%s", msg.filePlaying, fileinfo, msg.sessId);
+            electronState.setSessionFlag(msg.sessId, 'filePlaying', fileinfo);
+            updateRidersFlags(msg.sessId);
+            socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
+        });
+
+
         // ====== left ======
         // left channel updates... send them over to all riders
         socket.on('left', function (msg) {

@@ -532,6 +532,16 @@ ul.public-session-list li {
   font-weight: bold;
 }
 
+#file-playing {
+  font-size: 0.8em;
+  text-align: left;
+  margin-top: -1.5rem;
+  max-width: 50%;
+}
+#file-playing .file-playing-info {
+  font-weight: bold;
+}
+
 #cam-url {
   border: 1px solid #888;
   position: absolute;
@@ -545,6 +555,10 @@ ul.public-session-list li {
 #cam-url .cam-url-warning {
   font-style: italic;
   font-size: 0.9em;
+}
+
+#file-playing .file-playing-info {
+  font-weight: bold;
 }
 
 #playback-progress-bar {
