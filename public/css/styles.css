@@ -533,13 +533,18 @@ ul.public-session-list li {
 }
 
 #file-playing {
-  font-size: 0.8em;
   text-align: left;
-  margin-top: -1.5rem;
   max-width: 50%;
+  line-height: 1.2rem;
 }
 #file-playing .file-playing-info {
-  font-weight: bold;
+  font-size: 0.8em;
+  font-style: italic;
+  margin-left: 0.5em;
+}
+#file-playing .file-driver-info {
+  font-size: 0.9em;
+  margin-left: 0.5em;
 }
 
 #cam-url {
@@ -555,10 +560,6 @@ ul.public-session-list li {
 #cam-url .cam-url-warning {
   font-style: italic;
   font-size: 0.9em;
-}
-
-#file-playing .file-playing-info {
-  font-weight: bold;
 }
 
 #playback-progress-bar {

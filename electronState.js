@@ -19,8 +19,20 @@ class ElectronState {
     initSessionData(sessId) {
         this.previousMessageStamp[sessId] ||= { 'left': Date.now(), 'right': Date.now() };
         this.lastMessages[sessId] ||= {};
-        this.sessionFlags[sessId] ||= { driverName: 'Anonymous' };
-        this.driverSockets[sessId].emit('updateFlags', this.getSessionFlags(sessId));
+        this.sessionFlags[sessId] ||= {};
+
+        // New driver, reset some settings...
+        this.sessionFlags[sessId]['driverName'] = 'Anonymous';
+        delete this.sessionFlags[sessId]['filePlaying'];
+        delete this.sessionFlags[sessId]['fileDriver'];
+
+        const sessionflags = this.getSessionFlags(sessId);
+        this.driverSockets[sessId].emit('updateFlags', sessionflags);
+        if (this.riders[sessId]) {
+            this.riders[sessId].forEach(function(s) {
+                s.emit('updateFlags', sessionflags);
+            });
+        }
     }
 
     cleanupSessionData(sessId) {
@@ -136,6 +148,7 @@ class ElectronState {
             return "No messages stored";
         }
         return JSON.stringify({
+            'meta': { driverName: this.sessionFlags[sessId]['driverName'] },
             'left': this.lastMessages[sessId]['left'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
             'right': this.lastMessages[sessId]['right'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
         });

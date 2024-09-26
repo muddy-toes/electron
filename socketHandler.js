@@ -134,8 +134,16 @@ module.exports = function (electronState) {
             else
                 fileinfo = fileinfo.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
 
-            console.log("setFilePlaying, raw=%o, processed=%o, sessId=%s", msg.filePlaying, fileinfo, msg.sessId);
+            let filedriver = msg.fileDriver;
+            if (!filedriver)
+                filedriver = '';
+            else
+                filedriver = filedriver.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+
+            console.log("setFilePlaying, raw_fileinfo=%o, processed_fileinfo=%o, raw_filedriver=%o, processed_filedriver=%o, sessId=%s",
+                        msg.filePlaying, fileinfo, msg.fileDriver, filedriver, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'filePlaying', fileinfo);
+            electronState.setSessionFlag(msg.sessId, 'fileDriver', filedriver);
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
         });
