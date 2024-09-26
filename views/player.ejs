@@ -35,8 +35,22 @@
     Welcome to electron! You are currently playing in «solo mode».
   </div>
 
-  <div style="display:none;" id="driver-nametag">
-    Your driver's name is <span class="nametag"><%= driverName %></span>
+  <div id="ride-info" style="display:none;">
+    <h3>Ride Info</h3>
+    <p id='driver-nametag'>
+      Your driver's name is <span class="nametag"><%= driverName %></span>
+    </p>
+    <p id='file-playing' style="display:none;"></p>
+    <p id='cam-url' style="<%= camUrl ? '' : 'display:none;' %>">
+      This is where riders are camming:
+      <br/>
+      <span class='cam-url-link'>
+        <a target="_blank" href="<%= camUrl %>"><%= camUrl %></a>
+      </span>
+      <br/>
+      <span class='cam-url-warning'><b>WARNING:</b> Use your judgement before clicking.<br/>If the cam link looks sketchy and you don't know your driver, don't click on it.</span>
+    </p>
+    <p id='driver-comments' style="display:none;"></p>
   </div>
 
   <div style="display:none;" id="rider-count">
@@ -57,6 +71,11 @@
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <label for="blindfold-riders">Blindfold Riders (hide controls)</label>
       <input type="checkbox" id="blindfold-riders" title="Check box to hide controls on riders' screens and only show the graphs." />
+      <br/>
+      <label for="driver-cam-url">URL for camming:</label>
+      <input type="text" maxlength="100" style="width:20em" id="driver-cam-url"/>
+      <button id="set-cam-url">Set</button>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     </div>
   </div>
 

@@ -82,10 +82,12 @@ app.get('/player/:mode/:sessId', function (req, res) {
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId);
         let driverName = defaultDriverName;
+        let camUrl = null;
         if (flags) {
           driverName = flags['driverName'];
+          camUrl = flags['camUrl'];
         }
-        res.render('player', { driverName: driverName });
+        res.render('player', { driverName: driverName, camUrl: camUrl });
     } else if (mode === 'play' && sessId === 'solo') {
         console.log('User playing solo');
         // solo play

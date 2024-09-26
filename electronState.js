@@ -11,9 +11,9 @@ class ElectronState {
         this.lastMessages = {};         // storage of incoming messages (setting waveform parameters, pain tool, etc.)
         this.automatedDrivers = {};     // stores automated drivers by their session ids
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
-        console.log("start");
         this.sessionFlags = {};         // sessionFlags[sessId][flagname]
                                         // flagnames in use: blindfoldRiders, publicSession, driverName
+        console.log("start");
     }
 
     initSessionData(sessId) {

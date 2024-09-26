@@ -103,8 +103,24 @@ module.exports = function (electronState) {
             else
               name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
 
-            console.log("setDriverName=%o, sessId=%s", msg.driverName, msg.sessId);
+            console.log("setDriverName, raw=%o, processed=%o, sessId=%s", msg.driverName, name, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'driverName', name);
+            updateRidersFlags(msg.sessId);
+            socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
+        });
+
+        socket.on('setCamUrl', function(msg) {
+            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                return;
+            }
+            let url = msg.camUrl.slice(0, 100);
+            // I want to try to protect riders from bad urls as much as I can but not break
+            // it either.  At least we can make sure it's an http/https url...
+            if (!url || !url.match(/^https?:\/\//i))
+              url = ""
+
+            console.log("setCamUrl, raw=%o, processed=%o, sessId=%s", msg.camUrl, url, msg.sessId);
+            electronState.setSessionFlag(msg.sessId, 'camUrl', url);
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
         });
