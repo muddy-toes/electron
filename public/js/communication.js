@@ -31,7 +31,7 @@ $(function () {
         const bar = $('#playback-progress-bar');
         const label = bar.find('.progress-label');
         label.text('Script complete');
-        socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '' });
+        socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '' });
       }
     });
 
@@ -110,6 +110,11 @@ $(function () {
       });
     }
 
+    function transient_message(msg) {
+        $('#status-message').append(`<p class="transient">${msg}</p>`);
+        setTimeout(function() { $('#status-message .transient').slideUp(1000, function() { $(this).remove() }) }, 5000);
+    }
+
     function initLoadScriptOnly() {
         $('.save-load-bar').show();
 
@@ -123,9 +128,8 @@ $(function () {
                 $('#cancel-script').hide();
                 $('#step-ticker').hide();
                 $('#playback-progress-bar').hide();
-                $('#status-message').append('<p class="transient">Cancelled script</p>');
-                socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '' });
-                setTimeout(function() { $('#status-message .transient').slideUp(1000, function() { $(this).remove() }) }, 5000);
+                transient_message('Cancelled script');
+                socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '' });
             } catch(e) {
                 $('#status-message').append(`<p>Error cancelling script: ${e}</p>`);
             };
@@ -158,11 +162,21 @@ $(function () {
                       } catch(e) {
                         if (window.console) console.log("Failed to adjust first step start times: %o", e);
                       }
+
+                      let fileDriver = '';
+                      if (script['meta']) {
+                          if (script['meta']['driverName']) {
+                              fileDriver = script['meta']['driverName'].replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+                              transient_message(`Loaded file is by driver "${fileDriver}"`);
+                          }
+
+                          delete script['meta'];
+                      }
                         
                       window.dbgscript = script;
                       scriptStepCurrent = 0
                       scriptStepCount = Object.keys(script).map((channel) => script[channel].length).reduce((i, j) => i + j)
-                      socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename });
+                      socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename, fileDriver: fileDriver });
                       $('#playback-progress-bar').show();
                       $("#cancel-script").show();
                       $('#step-ticker').show();
@@ -287,6 +301,7 @@ $(function () {
 
             if (msg['filePlaying']) {
                 $('#file-playing .file-playing-info').text(msg['filePlaying']);
+                $('#file-playing .file-driver-info').text(`by ${msg['fileDriver'] || 'Unknown'}`);
                 $('#file-playing').fadeIn();
             } else {
                 $('#file-playing').fadeOut();
