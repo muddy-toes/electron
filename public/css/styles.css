@@ -17,7 +17,7 @@ body {
 #main-container,
 #status-message,
 #initialize-audio,
-#driver-nametag,
+#ride-info,
 #rider-count {
     background: #FFF;
     border: 0;
@@ -29,7 +29,7 @@ body {
 
 #status-message,
 #initialize-audio,
-#driver-nametag,
+#ride-info,
 #rider-count {
     background: #e0e8ff;
     border: 1px solid #555999;
@@ -513,8 +513,36 @@ ul.public-session-list li {
   font-size: 1.2em;
 }
 
+#ride-info {
+  position: relative;
+}
+
+#ride-info h3 {
+  text-align: left;
+  margin-top: -0.9rem;
+  margin-left: -0.5em;
+}
+
+#driver-nametag {
+  text-align: left;
+  margin-top: -1em;
+}
 #driver-nametag .nametag {
   font-weight: bold;
+}
+
+#cam-url {
+  border: 1px solid #888;
+  position: relative;
+  top: -3.6rem;
+  right: -35.4em;
+}
+#cam-url .cam-url-link {
+  font-size: 0.8em;
+}
+#cam-url .cam-url-warning {
+  font-style: italic;
+  font-size: 0.9em;
 }
 
 #playback-progress-bar {

@@ -225,7 +225,7 @@ $(function () {
             $('#status-message').html('<p>Have a good ride!</p>');
         });
 
-        $('#driver-nametag').show();
+        $('#ride-info').show();
 
         // show traffic light container
         $('#traffic-light').show();
@@ -238,6 +238,10 @@ $(function () {
             socket.emit('trafficLight', data);
             return false;
         });
+
+        function initialize_cam_url_warning_dismissal() {
+          $('#cam-url .cam-url-link a').on('click', function() { $('#cam-url .cam-url-warning').slideUp() });
+        }
 
         socket.on('driverLost', function() {
           $('#status-message').html(`<p>The driver has left.  Give this url to someone else and they can become the driver:<br/><b>${document.location.href.replace('/play/', '/drive/')}</b></p>`);
@@ -267,6 +271,15 @@ $(function () {
 
           const name = (msg['driverName'] || 'Anonymous').replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
           $("#driver-nametag .nametag").text(name);
+
+          if (msg['camUrl']) {
+            $('#cam-url .cam-url-link').html(`<a target="_blank" href="${msg['camUrl']}">${msg['camUrl']}</a>`);
+            initialize_cam_url_warning_dismissal();
+            $('#cam-url .cam-url-warning').show();
+            $('#cam-url').show();
+          } else {
+            $('#cam-url').hide();
+          }
         });
 
         $('button.apply-btn').remove();
@@ -295,14 +308,24 @@ $(function () {
             });
 
             $('#set-driver-name').on('click', function(e) {
-              const name = $('#driver-name').val().replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
-              socket.emit('setDriverName', { sessId: sessId, driverToken: driverToken, driverName: name });
+                const name = $('#driver-name').val().replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+                socket.emit('setDriverName', { sessId: sessId, driverToken: driverToken, driverName: name });
+            });
+
+            $('#set-cam-url').on('click', function(e) {
+                const url = $('#driver-cam-url').val();
+                if (url && !url.match(/^https?:\/\//i)) {
+                    $('#status-message').append("<p>Invalid Cam URL.  Has to be an HTTP/HTTPS URL.</p>");
+                    return false;
+                }
+                socket.emit('setCamUrl', { sessId: sessId, driverToken: driverToken, camUrl: url });
             });
 
             socket.on('updateFlags', function(msg) {
                 $("#blindfold-riders").prop('checked',  msg['blindfoldRiders'] ? true : false);
                 $("#public-session").prop('checked',  msg['publicSession'] ? true : false);
                 $("#driver-name").val(msg['driverName']);
+                $('#driver-cam-url').val(msg['camUrl']);
             });
 
             // initialize box that displays how many riders are connected and update it every 5 seconds
