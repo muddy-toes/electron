@@ -40,7 +40,9 @@
     <p id='driver-nametag'>
       Your driver's name is <span class="nametag"><%= flags['driverName'] %></span>
     </p>
-    <p id='file-playing' style="display:none;"></p>
+    <p id='file-playing' style="<%= flags['filePlaying'] ? '' : 'display:none;' %>">
+      Currently playing a recorded session: <span class='file-playing-info'><%= flags['filePlaying'] %></span>
+    </p>
     <p id='cam-url' style="<%= flags['camUrl'] ? '' : 'display:none;' %>">
       This is where riders are camming:
       <br/>

@@ -31,6 +31,7 @@ $(function () {
         const bar = $('#playback-progress-bar');
         const label = bar.find('.progress-label');
         label.text('Script complete');
+        socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '' });
       }
     });
 
@@ -123,6 +124,7 @@ $(function () {
                 $('#step-ticker').hide();
                 $('#playback-progress-bar').hide();
                 $('#status-message').append('<p class="transient">Cancelled script</p>');
+                socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '' });
                 setTimeout(function() { $('#status-message .transient').slideUp(1000, function() { $(this).remove() }) }, 5000);
             } catch(e) {
                 $('#status-message').append(`<p>Error cancelling script: ${e}</p>`);
@@ -131,6 +133,7 @@ $(function () {
 
       $("#load-file-picker").change(function(){
           if(this.files && this.files[0]) {
+              const filename = this.files[0].name;
               const reader = new FileReader();
               reader.onload = function (e) {
                   try {
@@ -159,6 +162,7 @@ $(function () {
                       window.dbgscript = script;
                       scriptStepCurrent = 0
                       scriptStepCount = Object.keys(script).map((channel) => script[channel].length).reduce((i, j) => i + j)
+                      socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename });
                       $('#playback-progress-bar').show();
                       $("#cancel-script").show();
                       $('#step-ticker').show();
@@ -280,6 +284,14 @@ $(function () {
             } else {
                 $('#cam-url').fadeOut();
             }
+
+            if (msg['filePlaying']) {
+                $('#file-playing .file-playing-info').text(msg['filePlaying']);
+                $('#file-playing').fadeIn();
+            } else {
+                $('#file-playing').fadeOut();
+            }
+
         });
 
         initialize_cam_url_warning_dismissal() 
