@@ -515,6 +515,7 @@ ul.public-session-list li {
 
 #ride-info {
   position: relative;
+  min-height: 10rem;
 }
 
 #ride-info h3 {
@@ -533,9 +534,10 @@ ul.public-session-list li {
 
 #cam-url {
   border: 1px solid #888;
-  position: relative;
-  top: -3.6rem;
-  right: -35.4em;
+  position: absolute;
+  top: 0;
+  right: 1em;
+  width: 40%;
 }
 #cam-url .cam-url-link {
   font-size: 0.8em;

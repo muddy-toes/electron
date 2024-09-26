@@ -56,7 +56,6 @@ module.exports = function (electronState) {
                 const token = generateToken();
                 electronState.addDriverToken(sessId, token, socket);
                 socket.emit('driverToken', token);
-                socket.emit('updateFlags', electronState.getSessionFlags(sessId));
                 console.log('User APPROVED as driver for ' + sessId);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('driverGained');
@@ -99,9 +98,9 @@ module.exports = function (electronState) {
             }
             let name = msg.driverName;
             if (!name)
-              name = ""
+                name = ""
             else
-              name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+                name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
 
             console.log("setDriverName, raw=%o, processed=%o, sessId=%s", msg.driverName, name, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'driverName', name);
@@ -117,7 +116,7 @@ module.exports = function (electronState) {
             // I want to try to protect riders from bad urls as much as I can but not break
             // it either.  At least we can make sure it's an http/https url...
             if (!url || !url.match(/^https?:\/\//i))
-              url = ""
+              url = '';
 
             console.log("setCamUrl, raw=%o, processed=%o, sessId=%s", msg.camUrl, url, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'camUrl', url);

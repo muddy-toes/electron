@@ -38,14 +38,14 @@
   <div id="ride-info" style="display:none;">
     <h3>Ride Info</h3>
     <p id='driver-nametag'>
-      Your driver's name is <span class="nametag"><%= driverName %></span>
+      Your driver's name is <span class="nametag"><%= flags['driverName'] %></span>
     </p>
     <p id='file-playing' style="display:none;"></p>
-    <p id='cam-url' style="<%= camUrl ? '' : 'display:none;' %>">
+    <p id='cam-url' style="<%= flags['camUrl'] ? '' : 'display:none;' %>">
       This is where riders are camming:
       <br/>
       <span class='cam-url-link'>
-        <a target="_blank" href="<%= camUrl %>"><%= camUrl %></a>
+        <a target="_blank" href="<%= flags['camUrl'] %>"><%= flags['camUrl'] %></a>
       </span>
       <br/>
       <span class='cam-url-warning'><b>WARNING:</b> Use your judgement before clicking.<br/>If the cam link looks sketchy and you don't know your driver, don't click on it.</span>
@@ -63,7 +63,7 @@
     </div>
     <div class="toggles-container">
       <label for="driver-name">Your name for the session:</label>
-      <input type="text" maxlength="20" id="driver-name" value="Anonymous"/>
+      <input type="text" maxlength="20" id="driver-name" value="<%= flags['driverName'] %>"/>
       <button id="set-driver-name">Set</button>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <label for="public-session">Public Session</label>
