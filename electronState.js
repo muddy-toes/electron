@@ -153,7 +153,7 @@ class ElectronState {
         const lastmessages = this.lastMessages;
         const sessionflags = this.sessionFlags;
         let data_to_return = {
-            'meta': { driverName: sessionflags[sessId]['driverName'] },
+            'meta': { driverName: sessionflags[sessId]['driverName'], driverComments: sessionflags[sessId]['driverComments'] },
             'left': lastmessages[sessId]['left'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
             'right': lastmessages[sessId]['right'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
         };
