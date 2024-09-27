@@ -10,14 +10,14 @@ a {
 #status-message,
 #initialize-audio,
 #ride-info,
-#rider-count {
+#drive-info {
     background: #303030;
 }
 
 #status-message,
 #initialize-audio,
 #ride-info,
-#rider-count {
+#drive-info {
     background: #404040;
     border: 1px solid #888;
     color: #ccc;

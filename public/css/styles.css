@@ -18,7 +18,7 @@ body {
 #status-message,
 #initialize-audio,
 #ride-info,
-#rider-count {
+#drive-info {
     background: #FFF;
     border: 0;
     border-radius: 5px;
@@ -30,7 +30,7 @@ body {
 #status-message,
 #initialize-audio,
 #ride-info,
-#rider-count {
+#drive-info {
     background: #e0e8ff;
     border: 1px solid #555999;
     color: #555999;
