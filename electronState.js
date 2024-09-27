@@ -26,12 +26,15 @@ class ElectronState {
         delete this.sessionFlags[sessId]['filePlaying'];
         delete this.sessionFlags[sessId]['fileDriver'];
 
-        const sessionflags = this.getSessionFlags(sessId);
-        this.driverSockets[sessId].emit('updateFlags', sessionflags);
-        if (this.riders[sessId]) {
-            this.riders[sessId].forEach(function(s) {
-                s.emit('updateFlags', sessionflags);
-            });
+        // Only update if we have a real driver, not automated
+        if (this.driverSockets[sessId]) {
+            const sessionflags = this.getSessionFlags(sessId);
+            this.driverSockets[sessId].emit('updateFlags', sessionflags);
+            if (this.riders[sessId]) {
+                this.riders[sessId].forEach(function(s) {
+                    s.emit('updateFlags', sessionflags);
+                });
+            }
         }
     }
 
