@@ -58,15 +58,17 @@
     <p id='driver-comments' style="display:none;"></p>
   </div>
 
-  <div style="display:none;" id="rider-count">
-    Number of connected riders: <strong id="rider-count-number">0</strong>
-    <div class="traffic-bar-container">
-      <div class="traffic-bar none"></div>
-      <div class="traffic-bar green"></div>
-      <div class="traffic-bar yellow"></div>
-      <div class="traffic-bar red"></div>
+  <div style="display:none;" id="drive-info">
+    <div id="rider-count">
+      Number of connected riders: <strong id="rider-count-number">0</strong>
+      <div class="traffic-bar-container">
+        <div class="traffic-bar none"></div>
+        <div class="traffic-bar green"></div>
+        <div class="traffic-bar yellow"></div>
+        <div class="traffic-bar red"></div>
+      </div>
     </div>
-    <div class="toggles-container">
+    <div class="controls-container">
       <label for="driver-name">Your name for the session:</label>
       <input type="text" maxlength="20" id="driver-name" value="<%= flags['driverName'] %>"/>
       <button id="set-driver-name">Set</button>

@@ -358,7 +358,7 @@ $(function () {
             });
 
             // initialize box that displays how many riders are connected and update it every 5 seconds
-            $('#rider-count').show();
+            $('#drive-info').show();
             socket.emit('getRiderCount', { sessId: sessId, driverToken: driverToken });
             socket.emit('requestLast', { sessId: sessId });
             setInterval(function () {
