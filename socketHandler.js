@@ -102,6 +102,9 @@ module.exports = function (electronState) {
             else
                 name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
 
+            if (name === "")
+              name = "Anonymous";
+
             console.log("setDriverName, raw=%o, processed=%o, sessId=%s", msg.driverName, name, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'driverName', name);
             updateRidersFlags(msg.sessId);
@@ -120,6 +123,18 @@ module.exports = function (electronState) {
 
             console.log("setCamUrl, raw=%o, processed=%o, sessId=%s", msg.camUrl, url, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'camUrl', url);
+            updateRidersFlags(msg.sessId);
+            socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
+        });
+
+        socket.on('setDriverComments', function(msg) {
+            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                return;
+            }
+            let comments = msg.driverComments.slice(0, 100);
+
+            console.log("setComments, raw=%o, processed=%o, sessId=%s", msg.driverComments, comments, msg.sessId);
+            electronState.setSessionFlag(msg.sessId, 'driverComments', comments);
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
         });

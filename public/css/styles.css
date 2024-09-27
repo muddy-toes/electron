@@ -452,6 +452,34 @@ div.mode-selector-box p {
     background-color: #00ff00;
 }
 
+.controls-container {
+  position: relative;
+  min-height: 5rem;
+  text-align: left;
+  .fields {
+    position: absolute;
+    left: 0;
+    display: inline-block;
+    width: 50%;
+  }
+  .toggles {
+    position: absolute;
+    right: 0;
+    display: inline-block;
+    width: 50%;
+  }
+}
+
+#driver-name {
+  width: 15.3em;
+}
+#driver-cam-url {
+  width: 20em;
+}
+#driver-comments {
+  width: 17.8em;
+}
+
 .save-load-bar {
     width: 1000px;
     margin: 0 auto;
@@ -560,6 +588,11 @@ ul.public-session-list li {
 #cam-url .cam-url-warning {
   font-style: italic;
   font-size: 0.9em;
+}
+
+#comments {
+  text-align: left;
+  margin-bottom: 0;
 }
 
 #playback-progress-bar {

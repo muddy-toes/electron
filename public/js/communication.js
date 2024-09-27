@@ -307,12 +307,19 @@ $(function () {
                 $('#file-playing').fadeOut();
             }
 
+            if (msg['driverComments']) {
+                $('#comments .message').text(msg['driverComments']);
+                $('#comments').fadeIn();
+            } else {
+                $('#comments').fadeOut();
+            }
         });
 
         initialize_cam_url_warning_dismissal() 
         $('button.apply-btn').remove();
         $('button.pain-btn').remove();
         $('button.stop-btn').remove();
+        $('#drive-info').remove();
     } else {
         // ---DRIVER---
         $('#status-message').html('<p>Attempting to register as driver of Session ID ' + sessId + '.</p>');
@@ -349,12 +356,18 @@ $(function () {
                 socket.emit('setCamUrl', { sessId: sessId, driverToken: driverToken, camUrl: url });
             });
 
+            $('#set-driver-comments').on('click', function(e) {
+                const comments = $('#driver-comments').val().slice(0, 100);
+                socket.emit('setDriverComments', { sessId: sessId, driverToken: driverToken, driverComments: comments });
+            });
+
             socket.on('updateFlags', function(msg) {
                 // console.log("updateFlags %o", msg);
                 $("#blindfold-riders").prop('checked',  msg['blindfoldRiders'] ? true : false);
                 $("#public-session").prop('checked',  msg['publicSession'] ? true : false);
                 $("#driver-name").val(msg['driverName']);
                 $('#driver-cam-url').val(msg['camUrl']);
+                $('#driver-comments').val(msg['driverComments']);
             });
 
             // initialize box that displays how many riders are connected and update it every 5 seconds
