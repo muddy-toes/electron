@@ -98,13 +98,21 @@ button.roundy-btn {
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4);
     color: #FFF;
     cursor: pointer;
-    float: right;
     font-size: 18px;
     font-weight: 700;
     line-height: 20px;
     padding: 10px 20px;
     position: relative;
 }
+button.small.roundy-btn {
+    font-size: 14px;
+    line-height: 12px;
+    padding: 8px 14px;
+}
+button.roundy-btn[disabled] {
+  color: #888;
+}
+
 
 button.apply-btn,
 button.pain-btn {
@@ -480,6 +488,10 @@ div.mode-selector-box p {
   width: 17.8em;
 }
 
+.bottle-countdown {
+  vertical-align: middle;
+}
+
 .save-load-bar {
     width: 1000px;
     margin: 0 auto;
@@ -595,6 +607,14 @@ ul.public-session-list li {
   margin-bottom: 0;
 }
 
+#bottle-duration, #bottle-duration-val {
+  vertical-align: middle;
+}
+
+#trigger-bottle-prompt {
+  margin-left: 1em;
+}
+
 #playback-progress-bar {
   position: relative;
 }
@@ -605,4 +625,31 @@ ul.public-session-list li {
   top: 6px;
   font-weight: bold;
   text-shadow: 1px 1px 0 #fff;
+}
+
+#rider-bottle-countdown {
+  position: fixed;
+  background: rgba(74, 64, 64, 0.69);
+}
+#rider-bottle-countdown > .bottle-countdown {
+  position: absolute;
+}
+#rider-bottle-countdown, #rider-bottle-countdown > .bottle-countdown {
+  z-index: 999;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+#rider-bottle-countdown .bottle {
+  position: relative;
+  left: 43.4%;
+  top: 30%;
+}
+#rider-bottle-countdown .seconds {
+  position: absolute;
+  left: 48%;
+  top: 48%;
+  font-size: 90px;
+  color: white;
 }

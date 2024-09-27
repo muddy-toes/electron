@@ -30,6 +30,8 @@ $(function () {
       complete: function() {
         const bar = $('#playback-progress-bar');
         const label = bar.find('.progress-label');
+        $('#cancel-script').hide();
+        $('#step-ticker').hide();
         label.text('Script complete');
         socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '' });
       }
@@ -40,12 +42,8 @@ $(function () {
             if (!script[channel]) return;
 
             const step = script[channel].shift();
-            if (!step) {
-                $('#status-message').append('<p>Script complete</p>');
-                $('#cancel-script').hide();
-                $('#step-ticker').hide();
+            if (!step)
                 return;
-            }
             scriptTimeouts[channel] = setTimeout(function(){ apply_step(channel, step['message']) }, step['stamp']);
         } catch(e) {
             if( window.console ) console.log("Load script error: %o", e);
@@ -60,8 +58,14 @@ $(function () {
         percent = (scriptStepCurrent / scriptStepCount * 100).toFixed(0);
         $('#playback-progress-bar').progressbar('value', parseInt(percent));
         if (channel.match(/^pain-/)) {
-            const channelName = channel == 'pain-left' ? 'left' : 'right';
-            executePain(channelName, step);
+            console.log("EMIT %s, %o", channel, step); // dbg
+            step['sessId'] = sessId;
+            step['driverToken'] = driverToken;
+            socket.emit(channel, step);
+        } else if (channel == 'bottle' && step['bottleDuration']) {
+          const secs = parseInt(step['bottleDuration']) || 0;
+          socket.emit('triggerBottle', { sessId: sessId, driverToken: driverToken, bottleDuration: secs });
+          bottle_countdown(secs);
         } else {
             const channelSel = '#' + channel + '-channel-column ';
             $(channelSel + 'input[name="volume"]').val(step['volume']);
@@ -85,6 +89,40 @@ $(function () {
         $('#step-ticker').text(spinnersteps[spinnerstep]);
     }
     setInterval(step_timers, 1000);
+
+    function bottle_countdown(secs) {
+        if (!secs)
+            secs = 0;
+        if (secs === 0) {
+            $('#trigger-bottle-prompt').prop('disabled', false); // re-enable the trigger button
+            $('.bottle-countdown, #rider-bottle-countdown').fadeOut(); // hide the blocker and driver's display
+            return false;
+        }
+        /* Most of this is positioning the bottle and digits.  I set their
+         * opacities to 0.01 and show them to get their width, since you can't get
+         * the width of a display:none object, then set the opacity to 1 to show it.
+         *
+         * The rider display is #rider-bottle-countdown which contains a .bottle-countdown and the
+         * driver's display is just a .bottle-countdown because it's much simpler.
+         */
+        const center_line_px = $('#ride-info').offset().left + $('#ride-info').width() / 2;
+        const bottle_img = $('#rider-bottle-countdown img');
+        bottle_img.css('opacity', '0.01');
+        $('#rider-bottle-countdown').show(); // the modal background blocker
+        const img_width = bottle_img.width();
+        bottle_img.css('left', `${center_line_px - img_width / 2}px`).css('opacity', '1');
+        $('#trigger-bottle-prompt').prop('disabled', true); // disable the trigger button while we're counting
+        $('.bottle-countdown .seconds').text(secs.toString());
+        const rider_seconds_div = $('#rider-bottle-countdown .seconds');
+        rider_seconds_div.css('opacity', '0.01')
+        $('.bottle-countdown').show();
+        rider_seconds_div.css('left', `${500 + $('#ride-info').offset().left - (rider_seconds_div.width() / 2)}px`).css('opacity', '1');
+        $(".bottle-countdown").fadeOut(1000, function() {
+            if (secs > 0) {
+                bottle_countdown(secs - 1);
+            }
+        });
+    }
 
     function initSaveLoadScript() {
       initLoadScriptOnly();
@@ -169,6 +207,9 @@ $(function () {
                               fileDriver = script['meta']['driverName'].replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
                               transient_message(`Loaded file is by driver "${fileDriver}"`);
                           }
+                          if (script['meta']['driverComments']) {
+                              transient_message(`File comments: ${script['meta']['driverComments'].slice(0, 100)}`);
+                          }
 
                           delete script['meta'];
                       }
@@ -184,6 +225,7 @@ $(function () {
                       script_next_step('right', true);
                       script_next_step('pain-left');
                       script_next_step('pain-right');
+                      script_next_step('bottle');
                   } catch(e) {
                       $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
                   }
@@ -272,10 +314,17 @@ $(function () {
         // receive pain events
         ['pain-left', 'pain-right'].forEach(function (channel) {
             socket.on(channel, function (msg) {
+                console.log("PAIN %o, %o", channel, msg);
                 if (!authorizedPlaying) return;
                 const channelName = channel == 'pain-left' ? 'left' : 'right';
                 executePain(channelName, msg);
             });
+        });
+
+        socket.on('bottle', function(msg) {
+          if (!authorizedPlaying) return;
+          if (!msg || !msg.bottleDuration || isNaN(parseInt(msg.bottleDuration))) return;
+          bottle_countdown(parseInt(msg.bottleDuration));
         });
 
         socket.on('updateFlags', function(msg) {
@@ -342,12 +391,12 @@ $(function () {
                 socket.emit('setBlindfoldRiders', { sessId: sessId, driverToken: driverToken, blindfoldRiders: new_state });
             });
 
-            $('#set-driver-name').on('click', function(e) {
+            $('#set-driver-name').on('click', function() {
                 const name = $('#driver-name').val().replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
                 socket.emit('setDriverName', { sessId: sessId, driverToken: driverToken, driverName: name });
             });
 
-            $('#set-cam-url').on('click', function(e) {
+            $('#set-cam-url').on('click', function() {
                 const url = $('#driver-cam-url').val();
                 if (url && !url.match(/^https?:\/\//i)) {
                     $('#status-message').append("<p>Invalid Cam URL.  Has to be an HTTP/HTTPS URL.</p>");
@@ -356,10 +405,22 @@ $(function () {
                 socket.emit('setCamUrl', { sessId: sessId, driverToken: driverToken, camUrl: url });
             });
 
-            $('#set-driver-comments').on('click', function(e) {
+            $('#set-driver-comments').on('click', function() {
                 const comments = $('#driver-comments').val().slice(0, 100);
                 socket.emit('setDriverComments', { sessId: sessId, driverToken: driverToken, driverComments: comments });
             });
+
+            $('#bottle-duration').on('input', function() {
+              $('#bottle-duration-val').text($('#bottle-duration').val());
+            });
+
+            $('#trigger-bottle-prompt').on('click', function() {
+              const secs = parseInt($('#bottle-duration').val()) || 0;
+              socket.emit('triggerBottle', { sessId: sessId, driverToken: driverToken, bottleDuration: secs });
+              bottle_countdown(secs);
+            });
+
+            $('#rider-bottle-countdown').remove();
 
             socket.on('updateFlags', function(msg) {
                 // console.log("updateFlags %o", msg);
