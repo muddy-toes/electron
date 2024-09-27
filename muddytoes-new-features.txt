@@ -1,0 +1,29 @@
+
+So far, the new features are:
+- the driver can select a "public session" option which will list the session on
+  the main page for anyone to join along with the numbers of riders currently in
+  that session.
+- the driver can select a "blindfold riders" option which will hide the controls
+  on all riders' screens, only showing them the graphics and traffic lights
+- if the driver disconnects, the riders are notified and given a driving url to
+  find a new driver.  The next person who opens that url becomes the new driver
+  of the existing session.
+- the driver can set a "nametag" that shows up for the riders, so they know
+  who's driving.  If a nametag is set on a public session, it shows the driver's
+  name on the listing instead of the random ID.
+- the driver can save a script of the session, which is a json file that can
+  then be replayed in another session.  The driver name, if set, will also be
+  added to any saved session script.
+- when a driver plays a script file, it will tell the riders that a script is
+  being played, the name of the file, and the driver name from that file.
+- the driver can set a URL where they're hosting cammers for the ride.  The URL
+  will be shared to all riders.
+
+Still pending:
+- A popper prompt button, ideally also encoded into the session scripts
+- A driver notes/comments field that can say what sort of drive they're doing,
+  if pain tools will be used, etc.
+- A clear session history button, so if you've been playing a file but don't
+  want it to be part of the session when you save later, you can start fresh.
+  Not totally sure about this one or the form it should take yet.
+
