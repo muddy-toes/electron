@@ -92,6 +92,12 @@
         <br/>
         <input type="checkbox" id="blindfold-riders" title="Check box to hide controls on riders' screens and only show the graphs." />
         <label for="blindfold-riders">Blindfold Riders (hide controls)</label>
+        <br/>
+        <label for="bottle-duration">Seconds to show:</label>
+        <input type="range" id="bottle-duration" min="1" max="10" step="1" value="5"/>
+        <span id="bottle-duration-val">5</span>
+        <button id="trigger-bottle-prompt" class="small roundy-btn">Bottle Prompt</button>
+        <span class="bottle-countdown"><span class='seconds'></span></span>
       </div>
     </div>
   </div>
@@ -281,6 +287,13 @@
         <label>Time Between Shocks</label>
         <input name="pain-time-between" value="0.3" class="spinner-change-rate"> sec.
       </div>
+    </div>
+  </div>
+
+  <div id="rider-bottle-countdown" style="display:none">
+    <img class="bottle" src="/bottle.png"/>
+    <div class="bottle-countdown" style="display:none">
+      <span class="seconds"></span>
     </div>
   </div>
 

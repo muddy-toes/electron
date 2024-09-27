@@ -17,7 +17,7 @@ class ElectronState {
     }
 
     initSessionData(sessId) {
-        this.previousMessageStamp[sessId] ||= { 'left': Date.now(), 'right': Date.now() };
+        this.previousMessageStamp[sessId] ||= { 'left': Date.now(), 'right': Date.now(), 'pain-left': Date.now(), 'pain-right': Date.now(), 'bottle': Date.now() };
         this.lastMessages[sessId] ||= {};
         this.sessionFlags[sessId] ||= {};
 
@@ -147,11 +147,18 @@ class ElectronState {
         if (!(sessId in this.lastMessages) || !('left' in this.lastMessages[sessId]) || !('right' in this.lastMessages[sessId])) {
             return "No messages stored";
         }
-        return JSON.stringify({
-            'meta': { driverName: this.sessionFlags[sessId]['driverName'] },
-            'left': this.lastMessages[sessId]['left'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
-            'right': this.lastMessages[sessId]['right'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
+        const lastmessages = this.lastMessages;
+        const sessionflags = this.sessionFlags;
+        let data_to_return = {
+            'meta': { driverName: sessionflags[sessId]['driverName'] },
+            'left': lastmessages[sessId]['left'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
+            'right': lastmessages[sessId]['right'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
+        };
+        ['pain-left', 'pain-right', 'bottle'].forEach(function(channel) {
+          if (lastmessages[sessId][channel])
+            data_to_return[channel] = lastmessages[sessId][channel].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; });
         });
+        return JSON.stringify(data_to_return);
     }
 
     getRiderData(sessId) {
