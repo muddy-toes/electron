@@ -21,6 +21,19 @@ $(document).ready(function () {
     initPainTool('left');
     initPainTool('right');
 
+    $('#clear-steps-help').on('click', function() {
+        const dialog = $('#clear-steps-help-dialog').dialog({
+            autoOpen: true,
+            width: 600,
+            modal: true,
+            buttons: {
+                Close: function () {
+                    dialog.dialog('close');
+                }
+            }
+        });
+    });
+
 
     function addListenerToApply(channelName, osc, ampModulator, freqModulator) {
         const chSelector = '#' + channelName + '-channel-column ';

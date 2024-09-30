@@ -17,7 +17,8 @@ class ElectronState {
     }
 
     initSessionData(sessId) {
-        this.previousMessageStamp[sessId] ||= { 'left': Date.now(), 'right': Date.now(), 'pain-left': Date.now(), 'pain-right': Date.now(), 'bottle': Date.now() };
+        const now = Date.now();
+        this.previousMessageStamp[sessId] ||= { 'left': now, 'right': now, 'pain-left': now, 'pain-right': now, 'bottle': now };
         this.lastMessages[sessId] ||= {};
         this.sessionFlags[sessId] ||= {};
 
@@ -120,6 +121,12 @@ class ElectronState {
         this.previousMessageStamp[sessId][channel] = now;
         this.lastMessages[sessId][channel] ||= [];
         this.lastMessages[sessId][channel].push({ stamp: stamp_offset, message: message });
+    }
+
+    clearLastMessages(sessId) {
+        const now = Date.now();
+        this.lastMessages[sessId] = {};
+        this.previousMessageStamp[sessId] = { 'left': now, 'right': now, 'pain-left': now, 'pain-right': now, 'bottle': now };
     }
 
     setRiderTrafficLight(sessId, socket, color) {

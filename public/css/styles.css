@@ -113,6 +113,16 @@ button.roundy-btn[disabled] {
   color: #888;
 }
 
+.circle-icon {
+  border: 1px solid black;
+  border-radius: 20px;
+  color: black;
+  min-height: 1rem;
+  min-width: 1.2em;
+  text-align: center;
+  cursor: pointer;
+  margin: 0.2rem 0.2em;
+}
 
 button.apply-btn,
 button.pain-btn {

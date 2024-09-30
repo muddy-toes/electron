@@ -125,27 +125,32 @@ $(function () {
     }
 
     function initSaveLoadScript() {
-      initLoadScriptOnly();
+        initLoadScriptOnly();
 
-      $('#save-session-messages').on('click', function() {
-          socket.emit('getSessionMessages', { sessId: sessId, driverToken: driverToken });
-      });
-      $('#save-session-messages').show();
+        $('#clear-steps').on('click', function() {
+            if(confirm('Clear Steps - Are you sure?'))
+                socket.emit('clearSessionMessages', { sessId: sessId, driverToken: driverToken });
+        });
 
-      socket.on('sessionMessages', function(msg) {
-          if (window.File && window.FileReader && window.FileList && window.Blob) {
-              let element = document.createElement('a');
-              element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(msg));
-              element.setAttribute('download', `${sessId}.json`);
-              element.style.display = 'none';
-              document.body.appendChild(element);
-              element.click();
-              document.body.removeChild(element);
-          } else {
-              $('#messages-target').text(msg);
-              $('#status-message').append('<p>The File APIs are not fully supported by your browser.</p>');
-          }
-      });
+        $('#save-session-messages').on('click', function() {
+            socket.emit('getSessionMessages', { sessId: sessId, driverToken: driverToken });
+        });
+        $('#save-session-messages').show();
+
+        socket.on('sessionMessages', function(msg) {
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                let element = document.createElement('a');
+                element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(msg));
+                element.setAttribute('download', `${sessId}.json`);
+                element.style.display = 'none';
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            } else {
+                $('#messages-target').text(msg);
+                $('#status-message').append('<p>The File APIs are not fully supported by your browser.</p>');
+            }
+        });
     }
 
     function transient_message(msg) {
@@ -459,6 +464,9 @@ $(function () {
             });
 
             initSaveLoadScript();
+            socket.on('sessionMessagesCleared', function() {
+                transient_message('Steps Cleared');
+            });
 
         });
 

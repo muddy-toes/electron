@@ -116,6 +116,8 @@
       </div>
       <span id="step-ticker" style='display: none'></span>
       <button id="cancel-script" class="roundy-btn" style="display: none">Cancel</button>
+      <button id='clear-steps' class="roundy-btn">Clear Steps</button>
+      <div id='clear-steps-help' class='circle-icon'>?</div>
     </div>
     <div class='slb-right'>
       <div class='load-file-picker-container'>
@@ -295,6 +297,16 @@
     <div class="bottle-countdown" style="display:none">
       <span class="seconds"></span>
     </div>
+  </div>
+
+  <div id="clear-steps-help-dialog" style="display:none">
+    <p>
+      The <i>Clear Steps</i> button will erase the history of actions taken so far
+      in this session.  If you clear steps, any actions taken previously in this session will
+      <b>not</b> be part of any saved session script.  This includes whatever signal is <b>currently
+      playing</b>.  Once you clear steps, you should re-apply your left and right channels even if
+      you don't change their values.
+    </p>
   </div>
 
   <script src="/js/config.js"></script>
