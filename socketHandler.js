@@ -76,6 +76,15 @@ module.exports = function (electronState) {
             socket.emit('sessionMessages', electronState.getSessionMessages(sessId));
         });
 
+        socket.on('clearSessionMessages', function(msg) {
+            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                return;
+            }
+            const sessId = msg.sessId;
+            electronState.clearLastMessages(sessId);
+            socket.emit('sessionMessagesCleared', { status: 'ok' });
+        });
+
         socket.on('setPublicSession', function(msg) {
             if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 return;

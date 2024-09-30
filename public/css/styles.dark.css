@@ -171,3 +171,8 @@ html .ui-button.ui-state-disabled:active {
   color: #ccc;
 }
 
+.circle-icon {
+  color: white;
+  border-color: white;
+}
+
