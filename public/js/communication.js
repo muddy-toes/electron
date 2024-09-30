@@ -19,6 +19,8 @@ $(function () {
     let scriptStepCount = 1;
     const spinnersteps = ['\\', '|', '/', '|']
     let spinnerstep = 0;
+    let progress_hide_timeout = null;
+    let transient_idx = 1;
 
     $('#playback-progress-bar').progressbar({
       value: false,
@@ -32,6 +34,8 @@ $(function () {
         const label = bar.find('.progress-label');
         $('#cancel-script').hide();
         $('#step-ticker').hide();
+        $('#clear-steps-container').show();
+        progress_hide_timeout = setTimeout(5000, function() { $('#playback-progress-bar').hide() });
         label.text('Script complete');
         socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '' });
       }
@@ -154,8 +158,9 @@ $(function () {
     }
 
     function transient_message(msg) {
-        $('#status-message').append(`<p class="transient">${msg}</p>`);
-        setTimeout(function() { $('#status-message .transient').slideUp(1000, function() { $(this).remove() }) }, 5000);
+        const tidx = transient_idx++;
+        $('#status-message').append(`<p class="transient" id="transient${tidx}">${msg}</p>`);
+        setTimeout(function() { $(`#transient${tidx}`).slideUp(1000, function() { $(this).remove() }) }, 5000);
     }
 
     function initLoadScriptOnly() {
@@ -170,6 +175,7 @@ $(function () {
                 script = {};
                 $('#cancel-script').hide();
                 $('#step-ticker').hide();
+                $('#clear-steps-container').show();
                 $('#playback-progress-bar').hide();
                 transient_message('Cancelled script');
                 socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '' });
@@ -223,6 +229,8 @@ $(function () {
                       scriptStepCurrent = 0
                       scriptStepCount = Object.keys(script).map((channel) => script[channel].length).reduce((i, j) => i + j)
                       socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename, fileDriver: fileDriver });
+                      $('#clear-steps-container').hide();
+                      if (progress_hide_timeout) clearTimeout(progress_hide_timeout);
                       $('#playback-progress-bar').show();
                       $("#cancel-script").show();
                       $('#step-ticker').show();

@@ -520,6 +520,10 @@ div.mode-selector-box p {
     align-items: center;
 }
 
+#clear-steps-container {
+  display: contents;
+}
+
 #step-ticker {
   margin-left: 1em;
   font-family: monospace;
