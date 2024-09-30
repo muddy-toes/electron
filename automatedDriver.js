@@ -150,7 +150,7 @@ class AutomatedDriver {
 
         this.varyFrequency(channel, otherChannel.freq);
         this.emitToRiders(channel, channelName, electronState);
-        console.log(`Automated driver ${this.sessId} made changes to the ${channelName.toUpperCase()} channel. Elapsed minutes: ${elapsedMinutes.toFixed(2)}`);
+        // console.log(`Automated driver ${this.sessId} made changes to the ${channelName.toUpperCase()} channel. Elapsed minutes: ${elapsedMinutes.toFixed(2)}`);
     }
 
     processPain(channel, channelName, electronState) {
