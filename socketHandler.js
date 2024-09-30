@@ -73,6 +73,7 @@ module.exports = function (electronState) {
                 return;
             }
             const sessId = msg.sessId;
+            if (verbose) console.log("getSessionMessages, sessId=%s", sessId);
             socket.emit('sessionMessages', electronState.getSessionMessages(sessId));
         });
 
@@ -81,6 +82,7 @@ module.exports = function (electronState) {
                 return;
             }
             const sessId = msg.sessId;
+            if (verbose) console.log("clearLastMessages, sessId=%s", sessId);
             electronState.clearLastMessages(sessId);
             socket.emit('sessionMessagesCleared', { status: 'ok' });
         });
@@ -184,6 +186,7 @@ module.exports = function (electronState) {
             }
 
             delete msg.driverToken;
+            if (verbose) console.log("left, %o", JSON.stringify(msg));
 
             // store the current status of the left channel for the future
             electronState.storeLastMessage(msg.sessId, 'left', msg);
@@ -201,6 +204,7 @@ module.exports = function (electronState) {
             }
 
             delete msg.driverToken;
+            if (verbose) console.log("right, %o", JSON.stringify(msg));
 
             // store the current status of the right channel for the future
             electronState.storeLastMessage(msg.sessId, 'right', msg);
@@ -215,7 +219,7 @@ module.exports = function (electronState) {
         socket.on('pain-left', function (msg) {
             if (electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 delete msg.driverToken;
-                if (verbose) console.log("pain-left, %o", msg);
+                if (verbose) console.log("pain-left, %o", JSON.stringify(msg));
                 electronState.storeLastMessage(msg.sessId, 'pain-left', msg);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('pain-left', msg);
@@ -228,7 +232,7 @@ module.exports = function (electronState) {
         socket.on('pain-right', function (msg) {
             if (electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 delete msg.driverToken;
-                if (verbose) console.log("pain-left, %o", msg);
+                if (verbose) console.log("pain-left, %o", JSON.stringify(msg));
                 electronState.storeLastMessage(msg.sessId, 'pain-right', msg);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('pain-right', msg);
