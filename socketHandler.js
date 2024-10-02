@@ -4,8 +4,6 @@ module.exports = function (electronState) {
     return function (socket) {
         console.log('User connected');
 
-        const verbose = true;
-
         function updateRidersFlags(sessId) {
             const flags = electronState.getSessionFlags(sessId)
             electronState.getRiderSockets(sessId).forEach(function (s) {
@@ -73,7 +71,7 @@ module.exports = function (electronState) {
                 return;
             }
             const sessId = msg.sessId;
-            if (verbose) console.log("getSessionMessages, sessId=%s", sessId);
+            if (electronState.getVerbose()) console.log("getSessionMessages, sessId=%s", sessId);
             socket.emit('sessionMessages', electronState.getSessionMessages(sessId));
         });
 
@@ -82,7 +80,7 @@ module.exports = function (electronState) {
                 return;
             }
             const sessId = msg.sessId;
-            if (verbose) console.log("clearLastMessages, sessId=%s", sessId);
+            if (electronState.getVerbose()) console.log("clearLastMessages, sessId=%s", sessId);
             electronState.clearLastMessages(sessId);
             socket.emit('sessionMessagesCleared', { status: 'ok' });
         });
@@ -91,7 +89,7 @@ module.exports = function (electronState) {
             if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 return;
             }
-            if (verbose) console.log("publicSession=%o, sessId=%s", msg.publicSession, msg.sessId);
+            if (electronState.getVerbose()) console.log("publicSession=%o, sessId=%s", msg.publicSession, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'publicSession', msg.publicSession ? true : false);
         });
 
@@ -99,7 +97,7 @@ module.exports = function (electronState) {
             if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 return;
             }
-            if (verbose) console.log("blindfoldRiders=%o, sessId=%s", msg.blindfoldRiders, msg.sessId);
+            if (electronState.getVerbose()) console.log("blindfoldRiders=%o, sessId=%s", msg.blindfoldRiders, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'blindfoldRiders', msg.blindfoldRiders ? true : false);
             
             updateRidersFlags(msg.sessId);
@@ -118,7 +116,7 @@ module.exports = function (electronState) {
             if (name === "")
               name = "Anonymous";
 
-            if (verbose) console.log("setDriverName, raw=%o, processed=%o, sessId=%s", msg.driverName, name, msg.sessId);
+            if (electronState.getVerbose()) console.log("setDriverName, raw=%o, processed=%o, sessId=%s", msg.driverName, name, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'driverName', name);
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
@@ -134,7 +132,7 @@ module.exports = function (electronState) {
             if (!url || !url.match(/^https?:\/\//i))
               url = '';
 
-            if (verbose) console.log("setCamUrl, raw=%o, processed=%o, sessId=%s", msg.camUrl, url, msg.sessId);
+            if (electronState.getVerbose()) console.log("setCamUrl, raw=%o, processed=%o, sessId=%s", msg.camUrl, url, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'camUrl', url);
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
@@ -146,7 +144,7 @@ module.exports = function (electronState) {
             }
             let comments = msg.driverComments.slice(0, 100);
 
-            if (verbose) console.log("setComments, raw=%o, processed=%o, sessId=%s", msg.driverComments, comments, msg.sessId);
+            if (electronState.getVerbose()) console.log("setComments, raw=%o, processed=%o, sessId=%s", msg.driverComments, comments, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'driverComments', comments);
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
@@ -168,7 +166,7 @@ module.exports = function (electronState) {
             else
                 filedriver = filedriver.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
 
-            if (verbose)
+            if (electronState.getVerbose())
                 console.log("setFilePlaying, raw_fileinfo=%o, processed_fileinfo=%o, raw_filedriver=%o, processed_filedriver=%o, sessId=%s",
                             msg.filePlaying, fileinfo, msg.fileDriver, filedriver, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'filePlaying', fileinfo);
@@ -186,7 +184,7 @@ module.exports = function (electronState) {
             }
 
             delete msg.driverToken;
-            if (verbose) console.log("left, %o", JSON.stringify(msg));
+            if (electronState.getVerbose()) console.log("left, %o", JSON.stringify(msg));
 
             // store the current status of the left channel for the future
             electronState.storeLastMessage(msg.sessId, 'left', msg);
@@ -204,7 +202,7 @@ module.exports = function (electronState) {
             }
 
             delete msg.driverToken;
-            if (verbose) console.log("right, %o", JSON.stringify(msg));
+            if (electronState.getVerbose()) console.log("right, %o", JSON.stringify(msg));
 
             // store the current status of the right channel for the future
             electronState.storeLastMessage(msg.sessId, 'right', msg);
@@ -219,7 +217,7 @@ module.exports = function (electronState) {
         socket.on('pain-left', function (msg) {
             if (electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 delete msg.driverToken;
-                if (verbose) console.log("pain-left, %o", JSON.stringify(msg));
+                if (electronState.getVerbose()) console.log("pain-left, %o", JSON.stringify(msg));
                 electronState.storeLastMessage(msg.sessId, 'pain-left', msg);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('pain-left', msg);
@@ -232,7 +230,7 @@ module.exports = function (electronState) {
         socket.on('pain-right', function (msg) {
             if (electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 delete msg.driverToken;
-                if (verbose) console.log("pain-left, %o", JSON.stringify(msg));
+                if (electronState.getVerbose()) console.log("pain-left, %o", JSON.stringify(msg));
                 electronState.storeLastMessage(msg.sessId, 'pain-right', msg);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('pain-right', msg);
