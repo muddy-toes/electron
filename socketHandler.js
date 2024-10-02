@@ -248,7 +248,7 @@ module.exports = function (electronState) {
             if (!secs || isNaN(parseInt(secs)))
               secs = '5';
 
-            console.log("triggerBottle, raw_duration=%o, processed_duration=%o, sessId=%s", msg.bottleDuration, secs, msg.sessId);
+            if (electronState.getVerbose()) console.log("triggerBottle, raw_duration=%o, processed_duration=%o, sessId=%s", msg.bottleDuration, secs, msg.sessId);
             // store the current status of the right channel for the future
             electronState.storeLastMessage(msg.sessId, 'bottle', { bottleDuration: secs });
             // send real time updates to all riders
