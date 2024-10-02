@@ -3,7 +3,8 @@
 const AutomatedDriver = require('./automatedDriver');
 
 class ElectronState {
-    constructor() {
+    constructor(config={}) {
+        this.verbose = config['verbose'] || false;
         this.driverTokens = {};         // stores the authentication tokens of drivers
         this.driverSockets = {};        // stores sockets for people driving sessions
         this.riders = {};               // stores all sockets for people riding each session
@@ -14,6 +15,11 @@ class ElectronState {
         this.sessionFlags = {};         // sessionFlags[sessId][flagname]
                                         // flagnames in use: blindfoldRiders, publicSession, driverName
         console.log("start");
+        if (this.verbose) console.log("verbose logging enabled");
+    }
+
+    getVerbose() {
+      return this.verbose;
     }
 
     initSessionData(sessId) {

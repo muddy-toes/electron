@@ -1,3 +1,6 @@
+// if true, log all actions to console instead of just join/part sessions
+const verbose = false;
+
 const express = require('express');
 const path = require('path');
 const http = require('http');
@@ -9,7 +12,7 @@ const socketHandler = require('./socketHandler');
 const { generateAutomatedSessId } = require('./utils');
 
 const PORT = process.env.PORT || 5000;
-const electronState = new ElectronState();
+const electronState = new ElectronState({ verbose: verbose });
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -46,6 +49,7 @@ app.post('/start-automated-driver', function (req, res) {
     const sessId = generateAutomatedSessId();
 
     const sessionConfig = {
+        verbose: verbose,
         sessionDuration: sessionDuration,
         minAMDepth: amPreset,
         maxAMDepth: amPreset * 3,
