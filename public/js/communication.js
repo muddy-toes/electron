@@ -404,23 +404,15 @@ $(function () {
                 socket.emit('setBlindfoldRiders', { sessId: sessId, driverToken: driverToken, blindfoldRiders: new_state });
             });
 
-            $('#set-driver-name').on('click', function() {
+            $('.set-settings').on('click', function() {
                 const name = $('#driver-name').val().replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
-                socket.emit('setDriverName', { sessId: sessId, driverToken: driverToken, driverName: name });
-            });
-
-            $('#set-cam-url').on('click', function() {
+                const comments = $('#driver-comments').val().slice(0, 100);
                 const url = $('#driver-cam-url').val();
                 if (url && !url.match(/^https?:\/\//i)) {
                     $('#status-message').append("<p>Invalid Cam URL.  Has to be an HTTP/HTTPS URL.</p>");
                     return false;
                 }
-                socket.emit('setCamUrl', { sessId: sessId, driverToken: driverToken, camUrl: url });
-            });
-
-            $('#set-driver-comments').on('click', function() {
-                const comments = $('#driver-comments').val().slice(0, 100);
-                socket.emit('setDriverComments', { sessId: sessId, driverToken: driverToken, driverComments: comments });
+                socket.emit('setSettings', { sessId: sessId, driverToken: driverToken, driverName: name, camUrl: url, driverComments: comments });
             });
 
             $('#bottle-duration').on('input', function() {

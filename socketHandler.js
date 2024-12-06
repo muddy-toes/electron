@@ -103,10 +103,12 @@ module.exports = function (electronState) {
             updateRidersFlags(msg.sessId);
         });
 
-        socket.on('setDriverName', function(msg) {
+        socket.on('setSettings', function(msg) {
             if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 return;
             }
+            const currentFlags = electronState.getSessionFlags();
+
             let name = msg.driverName;
             if (!name)
                 name = ""
@@ -116,36 +118,22 @@ module.exports = function (electronState) {
             if (name === "")
               name = "Anonymous";
 
-            if (electronState.getVerbose()) console.log("setDriverName, raw=%o, processed=%o, sessId=%s", msg.driverName, name, msg.sessId);
+            if (electronState.getVerbose() && currentFlags['driverName'] != name) console.log("setSettings driverName, raw=%o, processed=%o, sessId=%s", msg.driverName, name, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'driverName', name);
-            updateRidersFlags(msg.sessId);
-            socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
-        });
 
-        socket.on('setCamUrl', function(msg) {
-            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
-                return;
-            }
             let url = msg.camUrl.slice(0, 100);
             // I want to try to protect riders from bad urls as much as I can but not break
             // it either.  At least we can make sure it's an http/https url...
             if (!url || !url.match(/^https?:\/\//i))
               url = '';
 
-            if (electronState.getVerbose()) console.log("setCamUrl, raw=%o, processed=%o, sessId=%s", msg.camUrl, url, msg.sessId);
+            if (electronState.getVerbose() && currentFlags['camUrl'] != url) console.log("setSettings camUrl, raw=%o, processed=%o, sessId=%s", msg.camUrl, url, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'camUrl', url);
-            updateRidersFlags(msg.sessId);
-            socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
-        });
 
-        socket.on('setDriverComments', function(msg) {
-            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
-                return;
-            }
             let comments = msg.driverComments.slice(0, 100);
-
-            if (electronState.getVerbose()) console.log("setComments, raw=%o, processed=%o, sessId=%s", msg.driverComments, comments, msg.sessId);
+            if (electronState.getVerbose() && currentFlags['driverComments'] != comments) console.log("setSettings driverComments, raw=%o, processed=%o, sessId=%s", msg.driverComments, comments, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'driverComments', comments);
+
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
         });
