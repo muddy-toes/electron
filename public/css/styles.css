@@ -547,6 +547,7 @@ div.mode-selector-box p {
     line-height: 20px;
     padding: 10px 20px;
     position: relative;
+    max-width: 22em;
 }
 
 #cancel-script {
