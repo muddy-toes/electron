@@ -11,16 +11,23 @@ $(function () {
     const mode = pathParts[2];
     const sessId = pathParts[3];
     const socket = io();
+    const channels = ['left', 'right', 'pain-left', 'pain-right', 'bottle'];
+    const script_interval = 250; // ms
+    const spinnersteps = ['\\', '|', '/', '&mdash;']
+
     let driverToken = '';
     let script = {};
-    let scriptTimeouts = { 'left': 0, 'right': 0, 'pain-left': 0, 'pain-right': 0 };
+    let scriptTimeouts = { 'left': 0, 'right': 0, 'pain-left': 0, 'pain-right': 0, 'bottle': 0 };
     let authorizedPlaying = false;
-    let scriptStepCurrent = 0;
-    let scriptStepCount = 1;
-    const spinnersteps = ['\\', '|', '/', '|']
+    let scriptDuration = 0;
+    let scriptVersion = 0;
     let spinnerstep = 0;
     let progress_hide_timeout = null;
     let transient_idx = 1;
+    let firstStepStamp = 0;
+    let scriptTimer = 0;
+
+    setInterval(script_increment_and_run, script_interval);
 
     $('#playback-progress-bar').progressbar({
       value: false,
@@ -36,33 +43,34 @@ $(function () {
         $('#step-ticker').hide();
         $('#clear-steps-container').show();
         progress_hide_timeout = setTimeout(5000, function() { $('#playback-progress-bar').hide() });
-        label.text('Script complete');
-        socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '' });
+        label.text('Done');
+        socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '', duration: 0 });
       }
     });
 
-    function script_next_step(channel) {
-        try {
-            if (!script[channel]) return;
-
-            const step = script[channel].shift();
-            if (!step)
-                return;
-            scriptTimeouts[channel] = setTimeout(function(){ apply_step(channel, step['message']) }, step['stamp']);
-        } catch(e) {
-            if( window.console ) console.log("Load script error: %o", e);
-            const errmsg = `<p>Invalid script, cannot run.  Error: ${e}</p>`;
-            $('#status-message').append(errmsg);
+    function script_increment_and_run() {
+        if ( ! script ) {
+          return;
         }
+        scriptTimer += script_interval;
+        channels.forEach(function(ch) {
+            if( script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined && script[ch][0]['stamp'] <= scriptTimer ) {
+                const step = script[ch].shift();
+                apply_step(ch, step['message']);
+            }
+        });
+        percent = ((scriptTimer - firstStepStamp) / scriptDuration * 100).toFixed(0);
+        $('#playback-progress-bar').progressbar('value', parseInt(percent));
+        spinnerstep++;
+        if( spinnerstep > spinnersteps.length ) spinnerstep = 0
+        $('#step-ticker').html(spinnersteps[spinnerstep]);
+
     }
 
     function apply_step(channel, step) {
         if( window.console ) console.log("Step %s: %o", channel, step);
-        scriptStepCurrent++;
-        percent = (scriptStepCurrent / scriptStepCount * 100).toFixed(0);
-        $('#playback-progress-bar').progressbar('value', parseInt(percent));
         if (channel.match(/^pain-/)) {
-            console.log("EMIT %s, %o", channel, step); // dbg
+            if( window.console ) console.log("EMIT %s, %o", channel, step); // dbg
             step['sessId'] = sessId;
             step['driverToken'] = driverToken;
             socket.emit(channel, step);
@@ -84,15 +92,7 @@ $(function () {
             $(channelSel + 'input[name="ramp-rate"]').val(step['rampRate']);
             $(channelSel + '.apply-btn').click();
           }
-      script_next_step(channel);
     }
-
-    function step_timers() {
-        spinnerstep++;
-        if( spinnerstep >= spinnersteps.length ) spinnerstep = 0
-        $('#step-ticker').text(spinnersteps[spinnerstep]);
-    }
-    setInterval(step_timers, 1000);
 
     function bottle_countdown(secs) {
         if (!secs)
@@ -172,13 +172,14 @@ $(function () {
                 clearTimeout(scriptTimeouts['right']);
                 clearTimeout(scriptTimeouts['pain-left']);
                 clearTimeout(scriptTimeouts['pain-right']);
+                clearTimeout(scriptTimeouts['bottle']);
                 script = {};
                 $('#cancel-script').hide();
                 $('#step-ticker').hide();
                 $('#clear-steps-container').show();
                 $('#playback-progress-bar').hide();
                 transient_message('Cancelled script');
-                socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '' });
+                socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '', duration: 0 });
             } catch(e) {
                 $('#status-message').append(`<p>Error cancelling script: ${e}</p>`);
             };
@@ -192,28 +193,11 @@ $(function () {
                   try {
                       script = JSON.parse(e.target.result);
 
-                      // Reduce the first step's start time to 1000ms and the other channel's start time to the difference in delay + 1000,
-                      // so they still start within the appropriate seconds of each other to get something going.  This will affect the delay
-                      // between the first and second sets of changes, but at least something is playing.  Also, we can't just adjust all the
-                      // steps by however much the first step stamp is over 1000, because that could be like 60,000 and maybe the delay between
-                      // some later steps is only 5000 so we'd end up with negative delays... it's just a mess, so unless we're going to lay
-                      // all the steps on a timeline with offsets from the timestamp at the start of the session, this is the easiest solution
-                      // to get some stimming happening ASAP.
-                      try {
-                        if (script['left'] && script['left'][0] && script['left'][0]['stamp'] &&
-                            script['right'] && script['right'][0] && script['right'][0]['stamp']) {
-                          const chan_first = (script['left'][0]['stamp'] <= script['right'][0]['stamp']) ? 'left' : 'right';
-                          const chan_diff = Math.abs(script['left'][0]['stamp'] - script['right'][0]['stamp']);
-                          script[chan_first][0]['stamp'] = 1000;
-                          script[(chan_first == 'left') ? 'right' : 'left'][0]['stamp'] = chan_diff + 1000;
-
-                        }
-                      } catch(e) {
-                        if (window.console) console.log("Failed to adjust first step start times: %o", e);
-                      }
-
                       let fileDriver = '';
                       if (script['meta']) {
+                          if (script['meta']['version']) {
+                            scriptVersion = parseInt(script['meta']['version']) || 1;
+                          }
                           if (script['meta']['driverName']) {
                               fileDriver = script['meta']['driverName'].replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
                               transient_message(`Loaded file is by driver "${fileDriver}"`);
@@ -221,25 +205,61 @@ $(function () {
                           if (script['meta']['driverComments']) {
                               transient_message(`File comments: ${script['meta']['driverComments'].slice(0, 100)}`);
                           }
-
                           delete script['meta'];
+                      }
+
+                      // Upgrade v1 script to v2
+                      if (scriptVersion < 2) {
+                          channels.forEach(function(ch) {
+                              if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined ) {
+                                  let channelSum = 0;
+                                  for (var j = 0; j < script[ch].length; j++) {
+                                      channelSum += script[ch][j]['stamp'];
+                                      script[ch][j]['stamp'] = channelSum;
+                                  }
+                              }
+                          });
+                          scriptVersion = 2;
+                      }
+
+                      // Set the script timer to 1000ms prior to the first action, otherwise the thing could sit there for minutes after loading before
+                      // anything happens.
+                      try {
+                          let firstStep = Number.MAX_SAFE_INTEGER;
+                          let lastStep = 0;
+                          channels.forEach(function(ch) {
+                              if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined ) {
+                                  script[ch].forEach(function(step) {
+                                      if (step['stamp'] < firstStep) {
+                                          firstStep = step['stamp'];
+                                      }
+                                      if (step['stamp'] > lastStep) {
+                                          lastStep = step['stamp'];
+                                      }
+                                  });
+                              }
+                          });
+                          if (firstStep > 1000) {
+                              scriptTimer = firstStep - 1000;
+                          } else {
+                            scriptTimer = 0;
+                          }
+                          firstStepStamp = scriptTimer;
+                          scriptDuration = lastStep;
+                          if( window.console ) console.log("firstStepStamp=%d, scriptDuration=%d", firstStepStamp, scriptDuration);
+                      } catch(e) {
+                          if (window.console) console.log("Failed to adjust first step start times: %o", e);
                       }
                         
                       window.dbgscript = script;
-                      scriptStepCurrent = 0
-                      scriptStepCount = Object.keys(script).map((channel) => script[channel].length).reduce((i, j) => i + j)
-                      socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename, fileDriver: fileDriver });
+                      socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename, fileDriver: fileDriver, duration: scriptDuration });
                       $('#clear-steps-container').hide();
                       if (progress_hide_timeout) clearTimeout(progress_hide_timeout);
                       $('#playback-progress-bar').show();
                       $("#cancel-script").show();
                       $('#step-ticker').show();
-                      script_next_step('left', true);
-                      script_next_step('right', true);
-                      script_next_step('pain-left');
-                      script_next_step('pain-right');
-                      script_next_step('bottle');
                   } catch(e) {
+                      if (window.console) console.log("Parse error: %o", e);
                       $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
                   }
               };
@@ -327,7 +347,7 @@ $(function () {
         // receive pain events
         ['pain-left', 'pain-right'].forEach(function (channel) {
             socket.on(channel, function (msg) {
-                console.log("PAIN %o, %o", channel, msg);
+                if( window.console ) console.log("PAIN %o, %o", channel, msg);
                 if (!authorizedPlaying) return;
                 const channelName = channel == 'pain-left' ? 'left' : 'right';
                 executePain(channelName, msg);
