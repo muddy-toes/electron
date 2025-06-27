@@ -19,12 +19,11 @@ body {
 #initialize-audio,
 #ride-info,
 #drive-info {
-    background: #FFF;
     border: 0;
     border-radius: 5px;
     margin: 30px auto;
     padding: 15px;
-    width: 1000px;
+    width: 90vw;
 }
 
 #status-message,
@@ -44,16 +43,21 @@ body {
     font-weight: bold;
 }
 
+#controls {
+		margin: 0 auto;
+		width: 90vw;
+		display: flex;
+		gap: 10px;
+		align-items: stretch;
+}
+
 #left-channel-column,
 #right-channel-column {
-    box-shadow: 0 -2px 3px rgba(0, 0, 0, 0.4) inset;
-    color: #FFF;
-    float: left;
-    margin: 10px;
-    width: 480px;
+    flex-grow: 1;
 }
 
 div.color-header {
+    border-radius: 20px 20px 0 0;
     padding: 15px;
     height: 40px;
 }
@@ -78,6 +82,7 @@ div.color-header h2 {
 
 #left-channel-column .content,
 #right-channel-column .content {
+    background: #FFF;
     color: #444;
     font-weight: 400;
     padding: 5px 15px 15px;
@@ -98,16 +103,16 @@ button.roundy-btn {
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4);
     color: #FFF;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
-    line-height: 20px;
-    padding: 10px 20px;
+    line-height: 1em;
+    padding: 0.5em;
     position: relative;
 }
 button.small.roundy-btn {
     font-size: 14px;
-    line-height: 12px;
-    padding: 8px 14px;
+    line-height: 1.1em
+    padding: 0.7em;
 }
 button.roundy-btn[disabled] {
   color: #888;
@@ -503,7 +508,7 @@ div.mode-selector-box p {
 }
 
 .save-load-bar {
-    width: 1000px;
+    width: 90vw;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -511,6 +516,9 @@ div.mode-selector-box p {
 
 .save-load-bar .slb-left {
     display: flex;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
 }
 
 .save-load-bar .slb-middle {
@@ -520,18 +528,16 @@ div.mode-selector-box p {
     align-items: center;
 }
 
-#clear-steps-container {
-  display: contents;
-}
-
-#step-ticker {
-  margin-left: 1em;
-  font-family: monospace;
-  font-size: 2em;
+#clear-steps-container,
+#save-script-container {
+    display: contents;
 }
 
 .save-load-bar .slb-right {
     display: flex;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
 }
 
 .load-file-picker-container {
@@ -628,18 +634,6 @@ ul.public-session-list li {
 
 #trigger-bottle-prompt {
   margin-left: 1em;
-}
-
-#playback-progress-bar {
-  position: relative;
-}
-
-#playback-progress-bar .progress-label {
-  position: absolute;
-  left: 48%;
-  top: 6px;
-  font-weight: bold;
-  text-shadow: 1px 1px 0 #fff;
 }
 
 #rider-bottle-countdown {

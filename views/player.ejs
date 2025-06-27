@@ -9,6 +9,7 @@
   <link href='https://fonts.googleapis.com/css?family=Cabin:400,500,700' rel='stylesheet' type='text/css'>
   <link href='https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css' rel='stylesheet' type='text/css' id='jqueryui-stylesheet'>
   <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/player-styles.css">
   <link rel="stylesheet" href="" id='darkmode-stylesheet'>
 
   <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
@@ -108,19 +109,30 @@
 
   <div class='save-load-bar' style='display: none'>
     <div class='slb-left'>
-      <button id="save-session-messages" class="roundy-btn" style='display: none'>Save Session Script</button>
-    </div>
-    <div class='slb-middle'>
-      <div id='playback-progress-bar' style='display: none; width: 80%'>
-        <div class='progress-label'></div>
+      <div id='save-script-container' class='show-not-playing'>
+        <button id="save-session-messages" class="roundy-btn" style='display: none'>Save Session Script</button>
       </div>
-      <span id="step-ticker" style='display: none'></span>
-      <button id="cancel-script" class="roundy-btn" style="display: none">Cancel</button>
-      <div id='clear-steps-container'>
+    </div>
+
+    <div class='slb-middle'>
+			<div class="player-container show-playing" style='display: none'>
+        <button id="playPauseButton" class="player-button"></button>
+        <div class="progress-container">
+            <div id="progressBar" class="progress-bar"></div>
+            <div id="progressHandle" class="progress-handle"></div>
+        </div>
+        <div class="time-display">
+            <span id="time-info"</span>
+        </div>
+        <button id="cancel-script" class="player-button" title='Cancel'></button>
+			</div>
+
+      <div id='clear-steps-container' class='show-not-playing'>
         <button id='clear-steps' class="roundy-btn">Clear Steps</button>
         <div id='clear-steps-help' class='circle-icon'>?</div>
       </div>
     </div>
+
     <div class='slb-right'>
       <div class='load-file-picker-container'>
         <input type="file" id="load-file-picker" accept="application/json" />

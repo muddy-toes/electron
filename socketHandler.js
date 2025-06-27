@@ -161,6 +161,10 @@ module.exports = function (electronState) {
             electronState.setSessionFlag(msg.sessId, 'fileDriver', filedriver);
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
+            if (fileinfo == '') {
+                if (electronState.getVerbose()) console.log("clearLastMessages on setFilePlaying to blank, sessId=%s", msg.sessId);
+                electronState.clearLastMessages(msg.sessId);
+            }
         });
 
 
