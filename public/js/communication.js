@@ -12,7 +12,7 @@ $(function () {
     const sessId = pathParts[3];
     const socket = io();
     const channels = ['left', 'right', 'pain-left', 'pain-right', 'bottle'];
-    const script_interval = 250; // ms
+    const scriptInterval = 250; // ms
     const spinnersteps = ['\\', '|', '/', '&mdash;']
 
     let driverToken = '';
@@ -22,55 +22,76 @@ $(function () {
     let scriptDuration = 0;
     let scriptVersion = 0;
     let spinnerstep = 0;
-    let progress_hide_timeout = null;
     let transient_idx = 1;
     let firstStepStamp = 0;
     let scriptTimer = 0;
 
-    setInterval(script_increment_and_run, script_interval);
+    function startScriptPlaying() {
+        if( window.script_player_interval === undefined ) {
+            window.script_player_interval = setInterval(script_increment_and_run, scriptInterval);
+            $('#playPauseButton').attr('title', 'Pause');
+        }
+    }
 
-    $('#playback-progress-bar').progressbar({
-      value: false,
-      change: function() {
-        const bar = $('#playback-progress-bar');
-        const label = bar.find('.progress-label');
-        label.text(bar.progressbar('value') + '%');
-      },
-      complete: function() {
-        const bar = $('#playback-progress-bar');
-        const label = bar.find('.progress-label');
-        $('#cancel-script').hide();
-        $('#step-ticker').hide();
-        $('#clear-steps-container').show();
-        progress_hide_timeout = setTimeout(5000, function() { $('#playback-progress-bar').hide() });
-        label.text('Done');
-        socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '', duration: 0 });
-      }
+    function stopScriptPlaying() {
+        if( window.script_player_interval !== undefined ) {
+            clearInterval(window.script_player_interval);
+            window.script_player_interval = undefined;
+            $('#playPauseButton').attr('title', 'Play');
+        }
+    }
+
+    $('#playPauseButton').on('click', function() {
+        if( window.script_player_interval !== undefined ) { // is playing
+          stopScriptPlaying();
+        } else {
+          startScriptPlaying();
+        }
     });
+
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    function updateScriptTimes() {
+        const currentTime = parseInt(scriptTimer / 1000) - firstStepStamp / 1000;
+        const remainingTime = scriptDuration / 1000 - currentTime;
+        // if (window.console) console.log("timer/first/duration %d/%d/%d current/remain: %d/%d", scriptTimer, firstStepStamp, scriptDuration, currentTime, remainingTime);
+        $('#time-info').text(`${formatTime(currentTime)} / ${formatTime(remainingTime)}`);
+    }
 
     function script_increment_and_run() {
         if ( ! script ) {
           return;
         }
-        scriptTimer += script_interval;
+        scriptTimer += scriptInterval;
         channels.forEach(function(ch) {
             if( script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined && script[ch][0]['stamp'] <= scriptTimer ) {
                 const step = script[ch].shift();
                 apply_step(ch, step['message']);
             }
         });
-        percent = ((scriptTimer - firstStepStamp) / scriptDuration * 100).toFixed(0);
-        $('#playback-progress-bar').progressbar('value', parseInt(percent));
-        spinnerstep++;
-        if( spinnerstep > spinnersteps.length ) spinnerstep = 0
-        $('#step-ticker').html(spinnersteps[spinnerstep]);
-
+        const percent = ((scriptTimer - firstStepStamp) / scriptDuration * 100).toFixed(0);
+        if (percent >= 100) {
+            $('.show-not-playing').show();
+            $('.show-playing').hide();
+            $('#progressBar').css('width', '0%');
+            $('#progressHandle').css('left', '0%');
+            stopScriptPlaying();
+            socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '', duration: 0 });
+        } else {
+            $('#progressBar').css('width', `${percent}%`);
+            $('#progressHandle').css('left', `${percent}%`);
+        }
+        updateScriptTimes();
     }
 
     function apply_step(channel, step) {
-        if( window.console ) console.log("Step %s: %o", channel, step);
+        if (window.console) console.log("Step %s: %o", channel, step);
         if (channel.match(/^pain-/)) {
-            if( window.console ) console.log("EMIT %s, %o", channel, step); // dbg
+            if (window.console) console.log("EMIT %s, %o", channel, step); // dbg
             step['sessId'] = sessId;
             step['driverToken'] = driverToken;
             socket.emit(channel, step);
@@ -174,10 +195,8 @@ $(function () {
                 clearTimeout(scriptTimeouts['pain-right']);
                 clearTimeout(scriptTimeouts['bottle']);
                 script = {};
-                $('#cancel-script').hide();
-                $('#step-ticker').hide();
-                $('#clear-steps-container').show();
-                $('#playback-progress-bar').hide();
+                $('.show-not-playing').show();
+                $('.show-playing').hide();
                 transient_message('Cancelled script');
                 socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '', duration: 0 });
             } catch(e) {
@@ -246,18 +265,16 @@ $(function () {
                           }
                           firstStepStamp = scriptTimer;
                           scriptDuration = lastStep;
-                          if( window.console ) console.log("firstStepStamp=%d, scriptDuration=%d", firstStepStamp, scriptDuration);
+                          if (window.console) console.log("firstStepStamp=%d, scriptDuration=%d", firstStepStamp, scriptDuration);
                       } catch(e) {
                           if (window.console) console.log("Failed to adjust first step start times: %o", e);
                       }
                         
                       window.dbgscript = script;
                       socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename, fileDriver: fileDriver, duration: scriptDuration });
-                      $('#clear-steps-container').hide();
-                      if (progress_hide_timeout) clearTimeout(progress_hide_timeout);
-                      $('#playback-progress-bar').show();
-                      $("#cancel-script").show();
-                      $('#step-ticker').show();
+                      $('.show-not-playing').hide();
+                      $('.show-playing').show();
+                      startScriptPlaying();
                   } catch(e) {
                       if (window.console) console.log("Parse error: %o", e);
                       $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
@@ -271,11 +288,11 @@ $(function () {
 
     ['left', 'right'].forEach(function (channel) {
         socket.on(channel, function (msg) {
-            // console.log("UPD %s, %s, %o, %o, %o, %o", channel, mode, authorizedPlaying, msg, msg.volume, msg['volume']);
+            // if (window.console) console.log("UPD %s, %s, %o, %o, %o, %o", channel, mode, authorizedPlaying, msg, msg.volume, msg['volume']);
             if (!authorizedPlaying && mode == 'play') return;
 
             const $channelCol = $(`#${channel}-channel-column`);
-            // console.log("SET %s volume=%o, clamped to %o", channelSel, msg.volume, clamp(msg.volume, 0, 100));
+            // if (window.console) console.log("SET %s volume=%o, clamped to %o", channelSel, msg.volume, clamp(msg.volume, 0, 100));
             // NOTE: If you change any of these ranges, also change it in applyChanges in public/js/electron.js
             $channelCol.find('input[name="volume"]').val(clamp(msg.volume, 0, 100));
             $channelCol.find('input[name="frequency"]').val(clamp(msg.freq, 10, 3000));
@@ -448,7 +465,7 @@ $(function () {
             $('#rider-bottle-countdown').remove();
 
             socket.on('updateFlags', function(msg) {
-                // console.log("updateFlags %o", msg);
+                // if (window.console) console.log("updateFlags %o", msg);
                 $("#blindfold-riders").prop('checked',  msg['blindfoldRiders'] ? true : false);
                 $("#public-session").prop('checked',  msg['publicSession'] ? true : false);
                 $("#driver-name").val(msg['driverName']);
