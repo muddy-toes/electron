@@ -31,6 +31,8 @@ $(function () {
     let channel_pos = {};
     resetChannelPositions();
 
+    let position_dragging = false;
+
     function resetChannelPositions() {
         channel_pos = {};
         channels.forEach((ch) => channel_pos[ch] = 0);
@@ -334,6 +336,35 @@ $(function () {
             } else {
               startScriptPlaying();
             }
+        });
+
+        $('#progressHandle').on('mousedown', function() {
+            position_dragging = true;
+            stopScriptPlaying(false);
+        });
+
+        $(document).on('mousemove', function(e) {
+            if (! position_dragging) return;
+
+            const containerRect = $('.progress-container')[0].getBoundingClientRect();
+            let newX = e.clientX - containerRect.left;
+            newX = Math.max(0, Math.min(newX, containerRect.width)); // Clamp within container
+
+            const percent = (newX / containerRect.width) * 100;
+            $('#progressBar').css('width', `${percent}%`);
+            $('#progressHandle').css('left', `${percent}%`);
+
+            // Update time display while dragging
+            if (!isNaN(scriptDuration)) {
+                scriptTimer = (newX / containerRect.width) * scriptDuration;
+                updateScriptTimes();
+            }
+        });
+
+        $(document).on('mouseup', function() {
+            if (!position_dragging) return;
+            position_dragging = false;
+            resumeAtPosition(scriptTimer);
         });
     }
 
