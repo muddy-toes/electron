@@ -6,6 +6,9 @@ $(function () {
         return Math.max(b, Math.min(c, a));
     }
 
+    const PAUSE_RAMP_SECS = 5;
+    const RESUME_RAMP_SECS = 5;
+
     const path = window.location.pathname;
     const pathParts = path.split('/');
     const mode = pathParts[2];
@@ -17,7 +20,6 @@ $(function () {
 
     let driverToken = '';
     let script = {};
-    let scriptTimeouts = { 'left': 0, 'right': 0, 'pain-left': 0, 'pain-right': 0, 'bottle': 0 };
     let authorizedPlaying = false;
     let scriptDuration = 0;
     let scriptVersion = 0;
@@ -25,19 +27,48 @@ $(function () {
     let transient_idx = 1;
     let firstStepStamp = 0;
     let scriptTimer = 0;
+    let applysteps = true;
+    let channel_pos = {};
+    resetChannelPositions();
 
-    function startScriptPlaying() {
+    function resetChannelPositions() {
+        channel_pos = {};
+        channels.forEach((ch) => channel_pos[ch] = 0);
+    }
+
+    function startScriptPlaying(ramp_up=true) {
         if( window.script_player_interval === undefined ) {
-            window.script_player_interval = setInterval(script_increment_and_run, scriptInterval);
             $('#playPauseButton').attr('title', 'Pause');
+            resumeScriptVolume();
+            if (ramp_up) applysteps = false;
+            setTimeout(function() { applysteps = true }, RESUME_RAMP_SECS * 1000);
+            window.script_player_interval = setInterval(script_increment_and_run, scriptInterval);
         }
     }
 
-    function stopScriptPlaying() {
+    function resumeScriptVolume() {
+        ['left', 'right'].forEach(function(ch) {
+            let message = { ...script[ch][channel_pos[ch]]['message'] };
+            const current_vol = $(`#${ch}-channel-column input[name=volume]`).val();
+            if (message['volume'] == current_vol) return;
+            message['rampTarget'] = message['volume'];
+            message['rampRate'] = 100 / PAUSE_RAMP_SECS;
+            message['volume'] = current_vol;
+            apply_step(ch, message);
+        });
+    }
+
+    function stopScriptPlaying(ramp_down=true) {
         if( window.script_player_interval !== undefined ) {
             clearInterval(window.script_player_interval);
             window.script_player_interval = undefined;
             $('#playPauseButton').attr('title', 'Play');
+
+            if( ramp_down ) {
+                $("input[name=ramp-target]").val(0);
+                $("input[name=ramp-rate]").val(100 / PAUSE_RAMP_SECS);
+                $(".apply-btn").click();
+            }
         }
     }
 
@@ -62,17 +93,42 @@ $(function () {
         $('#time-info').text(`${formatTime(currentTime)} / ${formatTime(remainingTime)}`);
     }
 
+    function resumeAtPosition(msecs, ramp_up=true) {
+        stopScriptPlaying(false);
+        channels.forEach(function(ch) {
+            if( script[ch] === undefined )
+                return;
+
+            for( let ch_pos = 0; script[ch][ch_pos] !== undefined; ch_pos++ )
+                if( script[ch][ch_pos]['stamp'] !== undefined && script[ch][ch_pos]['stamp'] <= msecs )
+                    channel_pos[ch] = ch_pos;
+
+            // We only want left & right to start with the previous step, the rest should start with the next future step:
+            if (ch != 'left' && ch != 'right')
+              channel_pos[ch]++;
+
+            if (window.console) console.log("Channel %s at %d.  Position %d, next stamp %d", ch, msecs, channel_pos[ch], script[ch][channel_pos[ch]]['stamp']);
+        });
+        scriptTimer = msecs;
+        startScriptPlaying(ramp_up);
+    }
+    window.resumeAtPosition = resumeAtPosition;
+
     function script_increment_and_run() {
         if ( ! script ) {
           return;
         }
         scriptTimer += scriptInterval;
-        channels.forEach(function(ch) {
-            if( script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined && script[ch][0]['stamp'] <= scriptTimer ) {
-                const step = script[ch].shift();
-                apply_step(ch, step['message']);
-            }
-        });
+        if (applysteps) {
+            channels.forEach(function(ch) {
+                const ch_pos = channel_pos[ch];
+                if( script[ch] !== undefined && script[ch][ch_pos] !== undefined && script[ch][ch_pos]['stamp'] !== undefined && script[ch][ch_pos]['stamp'] <= scriptTimer ) {
+                    const step = script[ch][ch_pos];
+                    channel_pos[ch]++;
+                    apply_step(ch, step['message']);
+                }
+            });
+        }
         const percent = ((scriptTimer - firstStepStamp) / scriptDuration * 100).toFixed(0);
         if (percent >= 100) {
             $('.show-not-playing').show();
@@ -189,11 +245,7 @@ $(function () {
 
         $('#cancel-script').on('click', function() {
             try {
-                clearTimeout(scriptTimeouts['left']);
-                clearTimeout(scriptTimeouts['right']);
-                clearTimeout(scriptTimeouts['pain-left']);
-                clearTimeout(scriptTimeouts['pain-right']);
-                clearTimeout(scriptTimeouts['bottle']);
+                stopScriptPlaying();
                 script = {};
                 $('.show-not-playing').show();
                 $('.show-playing').hide();
@@ -274,7 +326,8 @@ $(function () {
                       socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename, fileDriver: fileDriver, duration: scriptDuration });
                       $('.show-not-playing').hide();
                       $('.show-playing').show();
-                      startScriptPlaying();
+                      resetChannelPositions();
+                      startScriptPlaying(false);
                   } catch(e) {
                       if (window.console) console.log("Parse error: %o", e);
                       $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
