@@ -37,7 +37,7 @@ $(function () {
     }
 
     function startScriptPlaying(ramp_up=true) {
-        if( window.script_player_interval === undefined ) {
+        if (window.script_player_interval === undefined) {
             $('#playPauseButton').attr('title', 'Pause');
             resumeScriptVolume();
             if (ramp_up) applysteps = false;
@@ -59,26 +59,18 @@ $(function () {
     }
 
     function stopScriptPlaying(ramp_down=true) {
-        if( window.script_player_interval !== undefined ) {
+        if (window.script_player_interval !== undefined) {
             clearInterval(window.script_player_interval);
             window.script_player_interval = undefined;
             $('#playPauseButton').attr('title', 'Play');
 
-            if( ramp_down ) {
+            if (ramp_down) {
                 $("input[name=ramp-target]").val(0);
                 $("input[name=ramp-rate]").val(100 / PAUSE_RAMP_SECS);
                 $(".apply-btn").click();
             }
         }
     }
-
-    $('#playPauseButton').on('click', function() {
-        if( window.script_player_interval !== undefined ) { // is playing
-          stopScriptPlaying();
-        } else {
-          startScriptPlaying();
-        }
-    });
 
     function formatTime(seconds) {
         const minutes = Math.floor(seconds / 60);
@@ -96,11 +88,11 @@ $(function () {
     function resumeAtPosition(msecs, ramp_up=true) {
         stopScriptPlaying(false);
         channels.forEach(function(ch) {
-            if( script[ch] === undefined )
+            if (script[ch] === undefined)
                 return;
 
-            for( let ch_pos = 0; script[ch][ch_pos] !== undefined; ch_pos++ )
-                if( script[ch][ch_pos]['stamp'] !== undefined && script[ch][ch_pos]['stamp'] <= msecs )
+            for (let ch_pos = 0; script[ch][ch_pos] !== undefined; ch_pos++)
+                if (script[ch][ch_pos]['stamp'] !== undefined && script[ch][ch_pos]['stamp'] <= msecs)
                     channel_pos[ch] = ch_pos;
 
             // We only want left & right to start with the previous step, the rest should start with the next future step:
@@ -112,7 +104,6 @@ $(function () {
         scriptTimer = msecs;
         startScriptPlaying(ramp_up);
     }
-    window.resumeAtPosition = resumeAtPosition;
 
     function script_increment_and_run() {
         if ( ! script ) {
@@ -122,7 +113,7 @@ $(function () {
         if (applysteps) {
             channels.forEach(function(ch) {
                 const ch_pos = channel_pos[ch];
-                if( script[ch] !== undefined && script[ch][ch_pos] !== undefined && script[ch][ch_pos]['stamp'] !== undefined && script[ch][ch_pos]['stamp'] <= scriptTimer ) {
+                if (script[ch] !== undefined && script[ch][ch_pos] !== undefined && script[ch][ch_pos]['stamp'] !== undefined && script[ch][ch_pos]['stamp'] <= scriptTimer) {
                     const step = script[ch][ch_pos];
                     channel_pos[ch]++;
                     apply_step(ch, step['message']);
@@ -209,7 +200,7 @@ $(function () {
         initLoadScriptOnly();
 
         $('#clear-steps').on('click', function() {
-            if(confirm('Clear Steps - Are you sure?'))
+            if (confirm('Clear Steps - Are you sure?'))
                 socket.emit('clearSessionMessages', { sessId: sessId, driverToken: driverToken });
         });
 
@@ -256,86 +247,94 @@ $(function () {
             };
         });
 
-      $("#load-file-picker").change(function(){
-          if(this.files && this.files[0]) {
-              const filename = this.files[0].name;
-              const reader = new FileReader();
-              reader.onload = function (e) {
-                  try {
-                      script = JSON.parse(e.target.result);
+        $("#load-file-picker").change(function(){
+            if (this.files && this.files[0]) {
+                const filename = this.files[0].name;
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        script = JSON.parse(e.target.result);
 
-                      let fileDriver = '';
-                      if (script['meta']) {
-                          if (script['meta']['version']) {
-                            scriptVersion = parseInt(script['meta']['version']) || 1;
-                          }
-                          if (script['meta']['driverName']) {
-                              fileDriver = script['meta']['driverName'].replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
-                              transient_message(`Loaded file is by driver "${fileDriver}"`);
-                          }
-                          if (script['meta']['driverComments']) {
-                              transient_message(`File comments: ${script['meta']['driverComments'].slice(0, 100)}`);
-                          }
-                          delete script['meta'];
-                      }
+                        let fileDriver = '';
+                        if (script['meta']) {
+                            if (script['meta']['version']) {
+                              scriptVersion = parseInt(script['meta']['version']) || 1;
+                            }
+                            if (script['meta']['driverName']) {
+                                fileDriver = script['meta']['driverName'].replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+                                transient_message(`Loaded file is by driver "${fileDriver}"`);
+                            }
+                            if (script['meta']['driverComments']) {
+                                transient_message(`File comments: ${script['meta']['driverComments'].slice(0, 100)}`);
+                            }
+                            delete script['meta'];
+                        }
 
-                      // Upgrade v1 script to v2
-                      if (scriptVersion < 2) {
-                          channels.forEach(function(ch) {
-                              if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined ) {
-                                  let channelSum = 0;
-                                  for (var j = 0; j < script[ch].length; j++) {
-                                      channelSum += script[ch][j]['stamp'];
-                                      script[ch][j]['stamp'] = channelSum;
-                                  }
-                              }
-                          });
-                          scriptVersion = 2;
-                      }
+                        // Upgrade v1 script to v2
+                        if (scriptVersion < 2) {
+                            channels.forEach(function(ch) {
+                                if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined ) {
+                                    let channelSum = 0;
+                                    for (var j = 0; j < script[ch].length; j++) {
+                                        channelSum += script[ch][j]['stamp'];
+                                        script[ch][j]['stamp'] = channelSum;
+                                    }
+                                }
+                            });
+                            scriptVersion = 2;
+                        }
 
-                      // Set the script timer to 1000ms prior to the first action, otherwise the thing could sit there for minutes after loading before
-                      // anything happens.
-                      try {
-                          let firstStep = Number.MAX_SAFE_INTEGER;
-                          let lastStep = 0;
-                          channels.forEach(function(ch) {
-                              if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined ) {
-                                  script[ch].forEach(function(step) {
-                                      if (step['stamp'] < firstStep) {
-                                          firstStep = step['stamp'];
-                                      }
-                                      if (step['stamp'] > lastStep) {
-                                          lastStep = step['stamp'];
-                                      }
-                                  });
-                              }
-                          });
-                          if (firstStep > 1000) {
-                              scriptTimer = firstStep - 1000;
-                          } else {
-                            scriptTimer = 0;
-                          }
-                          firstStepStamp = scriptTimer;
-                          scriptDuration = lastStep;
-                          if (window.console) console.log("firstStepStamp=%d, scriptDuration=%d", firstStepStamp, scriptDuration);
-                      } catch(e) {
-                          if (window.console) console.log("Failed to adjust first step start times: %o", e);
-                      }
-                        
-                      window.dbgscript = script;
-                      socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename, fileDriver: fileDriver, duration: scriptDuration });
-                      $('.show-not-playing').hide();
-                      $('.show-playing').show();
-                      resetChannelPositions();
-                      startScriptPlaying(false);
-                  } catch(e) {
-                      if (window.console) console.log("Parse error: %o", e);
-                      $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
-                  }
-              };
-              reader.readAsText(this.files[0]);
-          };
-      });
+                        // Set the script timer to 1000ms prior to the first action, otherwise the thing could sit there for minutes after loading before
+                        // anything happens.
+                        try {
+                            let firstStep = Number.MAX_SAFE_INTEGER;
+                            let lastStep = 0;
+                            channels.forEach(function(ch) {
+                                if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined ) {
+                                    script[ch].forEach(function(step) {
+                                        if (step['stamp'] < firstStep) {
+                                            firstStep = step['stamp'];
+                                        }
+                                        if (step['stamp'] > lastStep) {
+                                            lastStep = step['stamp'];
+                                        }
+                                    });
+                                }
+                            });
+                            if (firstStep > 1000) {
+                                scriptTimer = firstStep - 1000;
+                            } else {
+                              scriptTimer = 0;
+                            }
+                            firstStepStamp = scriptTimer;
+                            scriptDuration = lastStep;
+                            if (window.console) console.log("firstStepStamp=%d, scriptDuration=%d", firstStepStamp, scriptDuration);
+                        } catch(e) {
+                            if (window.console) console.log("Failed to adjust first step start times: %o", e);
+                        }
+                          
+                        window.dbgscript = script;
+                        socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename, fileDriver: fileDriver, duration: scriptDuration });
+                        $('.show-not-playing').hide();
+                        $('.show-playing').show();
+                        resetChannelPositions();
+                        startScriptPlaying(false);
+                    } catch(e) {
+                        if (window.console) console.log("Parse error: %o", e);
+                        $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
+                    }
+                };
+                reader.readAsText(this.files[0]);
+            };
+        });
+
+        $('#playPauseButton').on('click', function() {
+            if (window.script_player_interval !== undefined) { // is playing
+              stopScriptPlaying();
+            } else {
+              startScriptPlaying();
+            }
+        });
     }
 
 
@@ -417,7 +416,7 @@ $(function () {
         // receive pain events
         ['pain-left', 'pain-right'].forEach(function (channel) {
             socket.on(channel, function (msg) {
-                if( window.console ) console.log("PAIN %o, %o", channel, msg);
+                if (window.console) console.log("PAIN %o, %o", channel, msg);
                 if (!authorizedPlaying) return;
                 const channelName = channel == 'pain-left' ? 'left' : 'right';
                 executePain(channelName, msg);
