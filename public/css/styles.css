@@ -96,7 +96,7 @@ div.color-header h2 {
     background: #8bc34a;
 }
 
-button.roundy-btn {
+.roundy-btn {
     background: #757575;
     border: 1px solid black;
     border-radius: 20px;
@@ -108,13 +108,14 @@ button.roundy-btn {
     line-height: 1em;
     padding: 0.5em;
     position: relative;
+    text-decoration: none;
 }
-button.small.roundy-btn {
+.small.roundy-btn {
     font-size: 14px;
     line-height: 1.1em
     padding: 0.7em;
 }
-button.roundy-btn[disabled] {
+.roundy-btn[disabled] {
   color: #888;
 }
 
@@ -661,4 +662,8 @@ ul.public-session-list li {
   top: 48%;
   font-size: 90px;
   color: white;
+}
+
+.analyze-script-link {
+  margin-left: auto;
 }
