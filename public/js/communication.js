@@ -93,15 +93,20 @@ $(function () {
             if (script[ch] === undefined)
                 return;
 
-            for (let ch_pos = 0; script[ch][ch_pos] !== undefined; ch_pos++)
+            channel_pos[ch] = 0;
+            for (let ch_pos = 0; script[ch][ch_pos] !== undefined; ch_pos++) {
+                if (window.console) console.log("ch_pos=%d, channel=%s, step=%o, msecs=%d", ch_pos, ch, script[ch][ch_pos], msecs);
                 if (script[ch][ch_pos]['stamp'] !== undefined && script[ch][ch_pos]['stamp'] <= msecs)
                     channel_pos[ch] = ch_pos;
+                else
+                    break;
+            }
 
             // We only want left & right to start with the previous step, the rest should start with the next future step:
             if (ch != 'left' && ch != 'right')
               channel_pos[ch]++;
 
-            if (window.console) console.log("Channel %s at %d.  Position %d, next stamp %d", ch, msecs, channel_pos[ch], script[ch][channel_pos[ch]]['stamp']);
+            if (window.console) try { console.log("Channel %s at %d.  Position %d, next stamp %d", ch, msecs, channel_pos[ch], script[ch][channel_pos[ch]]['stamp']); } catch(e) {}
         });
         scriptTimer = msecs;
         startScriptPlaying(ramp_up);
@@ -260,7 +265,7 @@ $(function () {
                         let fileDriver = '';
                         if (script['meta']) {
                             if (script['meta']['version']) {
-                              scriptVersion = parseInt(script['meta']['version']) || 1;
+                                scriptVersion = parseInt(script['meta']['version']) || 1;
                             }
                             if (script['meta']['driverName']) {
                                 fileDriver = script['meta']['driverName'].replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
@@ -272,10 +277,13 @@ $(function () {
                             delete script['meta'];
                         }
 
-                        // Upgrade v1 script to v2
-                        if (scriptVersion < 2) {
+                        // Upgrade script version
+                        if (scriptVersion > 2) {
+                          $('#status-message').append(`<p>Cannot load version ${scriptVersion} script.</p>`);
+                          return false;
+                        } else if (scriptVersion < 2) {
                             channels.forEach(function(ch) {
-                                if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined ) {
+                                if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined) {
                                     let channelSum = 0;
                                     for (var j = 0; j < script[ch].length; j++) {
                                         channelSum += script[ch][j]['stamp'];
@@ -286,7 +294,7 @@ $(function () {
                             scriptVersion = 2;
                         }
 
-                        // Set the script timer to 1000ms prior to the first action, otherwise the thing could sit there for minutes after loading before
+                        // Set the script time to 1000ms prior to the first action, otherwise the thing could sit there for minutes after loading before
                         // anything happens.
                         try {
                             let firstStep = Number.MAX_SAFE_INTEGER;

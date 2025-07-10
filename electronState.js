@@ -8,6 +8,7 @@ class ElectronState {
         this.driverTokens = {};         // stores the authentication tokens of drivers
         this.driverSockets = {};        // stores sockets for people driving sessions
         this.riders = {};               // stores all sockets for people riding each session
+        this.previousMessageStamp = {}; // stores timestamp of previous message for calculating offsets
         this.lastMessages = {};         // storage of incoming messages (setting waveform parameters, pain tool, etc.)
         this.sessionStartTimes = {};    // storage of timestamps when each session starts
         this.automatedDrivers = {};     // stores automated drivers by their session ids
@@ -24,6 +25,7 @@ class ElectronState {
 
     initSessionData(sessId) {
         const now = Date.now();
+        this.previousMessageStamp[sessId] ||= { 'left': now, 'right': now, 'pain-left': now, 'pain-right': now, 'bottle': now };
         this.lastMessages[sessId] ||= {};
         this.sessionStartTimes[sessId] = 0;
         this.sessionFlags[sessId] ||= {};
@@ -47,6 +49,7 @@ class ElectronState {
 
     cleanupSessionData(sessId) {
         delete this.lastMessages[sessId];
+        delete this.previousMessageStamp[sessId];
         delete this.sessionStartTimes[sessId];
         delete this.sessionFlags[sessId];
         delete this.driverTokens[sessId];
@@ -125,14 +128,20 @@ class ElectronState {
             this.sessionStartTimes[sessId] = Date.now();
         }
         const now = Date.now();
-        const stamp_offset = now - this.sessionStartTimes[sessId];
+        this.previousMessageStamp[sessId] ||= {};
+        this.previousMessageStamp[sessId][channel] ||= now;
+        // const abs_stamp_offset = now - this.sessionStartTimes[sessId];
+        const stamp_offset = now - this.previousMessageStamp[sessId][channel];
+        this.previousMessageStamp[sessId][channel] = now;
         this.lastMessages[sessId][channel] ||= [];
         this.lastMessages[sessId][channel].push({ stamp: stamp_offset, message: message });
     }
 
     clearLastMessages(sessId) {
+        const now = Date.now();
         this.lastMessages[sessId] = {};
-        this.sessionStartTimes[sessId] = Date.now();
+        this.sessionStartTimes[sessId] = now;
+        this.previousMessageStamp[sessId] = { 'left': now, 'right': now, 'pain-left': now, 'pain-right': now, 'bottle': now };
     }
 
     setRiderTrafficLight(sessId, socket, color) {
@@ -166,7 +175,7 @@ class ElectronState {
         const lastmessages = this.lastMessages;
         const sessionflags = this.sessionFlags;
         let data_to_return = {
-            'meta': { driverName: sessionflags[sessId]['driverName'], driverComments: sessionflags[sessId]['driverComments'], version: 2 },
+            'meta': { driverName: sessionflags[sessId]['driverName'], driverComments: sessionflags[sessId]['driverComments'], version: 1, fileType: 'e l e c t r o n script' },
             'left': lastmessages[sessId]['left'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
             'right': lastmessages[sessId]['right'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
         };
