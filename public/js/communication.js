@@ -75,8 +75,10 @@ $(function () {
     }
 
     function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
+        let minutes = Math.floor(seconds / 60);
+        let secs = Math.floor(seconds % 60);
+        if (minutes < 0) minutes = 0;
+        if (secs < 0) secs = 0;
         return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
