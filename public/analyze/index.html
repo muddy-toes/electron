@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e l e c t r o n analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        /* System Font Stack & Base Theme Colors */
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            background-color: #151515; /* Base background */
+            color: #ccc; /* Default text */
+        }
+        .plotly .hovertext { /* Inherit body font */ }
+        .plot-container { min-height: 450px; margin-bottom: 1.5rem; }
+
+        /* Button Styling */
+        .electron-button {
+            color: #FFF; background-color: #303030; border: 1px solid #555;
+            transition: background-color 0.2s ease-in-out; padding: 0.5rem 1rem;
+            border-radius: 0.375rem; cursor: pointer; margin-right: 0.5rem;
+            font-weight: 600; display: inline-block;
+        }
+        .electron-button:hover { background-color: #404040; border-color: #555; }
+        .electron-button:disabled { background-color: #4b5563; border-color: #4b5563; color: #9ca3af; cursor: not-allowed; }
+
+        /* Input/Select Styling */
+        .electron-input, .electron-select {
+             border: 1px solid #555; color: #ccc; background-color: #212121;
+             border-radius: 0.375rem; padding: 0.5rem; width: 100%;
+        }
+        select.electron-select {
+             background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"><path stroke="%23ccc" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4"/></svg>');
+             background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
+             padding-right: 2.5rem; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        }
+         /* File input specific */
+         .dark input[type="file"] {
+             border: 1px solid #555; color: #ccc; background-color: #212121;
+             border-radius: 0.375rem;
+         }
+         .dark input[type="file"]::file-selector-button {
+             color: #FFF; background-color: #A5CD39; border: 1px solid #555;
+             transition: background-color 0.2s ease-in-out; padding: 0.5rem 1rem;
+             border-radius: 0.375rem; cursor: pointer; margin-right: 0.5rem; font-weight: 600;
+             border-inline-start-width: 0; border-inline-end-width: 0; border-top-width: 0; border-bottom-width: 0;
+         }
+         .dark input[type="file"]::file-selector-button:hover { background-color: #84CC16; }
+
+         /* Style for flavor text output */
+         #flavorTextOutput {
+             margin-top: 1.5rem; padding: 1rem; background-color: #303030;
+             border: 1px solid #555; border-radius: 0.5rem;
+             color: #ccc; font-style: italic; line-height: 1.6;
+         }
+         #feedbackForm label, #tempFeedbackDisplay p { margin-bottom: 0.5rem; display: block; font-weight: 600; }
+         #feedbackForm input[type="text"], #feedbackForm select { margin-bottom: 0.75rem; }
+         #feedbackForm .radio-group label { display: inline-flex; align-items: center; margin-right: 1rem; font-weight: normal; }
+         #feedbackForm .radio-group input[type="radio"] { margin-right: 0.5rem; accent-color: #3eB0FF; }
+         #tempFeedbackDisplay { font-size: 0.9em; padding: 0.75rem; margin-top: 1rem; border-style: dashed; background-color: #404040; border-color: #555; } /* Added style for temp div */
+
+    </style>
+    </head>
+<body class="bg-[#151515] text-[#ccc] p-4 md:p-8">
+
+    <div id="mainContent" class="max-w-6xl mx-auto bg-[#303030] p-6 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold mb-4 text-[#3eB0FF] tracking-widest">e l e c t r o n analysis</h1>
+
+        <div class="mb-6 p-4 border border-[#555] rounded-lg bg-[#404040]">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                <div>
+                    <label for="fileInput" class="block text-sm font-medium text-[#ccc] mb-1">Upload JSON File:</label>
+                    <input type="file" id="fileInput" accept=".json" class="block w-full text-sm rounded-lg border cursor-pointer focus:outline-none placeholder-gray-500 mb-2 md:mb-0" />
+                    <p id="fileInfo" class="text-xs text-[#aaa] mt-1"></p>
+                </div>
+                 <div>
+                     <label class="block text-sm font-medium text-[#ccc] mb-1">Download Chart:</label>
+                     <button id="downloadChartButton" class="electron-button">Save</button>
+                     <p class="text-xs text-[#aaa] mt-1">Saves plots & text below as a single PNG. Use 📷 icon on plots for individual export.</p>
+                 </div>
+            </div>
+            <div id="errorMessage" class="mt-4 text-red-500 text-sm font-medium hidden"></div>
+        </div>
+
+
+        <div id="plotArea">
+             <div id="plotPlaceholder" class="text-center text-[#aaa] py-10">
+                Please upload a JSON file to view the graphs.
+            </div>
+            <div id="plot1" class="plot-container"></div>
+            <div id="plot2" class="plot-container"></div>
+            <div id="plot3" class="plot-container"></div>
+        </div>
+
+        <div id="flavorTextOutput" class="hidden"></div>
+        <div id="feedbackForm" class="hidden">
+            <h2 class="text-lg font-semibold mb-3 border-b border-[#555] pb-2">Session Feedback</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="userName">Name:</label>
+                    <input type="text" id="userName" class="electron-input" placeholder="Your Name (Optional)">
+                </div>
+                <div>
+                    <label>Rating (1-5):</label>
+                    <div class="radio-group mt-1">
+                        <label><input type="radio" name="rating" value="1"> 1</label>
+                        <label><input type="radio" name="rating" value="2"> 2</label>
+                        <label><input type="radio" name="rating" value="3"> 3</label>
+                        <label><input type="radio" name="rating" value="4"> 4</label>
+                        <label><input type="radio" name="rating" value="5"> 5</label>
+                    </div>
+                </div>
+                <div>
+                    <label>Experienced HFO?</label>
+                    <div class="radio-group mt-1">
+                        <label><input type="radio" name="hfoExperience" value="yes"> Yes</label>
+                        <label><input type="radio" name="hfoExperience" value="no" checked> No</label>
+                    </div>
+                </div>
+                <div id="hfoTimeSection" class="hidden">
+                    <label>Approx. HFO Time:</label>
+                    <div class="flex gap-2">
+                        <select id="hfoHour" class="electron-select"></select>
+                        <select id="hfoMinute" class="electron-select"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+    <script>
+        // --- DOM Elements ---
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const downloadChartButton = document.getElementById('downloadChartButton');
+        const mainContentDiv = document.getElementById('mainContent');
+        const plotArea = document.getElementById('plotArea');
+        const plotPlaceholder = document.getElementById('plotPlaceholder');
+        const plotDiv1 = document.getElementById('plot1');
+        const plotDiv2 = document.getElementById('plot2');
+        const plotDiv3 = document.getElementById('plot3');
+        const errorMessageDiv = document.getElementById('errorMessage');
+        const flavorTextOutputDiv = document.getElementById('flavorTextOutput');
+        const feedbackFormDiv = document.getElementById('feedbackForm');
+        const hfoTimeSectionDiv = document.getElementById('hfoTimeSection');
+        const hfoHourSelect = document.getElementById('hfoHour');
+        const hfoMinuteSelect = document.getElementById('hfoMinute');
+
+        // --- Global State ---
+        let processedData = null;
+        let rawMetadata = null;
+        let bottleEventTimesMs = [];
+        let totalDurationMs = 0;
+        let currentFilename = 'chart_export'; // Store the uploaded filename base
+
+        // --- Event Listeners ---
+        fileInput.addEventListener('change', handleFileSelect);
+        downloadChartButton.addEventListener('click', handleExportClick);
+        feedbackFormDiv.addEventListener('change', (event) => {
+            if (event.target.name === 'hfoExperience') {
+                toggleHfoTimeSection(event.target.value === 'yes');
+            }
+        });
+
+        // --- UI Helpers ---
+        function toggleHfoTimeSection(show) { /* ... same as before ... */
+            if (show) { hfoTimeSectionDiv.classList.remove('hidden'); } else { hfoTimeSectionDiv.classList.add('hidden'); }
+        }
+        function populateTimeSelectors(durationMs) { /* ... same as before ... */
+            const totalMinutes = Math.floor(durationMs / 60000); const totalHours = Math.floor(totalMinutes / 60);
+            hfoHourSelect.innerHTML = ''; for (let h = 0; h <= totalHours; h++) { const option = document.createElement('option'); option.value = h; option.textContent = `${h} hr`; hfoHourSelect.appendChild(option); }
+            hfoMinuteSelect.innerHTML = ''; for (let m = 0; m < 60; m++) { const option = document.createElement('option'); option.value = m; option.textContent = `${String(m).padStart(2, '0')} min`; hfoMinuteSelect.appendChild(option); }
+        }
+
+        // --- Error Handling ---
+        function showError(message) { /* ... same as before ... */
+             errorMessageDiv.textContent = message; errorMessageDiv.classList.remove('hidden'); clearPlots(); flavorTextOutputDiv.classList.add('hidden'); feedbackFormDiv.classList.add('hidden');
+             plotPlaceholder.textContent = `Error: ${message}`; plotPlaceholder.classList.remove('hidden'); plotPlaceholder.style.color = '#ef4444'; currentFilename = 'chart_export'; // Reset filename on error
+        }
+        function clearError() { /* ... same as before ... */
+             errorMessageDiv.textContent = ''; errorMessageDiv.classList.add('hidden');
+              if (!processedData) { plotPlaceholder.textContent = 'Please upload a JSON file to view the graphs.'; plotPlaceholder.style.color = ''; }
+        }
+        function clearPlots() { /* ... same as before ... */
+              Plotly.purge(plotDiv1); Plotly.purge(plotDiv2); Plotly.purge(plotDiv3);
+        }
+
+        // --- File Handling ---
+        function handleFileSelect(event) {
+             clearError(); flavorTextOutputDiv.classList.add('hidden'); feedbackFormDiv.classList.add('hidden'); currentFilename = 'chart_export'; // Reset filename
+             const file = event.target.files[0]; if (!file) return;
+             if (!file.name.toLowerCase().endsWith('.json')) { showError("Invalid file type. Please upload a JSON file."); fileInput.value = ''; fileInfo.textContent = ''; return; }
+
+             // Store filename (without extension)
+             currentFilename = file.name.replace(/\.json$/i, ''); // Remove .json extension
+             fileInfo.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+
+             const reader = new FileReader();
+             reader.onload = function(e) {
+                 try {
+                     const rawData = JSON.parse(e.target.result); console.log("Raw data loaded:", rawData);
+                     rawMetadata = rawData.meta || {};
+                     processedData = processAllChannels(rawData);
+                     bottleEventTimesMs = processBottleData(rawData);
+                     const maxTimeL = processedData?.left?.timesMs?.length > 0 ? Math.max(...processedData.left.timesMs) : 0; const maxTimeR = processedData?.right?.timesMs?.length > 0 ? Math.max(...processedData.right.timesMs) : 0; totalDurationMs = Math.max(maxTimeL, maxTimeR, 1);
+                     if (processedData) {
+                         plotPlaceholder.classList.add('hidden'); updateAllPlots();
+                         const flavorText = generateFlavorText(processedData, bottleEventTimesMs, totalDurationMs);
+                         flavorTextOutputDiv.textContent = flavorText; flavorTextOutputDiv.classList.remove('hidden');
+                         populateTimeSelectors(totalDurationMs); feedbackFormDiv.classList.remove('hidden');
+                         toggleHfoTimeSection(document.querySelector('input[name="hfoExperience"]:checked')?.value === 'yes');
+                      } else { fileInfo.textContent = ''; currentFilename = 'chart_export';} // Reset filename if processing fails
+                 } catch (error) { console.error("Error parsing JSON:", error); showError(`Error parsing JSON file: ${error.message}`); processedData = null; rawMetadata = null; bottleEventTimesMs = []; totalDurationMs = 0; fileInfo.textContent = ''; currentFilename = 'chart_export';}
+             };
+             reader.onerror = function(e) { console.error("Error reading file:", e); showError("Error reading file."); processedData = null; rawMetadata = null; bottleEventTimesMs = []; totalDurationMs = 0; fileInfo.textContent = ''; currentFilename = 'chart_export';};
+             reader.readAsText(file);
+        }
+
+        // --- Export Function (using html2canvas) ---
+        function handleExportClick() {
+            if (!processedData) { showError("Please upload data before exporting."); return; }
+            if (typeof html2canvas === 'undefined') { showError("Export library (html2canvas) not loaded."); return; }
+            console.log("Exporting view using html2canvas...");
+            downloadChartButton.textContent = "Saving..."; downloadChartButton.disabled = true;
+            const userName = document.getElementById('userName').value || 'N/A'; const hfoExpRadio = document.querySelector('input[name="hfoExperience"]:checked'); const hfoExp = hfoExpRadio ? hfoExpRadio.value : 'N/A'; let hfoTimeStr = ''; if (hfoExp === 'yes') { const hr = hfoHourSelect.value; const min = String(hfoMinuteSelect.value).padStart(2,'0'); hfoTimeStr = ` at ${hr}h ${min}m`; } const ratingRadio = document.querySelector('input[name="rating"]:checked'); const rating = ratingRadio ? `${ratingRadio.value}/5` : 'N/A'; const feedbackText = `Feedback -> Name: ${userName} | Rating: ${rating} | HFO: ${hfoExp}${hfoTimeStr}`; console.log("Feedback collected for export:", feedbackText);
+            const feedbackDiv = document.createElement('div'); feedbackDiv.id = 'tempFeedbackDisplay'; feedbackDiv.textContent = feedbackText; mainContentDiv.appendChild(feedbackDiv);
+            const elementToCapture = mainContentDiv;
+            // Use the stored filename for the download
+            const exportFilename = `${currentFilename}.png`;
+            console.log(`Exporting as: ${exportFilename}`);
+
+            html2canvas(elementToCapture, { allowTaint: false, useCORS: true, backgroundColor: '#303030', scale: 1.5, onrendered: function(canvas) { console.log("Canvas rendered"); } })
+            .then(canvas => {
+                const imageDataUrl = canvas.toDataURL('image/png'); const downloadLink = document.createElement('a'); downloadLink.href = imageDataUrl;
+                downloadLink.download = exportFilename; // Use dynamic filename
+                document.body.appendChild(downloadLink); downloadLink.click(); document.body.removeChild(downloadLink); console.log("Export complete.");
+            }).catch(err => {
+                console.error("Error using html2canvas:", err); showError("Failed to capture view for export. See console for details.");
+            }).finally(() => {
+                 if (mainContentDiv.contains(feedbackDiv)) { mainContentDiv.removeChild(feedbackDiv); console.log("Temporary feedback div removed."); }
+                 downloadChartButton.textContent = "Save"; downloadChartButton.disabled = false;
+            });
+        }
+
+
+        // --- Data Processing ---
+        function processChannelData(events, channelLabel) { /* ... same as before ... */
+             if (!Array.isArray(events)) { console.warn(`Expected an array for channel ${channelLabel}, got:`, events); return null; }
+             let cumulativeTimeMs = 0; const timesMs = [];
+             const params = { freq: [], volume: [], rampTarget: [], rampRate: [], amFreq: [], amDepth: [], amType: [], fmFreq: [], fmDepth: [], fmType: [] };
+             events.forEach((event, idx) => {
+                  if (typeof event !== 'object' || event === null || typeof event.stamp !== 'number' || typeof event.message !== 'object' || event.message === null) { console.warn(`Skipping invalid event format in '${channelLabel}' at index ${idx}:`, event); return; }
+                  cumulativeTimeMs += event.stamp; timesMs.push(cumulativeTimeMs);
+                  const message = event.message;
+                  for (const key in params) { params[key].push(message.hasOwnProperty(key) ? message[key] : null); }
+             });
+             return timesMs.length > 0 ? { timesMs, params } : null;
+        }
+        function processAllChannels(rawData) { /* ... same as before ... */
+              if (typeof rawData !== 'object' || rawData === null) { showError("Invalid raw data structure: not an object."); return null; }
+              try {
+                  const leftData = processChannelData(rawData.left, 'L'); const rightData = processChannelData(rawData.right, 'R');
+                  if (!leftData && !rightData) return null;
+                  return { left: leftData || { timesMs: [], params: {} }, right: rightData || { timesMs: [], params: {} } };
+              }
+              catch (error) { console.error("Error processing channel data:", error); showError(`Error processing data: ${error.message}`); return null; }
+        }
+        function processBottleData(rawData) { /* ... same as before ... */
+            const bottleEvents = rawData?.bottle; if (!Array.isArray(bottleEvents)) { console.warn("No 'bottle' data found or it's not an array."); return []; }
+            let cumulativeTimeMs = 0; const bottleTimesMs = [];
+            bottleEvents.forEach((event, idx) => {
+                if (typeof event !== 'object' || event === null || typeof event.stamp !== 'number') { console.warn(`Skipping invalid bottle event format at index ${idx}:`, event); return; }
+                 cumulativeTimeMs += event.stamp; bottleTimesMs.push(cumulativeTimeMs);
+            });
+            return bottleTimesMs;
+        }
+
+
+        // --- Flavor Text Generation ---
+        function calculateAverage(arr) { /* ... same as before ... */
+             if (!Array.isArray(arr)) return 0; const numbers = arr.filter(val => typeof val === 'number' && !isNaN(val)); if (numbers.length === 0) return 0; const sum = numbers.reduce((acc, val) => acc + val, 0); return sum / numbers.length;
+        }
+        function calculateStdDev(arr) { /* ... same as before ... */
+            if (!Array.isArray(arr)) return 0; const numbers = arr.filter(val => typeof val === 'number' && !isNaN(val)); const n = numbers.length; if (n < 2) return 0; const mean = calculateAverage(numbers); const variance = numbers.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (n - 1); return Math.sqrt(variance);
+        }
+        function getValuesInRange(timesMs, values, startMs, endMs) { /* ... same as before ... */
+              if (!Array.isArray(timesMs) || !Array.isArray(values)) return []; return values.filter((_, i) => timesMs[i] >= startMs && timesMs[i] <= endMs && typeof values[i] === 'number');
+        }
+        function getCombinedValuesInRange(pData, paramKey, startMs, endMs) { /* ... same as before ... */
+             const timesL = pData.left?.timesMs || []; const valuesL = pData.left?.params?.[paramKey] || []; const timesR = pData.right?.timesMs || []; const valuesR = pData.right?.params?.[paramKey] || []; const combinedValues = [];
+             valuesL.forEach((val, i) => { if (timesL[i] >= startMs && timesL[i] <= endMs && typeof val === 'number') { combinedValues.push(val); } });
+             valuesR.forEach((val, i) => { if (timesR[i] >= startMs && timesR[i] <= endMs && typeof val === 'number') { combinedValues.push(val); } });
+             return combinedValues;
+        }
+        function generateFlavorText(pData, bottleTimes, durationMs) { /* ... Updated session length logic ... */
+            let summary = []; const durationMinutes = durationMs / 60000; const fifteenMinutesMs = 15 * 60 * 1000; const tenMinutesMs = 10 * 60 * 1000; const endStartTimeMs = durationMs - fifteenMinutesMs;
+            const allTimes = [...(pData.left?.timesMs || []), ...(pData.right?.timesMs || [])]; const allVolumes = [...(pData.left?.params?.volume || []), ...(pData.right?.params?.volume || [])]; const allRampRates = [...(pData.left?.params?.rampRate || []), ...(pData.right?.params?.rampRate || [])]; const allAmDepths = [...(pData.left?.params?.amDepth || []), ...(pData.right?.params?.amDepth || [])];
+            // 1. Session Length (UPDATED Categories)
+            if (durationMinutes > 180) summary.push("An ultra long session"); else if (durationMinutes > 90) summary.push("A long session"); else if (durationMinutes > 60) summary.push("A medium length session"); else if (durationMinutes > 30) summary.push("A short session"); else summary.push("A teaser session");
+            // Warmup Analysis
+            const warmupVolThreshold = 5; const warmupFreqThreshold = 50; let warmupDetected = false; const warmup15mVols = getCombinedValuesInRange(pData, 'volume', 0, fifteenMinutesMs); const warmup15mFreqs = getCombinedValuesInRange(pData, 'freq', 0, fifteenMinutesMs); const stdDevVol15m = calculateStdDev(warmup15mVols); const stdDevFreq15m = calculateStdDev(warmup15mFreqs); if (warmup15mVols.length > 1 && warmup15mFreqs.length > 1 && stdDevVol15m < warmupVolThreshold && stdDevFreq15m < warmupFreqThreshold) { summary.push("which included a long warmup period (over 15 minutes)"); warmupDetected = true; } if (!warmupDetected) { const warmup10mVols = getCombinedValuesInRange(pData, 'volume', 0, tenMinutesMs); const warmup10mFreqs = getCombinedValuesInRange(pData, 'freq', 0, tenMinutesMs); const stdDevVol10m = calculateStdDev(warmup10mVols); const stdDevFreq10m = calculateStdDev(warmup10mFreqs); if (warmup10mVols.length > 1 && warmup10mFreqs.length > 1 && stdDevVol10m < warmupVolThreshold && stdDevFreq10m < warmupFreqThreshold) { summary.push("starting with a short warmup (around 10 minutes)"); warmupDetected = true; } }
+            // Rest of logic...
+            const slowRampsUsed = allRampRates.some(rate => rate >= 0.1 && rate <= 0.5); if (slowRampsUsed) summary.push("with some slow ramps");
+            const validVolumes = allVolumes.filter(v => typeof v === 'number'); const maxVolume = validVolumes.length > 0 ? Math.max(...validVolumes) : 0; let powerLevelDesc = ""; if (maxVolume > 70) powerLevelDesc = `reaching high power levels (up to ${maxVolume.toFixed(0)}%)`; else if (maxVolume > 40) powerLevelDesc = `reaching medium power levels (up to ${maxVolume.toFixed(0)}%)`; else if (maxVolume > 0) powerLevelDesc = `staying at lower power levels (max ${maxVolume.toFixed(0)}%)`; if (powerLevelDesc) summary.push(powerLevelDesc);
+            const endVolumesL = getValuesInRange(pData.left?.timesMs, pData.left?.params?.volume, endStartTimeMs, durationMs); const endVolumesR = getValuesInRange(pData.right?.timesMs, pData.right?.params?.volume, endStartTimeMs, durationMs); const avgEndVolume = calculateAverage([...endVolumesL, ...endVolumesR]); if (avgEndVolume > 70) { summary.push("finishing strong with high signals towards the end"); } else if (avgEndVolume > 40) { summary.push("maintaining moderate signals towards the end"); } else { summary.push("easing off towards the end"); }
+            const midPointMs = durationMs / 2; const firstHalfAmDepths = allAmDepths.filter((_, i) => allTimes[i] <= midPointMs && typeof allAmDepths[i] === 'number'); const secondHalfAmDepths = allAmDepths.filter((_, i) => allTimes[i] > midPointMs && typeof allAmDepths[i] === 'number'); const avgFirstHalfDepth = calculateAverage(firstHalfAmDepths); const avgSecondHalfDepth = calculateAverage(secondHalfAmDepths); if (avgSecondHalfDepth > avgFirstHalfDepth * 1.1) { summary.push("It felt like it got deeper as it went on"); } else if (avgFirstHalfDepth > avgSecondHalfDepth * 1.1) { summary.push("The depth seemed to ease off over time"); } else if (avgFirstHalfDepth > 0 || avgSecondHalfDepth > 0) { const avgOverallDepth = calculateAverage([...firstHalfAmDepths, ...secondHalfAmDepths]); if(avgOverallDepth > 30) summary.push("The depth remained fairly consistent"); }
+            const promptCount = bottleTimes.length; if (promptCount === 0) { summary.push("No poppers prompts were used"); } else { const avgIntervalMs = durationMs / promptCount; const fifteenMinMs = 15 * 60 * 1000; const tenMinMs = 10 * 60 * 1000; if (avgIntervalMs >= fifteenMinMs) summary.push("There were a few poppers prompts"); else if (avgIntervalMs >= tenMinMs) summary.push("A moderate amount of poppers prompts occurred"); else summary.push("Poppers prompts were used heavily"); }
+            const endTimesL = (pData.left?.timesMs || []).filter(t => t >= endStartTimeMs); const endTimesR = (pData.right?.timesMs || []).filter(t => t >= endStartTimeMs); const endVolsL = (pData.left?.params?.volume || []).filter((_, i) => (pData.left?.timesMs || [])[i] >= endStartTimeMs); const endVolsR = (pData.right?.params?.volume || []).filter((_, i) => (pData.right?.timesMs || [])[i] >= endStartTimeMs); let endEvents = []; endTimesL.forEach((t, i) => endEvents.push({ time: t, volume: endVolsL[i] })); endTimesR.forEach((t, i) => endEvents.push({ time: t, volume: endVolsR[i] })); endEvents.sort((a, b) => a.time - b.time); let directionChanges = 0; let lastDirection = 0; for (let i = 1; i < endEvents.length; i++) { const currentVol = endEvents[i].volume; const prevVol = endEvents[i-1].volume; if (typeof currentVol !== 'number' || typeof prevVol !== 'number') continue; const currentDirection = Math.sign(currentVol - prevVol); if (currentDirection !== 0 && lastDirection !== 0 && currentDirection !== lastDirection) { directionChanges++; } if (currentDirection !== 0) { lastDirection = currentDirection; } } if (directionChanges > 4) { summary.push("Things got pretty wild towards the end with volume changes"); } else if (directionChanges > 1) { summary.push("There were some fluctuations near the finish"); } else { const firstEndVol = endEvents.find(e => typeof e.volume === 'number')?.volume; const lastEndVol = [...endEvents].reverse().find(e => typeof e.volume === 'number')?.volume; if (typeof firstEndVol === 'number' && typeof lastEndVol === 'number' && lastEndVol > firstEndVol * 1.1) { summary.push("There was a mild build-up towards the end"); } }
+            return summary.join(". ") + ".";
+        }
+
+
+        // --- Plotting ---
+
+        // --- Time Formatting Helpers ---
+        function formatMsToHMS(milliseconds) { /* ... same as before ... */
+             try { const seconds = Math.max(0, Number(milliseconds)) / 1000; const totalSeconds = Math.floor(seconds); const hours = Math.floor(totalSeconds / 3600); const minutes = Math.floor((totalSeconds % 3600) / 60); const secs = totalSeconds % 60; return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`; } catch { return "Invalid Time"; }
+        }
+        function formatMsToHM(milliseconds) { /* ... same as before ... */
+            try { const secondsInt = Math.max(0, Math.floor(Number(milliseconds) / 1000)); const totalMinutes = Math.floor(secondsInt / 60); const hours = Math.floor(totalMinutes / 60); const minutes = totalMinutes % 60; if (hours > 0) { return `${hours}h ${minutes}m`; } else { return `${minutes}m`; } } catch { return "Invalid"; }
+        }
+        function getXAxisTitle() { return 'Time (Hours & Minutes)'; }
+
+
+        function updateAllPlots() { /* ... Plotting logic remains the same ... */
+            if (!processedData || totalDurationMs <= 0) { console.warn("No processed data available or zero duration."); return; }
+            const meta = rawMetadata || {}; const driverName = meta.driverName || 'Unknown Driver'; const comments = meta.driverComments || 'No Comments'; const durationStr =
+            formatMsToHMS(totalDurationMs); const scriptVersion = meta.version || 1; const titlePrefix = `Duration: ${durationStr} | ${driverName} - ${comments}, Version ${scriptVersion}`;
+            const plotColors = { freq_l: '#00AEEF', targ_l: '#38BDF8', vol_l: '#67E8F9', amdepth_l: '#00AEEF', fmdepth_l: '#00AEEF', freq_r: '#A5CD39', targ_r: '#BEF264', vol_r: '#84CC16', amdepth_r: '#A5CD39', fmdepth_r: '#A5CD39', amfreq_l_red: '#dd0000', fmfreq_l_red: '#dd0000', amfreq_r_yellow: '#FFFF00', fmfreq_r_yellow: '#FFFF00', paper_bgcolor: '#303030', plot_bgcolor: '#151515', font_color: '#ccc', grid_color: '#444', line_color: '#555', tick_color: '#ccc', bottle_marker_fill: '#FFFF00', bottle_marker_line: '#FF0000' };
+            const tenMinutesInMs = 10 * 60 * 1000; const tickVals = []; const tickText = []; for (let ms = tenMinutesInMs; ms <= totalDurationMs; ms += tenMinutesInMs) { tickVals.push(ms); tickText.push(formatMsToHM(ms)); }
+            const systemFontStack = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+            const baseLayout = { xaxis: { title: { text: getXAxisTitle(), font: { color: plotColors.font_color, family: systemFontStack } }, type: 'date', range: [0, totalDurationMs], tickmode: 'array', tickvals: tickVals, ticktext: tickText, gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } }, legend: { x: 0.01, y: 0.99, font: { color: plotColors.font_color, family: systemFontStack }, bgcolor: 'rgba(48, 48, 48, 0.7)', bordercolor: plotColors.line_color }, margin: { l: 60, r: 60, t: 80, b: 50 }, hovermode: 'x unified', paper_bgcolor: plotColors.paper_bgcolor, plot_bgcolor: plotColors.plot_bgcolor, font: { color: plotColors.font_color, family: systemFontStack } };
+            // Plot 1
+            const traces1 = [];
+             if (processedData.left?.timesMs?.length > 0) { traces1.push({ x: processedData.left.timesMs, y: processedData.left.params.freq, name: 'AP Freq L', yaxis: 'y1', mode: 'lines', line: { color: plotColors.freq_l, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AP Freq L:</b> %{y:.2f}<extra></extra>` }); traces1.push({ x: processedData.left.timesMs, y: processedData.left.params.volume, name: 'Volume Left', yaxis: 'y2', mode: 'lines', line: { color: plotColors.vol_l, width: 3 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>Volume L:</b> %{y:.2f}<extra></extra>` }); }
+             if (processedData.right?.timesMs?.length > 0) { traces1.push({ x: processedData.right.timesMs, y: processedData.right.params.freq, name: 'AP Freq R', yaxis: 'y1', mode: 'lines', line: { color: plotColors.freq_r, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AP Freq R:</b> %{y:.2f}<extra></extra>` }); traces1.push({ x: processedData.right.timesMs, y: processedData.right.params.volume, name: 'Volume Right', yaxis: 'y2', mode: 'lines', line: { color: plotColors.vol_r, width: 3 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>Volume R:</b> %{y:.2f}<extra></extra>` }); }
+            if (bottleEventTimesMs?.length > 0) { traces1.push({ x: bottleEventTimesMs, y: Array(bottleEventTimesMs.length).fill(0), mode: 'markers', name: 'Poppers Prompts', marker: { symbol: 'triangle-up', color: plotColors.bottle_marker_fill, size: 18, line: { color: plotColors.bottle_marker_line, width: 2 } }, yaxis: 'y1', hovertemplate: `<b>Poppers Prompts</b><br>Time: %{x|%H:%M:%S}<extra></extra>`, showlegend: true }); }
+            const layout1 = { ...baseLayout, title: { text: `<b>Basic Parameters</b><br>${titlePrefix}`, font: { color: plotColors.font_color, family: systemFontStack } }, yaxis: { title: { text: 'AP Freq', font: { color: plotColors.font_color, family: systemFontStack } }, range: [0, 1250], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } }, yaxis2: { title: { text: 'Volume', font: { color: plotColors.font_color, family: systemFontStack } }, overlaying: 'y', side: 'right', range: [0, 105], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } } };
+            Plotly.react(plotDiv1, traces1, layout1);
+            // Plot 2
+            const traces2 = [];
+             if (processedData.left?.timesMs?.length > 0) { traces2.push({ x: processedData.left.timesMs, y: processedData.left.params.amDepth, name: 'AM Depth L', yaxis: 'y1', mode: 'lines', line: { color: plotColors.amdepth_l }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth L:</b> %{y:.1f}<extra></extra>` }); traces2.push({ x: processedData.left.timesMs, y: processedData.left.params.amFreq, name: 'AM Freq L', yaxis: 'y2', mode: 'lines', line: { color: plotColors.amfreq_l_red, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq L:</b> %{y:.2f}<extra></extra>` }); }
+             if (processedData.right?.timesMs?.length > 0) { traces2.push({ x: processedData.right.timesMs, y: processedData.right.params.amDepth, name: 'AM Depth R', yaxis: 'y1', mode: 'lines', line: { color: plotColors.amdepth_r }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth R:</b> %{y:.1f}<extra></extra>` }); traces2.push({ x: processedData.right.timesMs, y: processedData.right.params.amFreq, name: 'AM Freq R', yaxis: 'y2', mode: 'lines', line: { color: plotColors.amfreq_r_yellow, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq R:</b> %{y:.2f}<extra></extra>` }); }
+             const layout2 = { ...baseLayout, title: { text: `<b>Amplitude Modulation</b><br>${titlePrefix}`, font: { color: plotColors.font_color, family: systemFontStack } }, yaxis: { title: { text: 'AM Depth', font: { color: plotColors.font_color, family: systemFontStack } }, range: [0, 100], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } }, yaxis2: { title: { text: 'AM Freq', font: { color: plotColors.font_color, family: systemFontStack } }, overlaying: 'y', side: 'right', range: [0, 1.3], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } } };
+             Plotly.react(plotDiv2, traces2, layout2);
+            // Plot 3
+            const traces3 = [];
+             if (processedData.left?.timesMs?.length > 0) { traces3.push({ x: processedData.left.timesMs, y: processedData.left.params.fmDepth, name: 'FM Depth L', yaxis: 'y1', mode: 'lines', line: { color: plotColors.fmdepth_l }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Depth L:</b> %{y:.1f}<extra></extra>` }); traces3.push({ x: processedData.left.timesMs, y: processedData.left.params.fmFreq, name: 'FM Freq L', yaxis: 'y2', mode: 'lines', line: { color: plotColors.fmfreq_l_red, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Freq L:</b> %{y:.2f}<extra></extra>` }); }
+             if (processedData.right?.timesMs?.length > 0) { traces3.push({ x: processedData.right.timesMs, y: processedData.right.params.fmDepth, name: 'FM Depth R', yaxis: 'y1', mode: 'lines', line: { color: plotColors.fmdepth_r }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Depth R:</b> %{y:.1f}<extra></extra>` }); traces3.push({ x: processedData.right.timesMs, y: processedData.right.params.fmFreq, name: 'FM Freq R', yaxis: 'y2', mode: 'lines', line: { color: plotColors.fmfreq_r_yellow, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Freq R:</b> %{y:.2f}<extra></extra>` }); }
+             const layout3 = { ...baseLayout, title: { text: `<b>Frequency Modulation</b><br>${titlePrefix}`, font: { color: plotColors.font_color, family: systemFontStack } }, yaxis: { title: { text: 'FM Depth', font: { color: plotColors.font_color, family: systemFontStack } }, range: [0, 110], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } }, yaxis2: { title: { text: 'FM Freq', font: { color: plotColors.font_color, family: systemFontStack } }, overlaying: 'y', side: 'right', range: [0, 4], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } } };
+            Plotly.react(plotDiv3, traces3, layout3);
+        }
+
+    </script>
+
+</body>
+</html>
