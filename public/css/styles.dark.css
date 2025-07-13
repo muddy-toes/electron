@@ -6,7 +6,17 @@ a {
     color: #ccc;
 }
 
-#main-container,
+#main-container {
+    background: #151515;
+}
+
+.player-container {
+    background: #757575;
+}
+.player-container .time-display {
+    color: white;
+}
+
 #status-message,
 #initialize-audio,
 #ride-info,
@@ -27,8 +37,14 @@ div.color-header {
     color: black;
 }
 
+#left-channel-column,
+#right-channel-column {
+    background: #000;
+}
+
 #left-channel-column .content,
 #right-channel-column .content {
+    background: #404040;
     color: #aaa;
 }
 
