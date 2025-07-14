@@ -403,30 +403,17 @@
         }
 
         function processAllChannels(rawData) {
-          /* ... same as before ... */
-          if (typeof rawData !== 'object' || rawData === null) {
-            showError("Invalid raw data structure: not an object.");
-            return null;
-          }
-          try {
-            const leftData = processChannelData(rawData.left, 'L');
-            const rightData = processChannelData(rawData.right, 'R');
-            if (!leftData && !rightData) return null;
-            return {
-              left: leftData || {
-                timesMs: [],
-                params: {}
-              },
-              right: rightData || {
-                timesMs: [],
-                params: {}
-              }
-            };
-          } catch (error) {
-            console.error("Error processing channel data:", error);
-            showError(`Error processing data: ${error.message}`);
-            return null;
-          }
+            if (typeof rawData !== 'object' || rawData === null) { showError("Invalid raw data structure: not an object."); return null; }
+            try {
+                const leftData = processChannelData(rawData.left, 'L'); 
+                const rightData = processChannelData(rawData.right, 'R');
+                if (!leftData && !rightData) return null;
+                return { 
+                    left: leftData || { timesMs: [], params: {} }, 
+                    right: rightData || { timesMs: [], params: {} } 
+                };
+            }
+            catch (error) { console.error("Error processing channel data:", error); showError(`Error processing data: ${error.message}`); return null; }
         }
 
         function processBottleData(rawData) {
@@ -685,173 +672,25 @@
 
 
         function updateAllPlots() {
-          /* ... Plotting logic remains the same ... */
-          if (!processedData || totalDurationMs <= 0) {
-            console.warn("No processed data available or zero duration.");
-            return;
-          }
-          const meta = rawMetadata || {};
-          const driverName = meta.driverName || 'Unknown Driver';
-          const comments = meta.driverComments || 'No Comments';
-          const durationStr =
-            formatMsToHMS(totalDurationMs);
-          const scriptVersion = meta.version || 1;
-          const titlePrefix = `Duration: ${durationStr} | ${driverName} - ${comments}, Version ${scriptVersion}`;
-          const plotColors = {
-            freq_l: '#00AEEF',
-            targ_l: '#38BDF8',
-            vol_l: '#67E8F9',
-            amdepth_l: '#00AEEF',
-            amdepth2_l: '#00AEEF',
-            fmdepth_l: '#00AEEF',
-            freq_r: '#A5CD39',
-            targ_r: '#BEF264',
-            vol_r: '#84CC16',
-            amdepth_r: '#A5CD39',
-            amdepth2_r: '#A5CD39',
-            fmdepth_r: '#A5CD39',
-            amfreq_l_red: '#dd0000',
-            amfreq2_l_red: '#dd0000',
-            fmfreq_l_red: '#dd0000',
-            amfreq_r_yellow: '#FFFF00',
-            amfreq2_r_yellow: '#FFFF00',
-            fmfreq_r_yellow: '#FFFF00',
-            paper_bgcolor: '#303030',
-            plot_bgcolor: '#151515',
-            font_color: '#ccc',
-            grid_color: '#444',
-            line_color: '#555',
-            tick_color: '#ccc',
-            bottle_marker_fill: '#FFFF00',
-            bottle_marker_line: '#FF0000'
-          };
-          const tenMinutesInMs = 10 * 60 * 1000;
-          const tickVals = [];
-          const tickText = [];
-          for (let ms = tenMinutesInMs; ms <= totalDurationMs; ms += tenMinutesInMs) {
-            tickVals.push(ms);
-            tickText.push(formatMsToHM(ms));
-          }
+          if (!processedData || totalDurationMs <= 0) { console.warn("No processed data available or zero duration."); return; }
+          const meta = rawMetadata || {}; const driverName = meta.driverName || 'Unknown Driver'; const comments = meta.driverComments || 'No Comments'; const durationStr =
+          formatMsToHMS(totalDurationMs); const scriptVersion = meta.version || 1; const titlePrefix = `Duration: ${durationStr} | ${driverName} - ${comments}, Version ${scriptVersion}`;
+          const plotColors = { freq_l: '#00AEEF', targ_l: '#38BDF8', vol_l: '#67E8F9', amdepth_l: '#00AEEF', amdepth2_l: '#00AEEF', fmdepth_l: '#00AEEF', freq_r: '#A5CD39', targ_r: '#BEF264', vol_r: '#84CC16', amdepth_r: '#A5CD39', amdepth2_r: '#A5CD39', fmdepth_r: '#A5CD39', amfreq_l_red: '#dd0000', amfreq2_l_red: '#dd0000', fmfreq_l_red: '#dd0000', amfreq_r_yellow: '#FFFF00', amfreq2_r_yellow: '#FFFF00', fmfreq_r_yellow: '#FFFF00', paper_bgcolor: '#303030', plot_bgcolor: '#151515', font_color: '#ccc', grid_color: '#444', line_color: '#555', tick_color: '#ccc', bottle_marker_fill: '#FFFF00', bottle_marker_line: '#FF0000' };
+          const tenMinutesInMs = 10 * 60 * 1000; const tickVals = []; const tickText = []; for (let ms = tenMinutesInMs; ms <= totalDurationMs; ms += tenMinutesInMs) { tickVals.push(ms); tickText.push(formatMsToHM(ms)); }
           const systemFontStack = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
-          const baseLayout = {
-            xaxis: {
-              title: {
-                text: getXAxisTitle(),
-                font: {
-                  color: plotColors.font_color,
-                  family: systemFontStack
-                }
-              },
-              type: 'date',
-              range: [0, totalDurationMs],
-              tickmode: 'array',
-              tickvals: tickVals,
-              ticktext: tickText,
-              gridcolor: plotColors.grid_color,
-              linecolor: plotColors.line_color,
-              zerolinecolor: plotColors.line_color,
-              tickfont: {
-                color: plotColors.tick_color,
-                family: systemFontStack
-              }
-            },
-            legend: {
-              x: 0.01,
-              y: 0.99,
-              font: {
-                color: plotColors.font_color,
-                family: systemFontStack
-              },
-              bgcolor: 'rgba(48, 48, 48, 0.7)',
-              bordercolor: plotColors.line_color
-            },
-            margin: {
-              l: 60,
-              r: 60,
-              t: 80,
-              b: 50
-            },
-            hovermode: 'x unified',
-            paper_bgcolor: plotColors.paper_bgcolor,
-            plot_bgcolor: plotColors.plot_bgcolor,
-            font: {
-              color: plotColors.font_color,
-              family: systemFontStack
-            }
-          };
+          const baseLayout = { xaxis: { title: { text: getXAxisTitle(), font: { color: plotColors.font_color, family: systemFontStack } }, type: 'date', range: [0, totalDurationMs], tickmode: 'array', tickvals: tickVals, ticktext: tickText, gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } }, legend: { x: 0.01, y: 0.99, font: { color: plotColors.font_color, family: systemFontStack }, bgcolor: 'rgba(48, 48, 48, 0.7)', bordercolor: plotColors.line_color }, margin: { l: 60, r: 60, t: 80, b: 50 }, hovermode: 'x unified', paper_bgcolor: plotColors.paper_bgcolor, plot_bgcolor: plotColors.plot_bgcolor, font: { color: plotColors.font_color, family: systemFontStack } };
           // Plot 1
           const traces1 = [];
           if (processedData.left?.timesMs?.length > 0) {
-            traces1.push({
-              x: processedData.left.timesMs,
-              y: processedData.left.params.freq,
-              name: 'AP Freq L',
-              yaxis: 'y1',
-              mode: 'lines',
-              line: {
-                color: plotColors.freq_l,
-                width: 1
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AP Freq L:</b> %{y:.2f}<extra></extra>`
-            });
-            traces1.push({
-              x: processedData.left.timesMs,
-              y: processedData.left.params.volume,
-              name: 'Volume Left',
-              yaxis: 'y2',
-              mode: 'lines',
-              line: {
-                color: plotColors.vol_l,
-                width: 3
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>Volume L:</b> %{y:.2f}<extra></extra>`
-            });
+            traces1.push({ x: processedData.left.timesMs, y: processedData.left.params.freq, name: 'AP Freq L', yaxis: 'y1', mode: 'lines', line: { color: plotColors.freq_l, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AP Freq L:</b> %{y:.2f}<extra></extra>` });
+            traces1.push({ x: processedData.left.timesMs, y: processedData.left.params.volume, name: 'Volume Left', yaxis: 'y2', mode: 'lines', line: { color: plotColors.vol_l, width: 3 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>Volume L:</b> %{y:.2f}<extra></extra>` });
           }
           if (processedData.right?.timesMs?.length > 0) {
-            traces1.push({
-              x: processedData.right.timesMs,
-              y: processedData.right.params.freq,
-              name: 'AP Freq R',
-              yaxis: 'y1',
-              mode: 'lines',
-              line: {
-                color: plotColors.freq_r,
-                width: 1
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AP Freq R:</b> %{y:.2f}<extra></extra>`
-            });
-            traces1.push({
-              x: processedData.right.timesMs,
-              y: processedData.right.params.volume,
-              name: 'Volume Right',
-              yaxis: 'y2',
-              mode: 'lines',
-              line: {
-                color: plotColors.vol_r,
-                width: 3
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>Volume R:</b> %{y:.2f}<extra></extra>`
-            });
+            traces1.push({ x: processedData.right.timesMs, y: processedData.right.params.freq, name: 'AP Freq R', yaxis: 'y1', mode: 'lines', line: { color: plotColors.freq_r, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AP Freq R:</b> %{y:.2f}<extra></extra>` });
+            traces1.push({ x: processedData.right.timesMs, y: processedData.right.params.volume, name: 'Volume Right', yaxis: 'y2', mode: 'lines', line: { color: plotColors.vol_r, width: 3 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>Volume R:</b> %{y:.2f}<extra></extra>` });
           }
           if (bottleEventTimesMs?.length > 0) {
-            traces1.push({
-              x: bottleEventTimesMs,
-              y: Array(bottleEventTimesMs.length).fill(0),
-              mode: 'markers',
-              name: 'Poppers Prompts',
-              marker: {
-                symbol: 'triangle-up',
-                color: plotColors.bottle_marker_fill,
-                size: 18,
-                line: {
-                  color: plotColors.bottle_marker_line,
-                  width: 2
-                }
-              },
-              yaxis: 'y1',
-              hovertemplate: `<b>Poppers Prompts</b><br>Time: %{x|%H:%M:%S}<extra></extra>`,
-              showlegend: true
-            });
+            traces1.push({ x: bottleEventTimesMs, y: Array(bottleEventTimesMs.length).fill(0), mode: 'markers', name: 'Poppers Prompts', marker: { symbol: 'triangle-up', color: plotColors.bottle_marker_fill, size: 18, line: { color: plotColors.bottle_marker_line, width: 2 } }, yaxis: 'y1', hovertemplate: `<b>Poppers Prompts</b><br>Time: %{x|%H:%M:%S}<extra></extra>`, showlegend: true });
           }
 
           const pData = processedData;
@@ -861,304 +700,50 @@
           const maxFmDepth = Math.max(...[...(pData.left?.params?.fmDepth || []), ...(pData.right?.params?.fmDepth || [])]);
           const maxFmFreq = Math.max(...[...(pData.left?.params?.fmFreq || []), ...(pData.right?.params?.fmFreq || [])]);
 
-          const layout1 = {
-            ...baseLayout,
-            title: {
-              text: `<b>Basic Parameters</b><br>${titlePrefix}`,
-              font: {
-                color: plotColors.font_color,
-                family: systemFontStack
-              }
-            },
-            yaxis: {
-              title: {
-                text: 'AP Freq',
-                font: {
-                  color: plotColors.font_color,
-                  family: systemFontStack
-                }
-              },
-              range: [0, maxAPFreq * 1.1],
-              gridcolor: plotColors.grid_color,
-              linecolor: plotColors.line_color,
-              zerolinecolor: plotColors.line_color,
-              tickfont: {
-                color: plotColors.tick_color,
-                family: systemFontStack
-              }
-            },
-            yaxis2: {
-              title: {
-                text: 'Volume',
-                font: {
-                  color: plotColors.font_color,
-                  family: systemFontStack
-                }
-              },
-              overlaying: 'y',
-              side: 'right',
-              range: [0, 105],
-              gridcolor: plotColors.grid_color,
-              linecolor: plotColors.line_color,
-              zerolinecolor: plotColors.line_color,
-              tickfont: {
-                color: plotColors.tick_color,
-                family: systemFontStack
-              }
-            }
-          };
+          const layout1 = { ...baseLayout, title: { text: `<b>Basic Parameters</b><br>${titlePrefix}`, font: { color: plotColors.font_color, family: systemFontStack } }, yaxis: { title: { text: 'AP Freq', font: { color: plotColors.font_color, family: systemFontStack } }, range: [0, maxAPFreq * 1.1], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } }, yaxis2: { title: { text: 'Volume', font: { color: plotColors.font_color, family: systemFontStack } }, overlaying: 'y', side: 'right', range: [0, 105], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } } };
           Plotly.react(plotDiv1, traces1, layout1);
           // Plot 2
           const traces2 = [];
           if (processedData.left?.timesMs?.length > 0) {
-            traces2.push({
-              x: processedData.left.timesMs,
-              y: processedData.left.params.amDepth,
-              name: 'AM Depth L',
-              yaxis: 'y1',
-              mode: 'lines',
-              line: {
-                color: plotColors.amdepth_l
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth L:</b> %{y:.1f}<extra></extra>`
-            });
-            traces2.push({
-              x: processedData.left.timesMs,
-              y: processedData.left.params.amFreq,
-              name: 'AM Freq L',
-              yaxis: 'y2',
-              mode: 'lines',
-              line: {
-                color: plotColors.amfreq_l_red,
-                width: 1
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq L:</b> %{y:.2f}<extra></extra>`
-            });
+            traces2.push({ x: processedData.left.timesMs, y: processedData.left.params.amDepth, name: 'AM Depth L', yaxis: 'y1', mode: 'lines', line: { color: plotColors.amdepth_l }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth L:</b> %{y:.1f}<extra></extra>` });
+            traces2.push({ x: processedData.left.timesMs, y: processedData.left.params.amFreq, name: 'AM Freq L', yaxis: 'y2', mode: 'lines', line: { color: plotColors.amfreq_l_red, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq L:</b> %{y:.2f}<extra></extra>` });
             console.log("PD %o", processedData);
             if (processedData.left.params.amDepth2.filter((d) => d !== null).length > 0) {
-							traces2.push({
-								x: processedData.left.timesMs,
-								y: processedData.left.params.amDepth2,
-								name: 'AM Depth 2 L',
-								yaxis: 'y1',
-								mode: 'lines',
-								line: {
-									color: plotColors.amdepth2_l
-								},
-								hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth 2 L:</b> %{y:.1f}<extra></extra>`
-							});
-							traces2.push({
-								x: processedData.left.timesMs,
-								y: processedData.left.params.amFreq2,
-								name: 'AM Freq 2 L',
-								yaxis: 'y2',
-								mode: 'lines',
-								line: {
-									color: plotColors.amfreq2_l_red,
-									width: 1
-								},
-								hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq 2 L:</b> %{y:.2f}<extra></extra>`
-							});
+				traces2.push({ x: processedData.left.timesMs, y: processedData.left.params.amDepth2, name: 'AM Depth 2 L', yaxis: 'y1', mode: 'lines', line: { color: plotColors.amdepth2_l }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth 2 L:</b> %{y:.1f}<extra></extra>` });
+				traces2.push({ x: processedData.left.timesMs, y: processedData.left.params.amFreq2, name: 'AM Freq 2 L', yaxis: 'y2', mode: 'lines', line: { color: plotColors.amfreq2_l_red, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq 2 L:</b> %{y:.2f}<extra></extra>` });
             }
           }
           if (processedData.right?.timesMs?.length > 0) {
-            traces2.push({
-              x: processedData.right.timesMs,
-              y: processedData.right.params.amDepth,
-              name: 'AM Depth R',
-              yaxis: 'y1',
-              mode: 'lines',
-              line: {
-                color: plotColors.amdepth_r
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth R:</b> %{y:.1f}<extra></extra>`
-            });
-            traces2.push({
-              x: processedData.right.timesMs,
-              y: processedData.right.params.amFreq,
-              name: 'AM Freq R',
-              yaxis: 'y2',
-              mode: 'lines',
-              line: {
-                color: plotColors.amfreq_r_yellow,
-                width: 1
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq R:</b> %{y:.2f}<extra></extra>`
-            });
+            traces2.push({ x: processedData.right.timesMs, y: processedData.right.params.amDepth, name: 'AM Depth R', yaxis: 'y1', mode: 'lines', line: { color: plotColors.amdepth_r }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth R:</b> %{y:.1f}<extra></extra>` });
+            traces2.push({ x: processedData.right.timesMs, y: processedData.right.params.amFreq, name: 'AM Freq R', yaxis: 'y2', mode: 'lines', line: { color: plotColors.amfreq_r_yellow, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq R:</b> %{y:.2f}<extra></extra>` });
             if (processedData.right.params.amDepth2.filter((d) => d !== null).length > 0) {
-                traces2.push({
-                  x: processedData.right.timesMs,
-                  y: processedData.right.params.amDepth2,
-                  name: 'AM Depth 2 R',
-                  yaxis: 'y1',
-                  mode: 'lines',
-                  line: {
-                    color: plotColors.amdepth_r
-                  },
-                  hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth 2 R:</b> %{y:.1f}<extra></extra>`
-                });
-                traces2.push({
-                  x: processedData.right.timesMs,
-                  y: processedData.right.params.amFreq2,
-                  name: 'AM Freq 2 R',
-                  yaxis: 'y2',
-                  mode: 'lines',
-                  line: {
-                    color: plotColors.amfreq_r_yellow,
-                    width: 1
-                  },
-                  hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq 2 R:</b> %{y:.2f}<extra></extra>`
-                });
+                traces2.push({ x: processedData.right.timesMs, y: processedData.right.params.amDepth2, name: 'AM Depth 2 R', yaxis: 'y1', mode: 'lines', line: { color: plotColors.amdepth_r }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Depth 2 R:</b> %{y:.1f}<extra></extra>` });
+                traces2.push({ x: processedData.right.timesMs, y: processedData.right.params.amFreq2, name: 'AM Freq 2 R', yaxis: 'y2', mode: 'lines', line: { color: plotColors.amfreq_r_yellow, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq 2 R:</b> %{y:.2f}<extra></extra>` });
             }
           }
-          const layout2 = {
-            ...baseLayout,
-            title: {
-              text: `<b>Amplitude Modulation</b><br>${titlePrefix}`,
-              font: {
-                color: plotColors.font_color,
-                family: systemFontStack
-              }
-            },
-            yaxis: {
-              title: {
-                text: 'AM Depth',
-                font: {
-                  color: plotColors.font_color,
-                  family: systemFontStack
-                }
-              },
-              range: [0, maxAmDepth * 1.1],
-              gridcolor: plotColors.grid_color,
-              linecolor: plotColors.line_color,
-              zerolinecolor: plotColors.line_color,
-              tickfont: {
-                color: plotColors.tick_color,
-                family: systemFontStack
-              }
-            },
-            yaxis2: {
-              title: {
-                text: 'AM Freq',
-                font: {
-                  color: plotColors.font_color,
-                  family: systemFontStack
-                }
-              },
-              overlaying: 'y',
-              side: 'right',
-              range: [0, maxAmFreq * 1.1],
-              gridcolor: plotColors.grid_color,
-              linecolor: plotColors.line_color,
-              zerolinecolor: plotColors.line_color,
-              tickfont: {
-                color: plotColors.tick_color,
-                family: systemFontStack
-              }
-            }
-          };
+          const layout2 = { ...baseLayout, title: { text: `<b>Amplitude Modulation</b><br>${titlePrefix}`, font: { color: plotColors.font_color, family: systemFontStack } }, yaxis: { title: { text: 'AM Depth', font: { color: plotColors.font_color, family: systemFontStack } }, range: [0, maxAmDepth * 1.1], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } }, yaxis2: { title: { text: 'AM Freq', font: { color: plotColors.font_color, family: systemFontStack } }, overlaying: 'y', side: 'right', range: [0, maxAmFreq * 1.1], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } } };
           Plotly.react(plotDiv2, traces2, layout2);
           // Plot 3
           const traces3 = [];
           if (processedData.left?.timesMs?.length > 0) {
-            traces3.push({
-              x: processedData.left.timesMs,
-              y: processedData.left.params.fmDepth,
-              name: 'FM Depth L',
-              yaxis: 'y1',
-              mode: 'lines',
-              line: {
-                color: plotColors.fmdepth_l
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Depth L:</b> %{y:.1f}<extra></extra>`
-            });
-            traces3.push({
-              x: processedData.left.timesMs,
-              y: processedData.left.params.fmFreq,
-              name: 'FM Freq L',
-              yaxis: 'y2',
-              mode: 'lines',
-              line: {
-                color: plotColors.fmfreq_l_red,
-                width: 1
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Freq L:</b> %{y:.2f}<extra></extra>`
-            });
+            traces3.push({ x: processedData.left.timesMs, y: processedData.left.params.fmDepth, name: 'FM Depth L', yaxis: 'y1', mode: 'lines', line: { color: plotColors.fmdepth_l }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Depth L:</b> %{y:.1f}<extra></extra>` });
+            traces3.push({ x: processedData.left.timesMs, y: processedData.left.params.fmFreq, name: 'FM Freq L', yaxis: 'y2', mode: 'lines', line: { color: plotColors.fmfreq_l_red, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Freq L:</b> %{y:.2f}<extra></extra>` });
           }
           if (processedData.right?.timesMs?.length > 0) {
-            traces3.push({
-              x: processedData.right.timesMs,
-              y: processedData.right.params.fmDepth,
-              name: 'FM Depth R',
-              yaxis: 'y1',
-              mode: 'lines',
-              line: {
-                color: plotColors.fmdepth_r
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Depth R:</b> %{y:.1f}<extra></extra>`
-            });
-            traces3.push({
-              x: processedData.right.timesMs,
-              y: processedData.right.params.fmFreq,
-              name: 'FM Freq R',
-              yaxis: 'y2',
-              mode: 'lines',
-              line: {
-                color: plotColors.fmfreq_r_yellow,
-                width: 1
-              },
-              hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Freq R:</b> %{y:.2f}<extra></extra>`
-            });
+            traces3.push({ x: processedData.right.timesMs, y: processedData.right.params.fmDepth, name: 'FM Depth R', yaxis: 'y1', mode: 'lines', line: { color: plotColors.fmdepth_r }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Depth R:</b> %{y:.1f}<extra></extra>` });
+            traces3.push({ x: processedData.right.timesMs, y: processedData.right.params.fmFreq, name: 'FM Freq R', yaxis: 'y2', mode: 'lines', line: { color: plotColors.fmfreq_r_yellow, width: 1 }, hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>FM Freq R:</b> %{y:.2f}<extra></extra>` });
           }
-          const layout3 = {
-            ...baseLayout,
-            title: {
-              text: `<b>Frequency Modulation</b><br>${titlePrefix}`,
-              font: {
-                color: plotColors.font_color,
-                family: systemFontStack
-              }
-            },
-            yaxis: {
-              title: {
-                text: 'FM Depth',
-                font: {
-                  color: plotColors.font_color,
-                  family: systemFontStack
-                }
-              },
-              range: [0, maxFmDepth * 1.1],
-              gridcolor: plotColors.grid_color,
-              linecolor: plotColors.line_color,
-              zerolinecolor: plotColors.line_color,
-              tickfont: {
-                color: plotColors.tick_color,
-                family: systemFontStack
-              }
-            },
-            yaxis2: {
-              title: {
-                text: 'FM Freq',
-                font: {
-                  color: plotColors.font_color,
-                  family: systemFontStack
-                }
-              },
-              overlaying: 'y',
-              side: 'right',
-              range: [0, maxFmFreq * 1.1],
-              gridcolor: plotColors.grid_color,
-              linecolor: plotColors.line_color,
-              zerolinecolor: plotColors.line_color,
-              tickfont: {
-                color: plotColors.tick_color,
-                family: systemFontStack
-              }
-            }
-          };
+          const layout3 = { ...baseLayout, title: { text: `<b>Frequency Modulation</b><br>${titlePrefix}`, font: { color: plotColors.font_color, family: systemFontStack } }, yaxis: { title: { text: 'FM Depth', font: { color: plotColors.font_color, family: systemFontStack } }, range: [0, maxFmDepth * 1.1], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } }, yaxis2: { title: { text: 'FM Freq', font: { color: plotColors.font_color, family: systemFontStack } }, overlaying: 'y', side: 'right', range: [0, maxFmFreq * 1.1], gridcolor: plotColors.grid_color, linecolor: plotColors.line_color, zerolinecolor: plotColors.line_color, tickfont: { color: plotColors.tick_color, family: systemFontStack } } };
           Plotly.react(plotDiv3, traces3, layout3);
         }
     </script>
-
+<script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script><script>
+        kofiWidgetOverlay.draw('stimstation', {
+          'type': 'floating-chat',
+          'floating-chat.donateButton.text': 'Support Us',
+          'floating-chat.donateButton.background-color': '#FF5E5B',
+          'floating-chat.donateButton.text-color': '#fff'
+        });
+      </script>
 </body>
 </html>
