@@ -56,7 +56,9 @@ function drawLissajous() {
     /* Amplitude */
     /*************/
     let amplL = wavLa.waveform();
+    let amplL2 = wavLa2.waveform();
     let amplR = wavRa.waveform();
+    let amplR2 = wavRa2.waveform();
 
     // vertical line at left channel volume
     const xA = map(leftOsc.getAmp(), 0, 1, (width - height) / 2, (width + height) / 2);
@@ -69,11 +71,11 @@ function drawLissajous() {
     line((width - height) / 2, yA, (width + height) / 2, yA);
 
     // Lissajous
-    plotLength = Math.min(amplL.length, amplR.length);
+    plotLength = Math.min(amplL.length, amplL2.length, amplR.length, amplR2.length);
     beginShape();
     for (let iLR = 0; iLR < plotLength; iLR++) {
-        let ml = Math.abs(leftOsc.getAmp() + amplL[iLR]);
-        let mr = Math.abs(rightOsc.getAmp() + amplR[iLR]);
+        let ml = Math.abs(leftOsc.getAmp() + amplL[iLR] + amplL2[iLR]);
+        let mr = Math.abs(rightOsc.getAmp() + amplR[iLR] + amplR2[iLR]);
         let al = Math.min(ml, 1);
         let ar = Math.min(mr, 1);
         if (ml > 1 || mr > 1) {

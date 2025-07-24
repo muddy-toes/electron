@@ -162,6 +162,9 @@ $(function () {
             $(channelSel + 'select[name="am-type"]').val(step['amType']);
             $(channelSel + 'input[name="am-depth"]').val(step['amDepth']);
             $(channelSel + 'input[name="am-frequency"]').val(step['amFreq']);
+            $(channelSel + 'select[name="am2-type"]').val(step['amType2']);
+            $(channelSel + 'input[name="am2-depth"]').val(step['amDepth2']);
+            $(channelSel + 'input[name="am2-frequency"]').val(step['amFreq2']);
             $(channelSel + 'select[name="fm-type"]').val(step['fmType']);
             $(channelSel + 'input[name="fm-depth"]').val(step['fmDepth']);
             $(channelSel + 'input[name="fm-frequency"]').val(step['fmFreq']);
@@ -392,6 +395,9 @@ $(function () {
             $channelCol.find('select[name="am-type"]').val(msg.amType).selectmenu('refresh');
             $channelCol.find('input[name="am-depth"]').val(clamp(msg.amDepth, 0, 100));
             $channelCol.find('input[name="am-frequency"]').val(clamp(msg.amFreq, 0, 100));
+            $channelCol.find('select[name="am2-type"]').val(msg.amType2).selectmenu('refresh');
+            $channelCol.find('input[name="am2-depth"]').val(clamp(msg.amDepth2, 0, 100));
+            $channelCol.find('input[name="am2-frequency"]').val(clamp(msg.amFreq2, 0, 100));
             $channelCol.find('select[name="fm-type"]').val(msg.fmType).selectmenu('refresh');
             $channelCol.find('input[name="fm-depth"]').val(clamp(msg.fmDepth, 0, 1000));
             $channelCol.find('input[name="fm-frequency"]').val(clamp(msg.fmFreq, 0, 100));
@@ -620,6 +626,9 @@ $(function () {
                     amType: $(channelSel + 'select[name="am-type"]').val(),
                     amDepth: parseFloat($(channelSel + 'input[name="am-depth"]').val()),
                     amFreq: parseFloat($(channelSel + 'input[name="am-frequency"]').val()),
+                    amType2: $(channelSel + 'select[name="am2-type"]').val(),
+                    amDepth2: parseFloat($(channelSel + 'input[name="am2-depth"]').val()),
+                    amFreq2: parseFloat($(channelSel + 'input[name="am2-frequency"]').val()),
                     fmType: $(channelSel + 'select[name="fm-type"]').val(),
                     fmDepth: parseFloat($(channelSel + 'input[name="fm-depth"]').val()),
                     fmFreq: parseFloat($(channelSel + 'input[name="fm-frequency"]').val()),
