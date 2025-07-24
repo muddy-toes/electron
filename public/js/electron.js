@@ -15,8 +15,8 @@ $(document).ready(function () {
     $('select').selectmenu();
 
     // register UI events
-    addListenerToApply('left', leftOsc, modL, fModL);
-    addListenerToApply('right', rightOsc, modR, fModR);
+    addListenerToApply('left', leftOsc, modL, fModL, modL2);
+    addListenerToApply('right', rightOsc, modR, fModR, modR2);
 
     initPainTool('left');
     initPainTool('right');
@@ -35,10 +35,10 @@ $(document).ready(function () {
     });
 
 
-    function addListenerToApply(channelName, osc, ampModulator, freqModulator) {
+    function addListenerToApply(channelName, osc, ampModulator, freqModulator, ampModulator2) {
         const chSelector = '#' + channelName + '-channel-column ';
         $(chSelector + '.apply-btn').click(function () {
-            applyChanges(channelName, osc, ampModulator, freqModulator);
+            applyChanges(channelName, osc, ampModulator, freqModulator, ampModulator2);
             // send event to communication module can capture it
             $(window).trigger('applied-' + channelName);
         });
@@ -46,7 +46,7 @@ $(document).ready(function () {
         $(chSelector + ' input').keydown(function (e) {
             if (e.keyCode == 13) {
                 // return key was pressed
-                applyChanges(channelName, osc, ampModulator, freqModulator);
+                applyChanges(channelName, osc, ampModulator, freqModulator, ampModulator2);
                 // send event to communication module can capture it
                 $(window).trigger('applied-' + channelName);
             } else if (e.keyCode == 27) {
@@ -59,7 +59,7 @@ $(document).ready(function () {
     }
 
 
-    function applyChanges(channelName, osc, ampModulator, freqModulator) {
+    function applyChanges(channelName, osc, ampModulator, freqModulator, ampModulator2) {
         const chSelector = '#' + channelName + '-channel-column ';
 
         // NOTE: If you change any of these ranges, also change it in in the socket.on in public/js/communication.js
@@ -67,6 +67,8 @@ $(document).ready(function () {
         validateRange($(chSelector + 'input[name="volume"]'), 0, 100);
         validateRange($(chSelector + 'input[name="am-depth"]'), 0, 100);
         validateRange($(chSelector + 'input[name="am-frequency"]'), 0, 100);
+        validateRange($(chSelector + 'input[name="am2-depth"]'), 0, 100);
+        validateRange($(chSelector + 'input[name="am2-frequency"]'), 0, 100);
         validateRange($(chSelector + 'input[name="fm-depth"]'), 0, 1000);
         validateRange($(chSelector + 'input[name="fm-frequency"]'), 0, 100);
         validateRange($(chSelector + 'input[name="ramp-rate"]'), 0, 10);
@@ -78,6 +80,9 @@ $(document).ready(function () {
         const amDepth = 0.01 * parseFloat($(chSelector + 'input[name="am-depth"]').val());
         const amFrequency = parseFloat($(chSelector + 'input[name="am-frequency"]').val());
         const amType = $(chSelector + 'select[name="am-type"]').val();
+        const amDepth2 = 0.01 * parseFloat($(chSelector + 'input[name="am2-depth"]').val());
+        const amFrequency2 = parseFloat($(chSelector + 'input[name="am2-frequency"]').val());
+        const amType2 = $(chSelector + 'select[name="am2-type"]').val();
 
         const fmDepth = parseFloat($(chSelector + 'input[name="fm-depth"]').val());
         const fmFrequency = parseFloat($(chSelector + 'input[name="fm-frequency"]').val());
@@ -104,6 +109,26 @@ $(document).ready(function () {
             osc.amp(volume, 0.5);
             ampModulator.amp(0);
         }
+
+        // second A.M.
+        if (amFrequency2 > 0 && amDepth2 > 0 && amType2 != 'none') {
+            // A.M. is on
+            ampModulator2.freq(amFrequency2);
+            ampModulator2.amp(amDepth2);
+            ampModulator2.setType(amType2);
+            // ampModulator.phase(0); // This does not appear to reset the phase, possibly a bug in p5.Oscillator.
+            // Restart the oscillator. Will stop the oscillator first if already started.
+            // This restart allows the driver to reset the phase by clicking Apply, even if no changes were made.
+            // If Apply button is eventually removed, it would still be nice to have phase reset button(s) for amplitude and frequency modulators.
+            ampModulator2.start();
+            osc.amp(volume, 0.5);
+            osc.amp(ampModulator2);
+        } else {
+            // A.M. is off
+            osc.amp(volume, 0.5);
+            ampModulator2.amp(0);
+        }
+
 
         // handle F.M.
         if (fmFrequency > 0 && fmDepth > 0 && fmType != 'none') {

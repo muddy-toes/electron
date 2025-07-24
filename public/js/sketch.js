@@ -1,13 +1,6 @@
 // the connection between electron and the sound generation capabilities
 // of the p5 library. it initializes all the necessary oscillators, as well
 // as drawing the waveforms in the signal monitor.
-let fftL;
-let fftR;
-let fftLa;
-let fftRa;
-let fftLf;
-let fftRf;
-
 function getModulationOscillator() {
     const newOscillator = new p5.Oscillator('sine');
     newOscillator.disconnect();
@@ -26,6 +19,8 @@ rightOsc.pan(1);
 // Initialize oscillators used for Amplitude Modulation
 const modL = getModulationOscillator();
 const modR = getModulationOscillator();
+const modL2 = getModulationOscillator();
+const modR2 = getModulationOscillator();
 
 // Initialize oscillators used for Frequency Modulation
 const fModL = getModulationOscillator();
@@ -74,7 +69,9 @@ function setup() {
 
     // Waveform buffers used to sample AM and FM oscillators
     wavLa = new p5.FFT(undefined, bins);
+    wavLa2 = new p5.FFT(undefined, bins);
     wavRa = new p5.FFT(undefined, bins);
+    wavRa2 = new p5.FFT(undefined, bins);
     wavLf = new p5.FFT(undefined, bins);
     wavRf = new p5.FFT(undefined, bins);
 
@@ -84,6 +81,8 @@ function setup() {
     wavR.setInput(rightOsc);
     wavLa.setInput(modL);
     wavRa.setInput(modR);
+    wavLa2.setInput(modL2);
+    wavRa2.setInput(modR2);
     wavLf.setInput(fModL);
     wavRf.setInput(fModR);
 

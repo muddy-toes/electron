@@ -34,12 +34,13 @@ function drawVuMeter() {
 
     if (leftOsc.started) {
         let amplL = wavLa.waveform();
+        let amplL2 = wavLa2.waveform();
         // NOTE: Need to pass a string to wavLf.waveform() otherwise clips to [-1,1]
         let freqL = wavLf.waveform('float');
         // NOTE: Total amplitude (volume + AM depth) can be greater than 1,
         // resulting in clipping and distortion of the tone.
         // However, we clamp the VU Meter to a maximum of 1.
-        let leftMax = Math.abs(leftOsc.getAmp() + amplL[0]);
+        let leftMax = Math.abs(leftOsc.getAmp() + amplL[0] + amplL2[0]);
         let leftAmpl = Math.min(leftMax, 1);
         leftFreq = leftOsc.getFreq() + freqL[0];
 
@@ -54,8 +55,9 @@ function drawVuMeter() {
 
     if (rightOsc.started) {
         let amplR = wavRa.waveform();
+        let amplR2 = wavRa2.waveform();
         let freqR = wavRf.waveform('float');
-        let rightMax = Math.abs(rightOsc.getAmp() + amplR[0]);
+        let rightMax = Math.abs(rightOsc.getAmp() + amplR[0] + amplR2[0]);
         let rightAmpl = Math.min(rightMax, 1);
         rightFreq = rightOsc.getFreq() + freqR[0];
 

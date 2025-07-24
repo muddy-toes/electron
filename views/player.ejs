@@ -217,6 +217,28 @@
             <input name="am-depth" value="10" class="spinner-change-rate"> %
           </div>
 
+          <div class="amp2" style='display:none'><!-- This second amplitude modulator is only for SmartStim4 file playback -->
+            <hr style='opacity:0.3; width:60%'/>
+            <div class="form-row">
+              <label title="The type of waveform to use for amplitude (volume) modulation." style="cursor:help">A.M. Type 2</label>
+              <select name="am2-type">
+                <option value="none">None</option>
+                <option value="sine">Sine</option>
+                <option value="sawtooth">Sawtooth</option>
+                <option value="square">Square</option>
+                <option value="triangle">Triangle</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label title="How many times per second the amplitude (volume) modulation will be performed." style="cursor:help">A.M. Frequency 2</label>
+              <input name="am2-frequency" value="10" class="spinner-change-rate">
+            </div>
+            <div class="form-row">
+              <label title="How many percentage points the amplitude (volume) will be altered by in each cycle. For example, if your current volume is 75% and you set the A.M. Depth to 5% the volume will oscillate between 70% and 80%." style="cursor:help">A.M. Depth 2</label>
+              <input name="am2-depth" value="10" class="spinner-change-rate"> %
+            </div>
+          </div>
+
           <h3>Frequency Modulation</h3>
           <div class="form-row">
             <label title="The type of waveform to use for frequency modulation." style="cursor:help">F.M.
