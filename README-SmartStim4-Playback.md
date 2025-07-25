@@ -18,3 +18,6 @@ widely used:
   - Currently the volume On, Off, Target, and Offset numbers are ignored.  I plan to support those as they look
     widely used, I just haven't done it yet.
 
+  - ss4 supports ramping not only for volume but also for every other setting.  I play to support that as well,
+    but haven't done it yet.
+
