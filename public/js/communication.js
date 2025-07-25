@@ -357,7 +357,7 @@ $(function () {
             if (this.files && this.files[0]) {
                 const filename = this.files[0].name;
                 let filetype = 'electron';
-                if (filename.match(/\.(SmrtStim4|ss4)$/)) {
+                if (filename.match(/\.(SmrtStm4|ss4)$/)) {
                   filetype = 'ss4';
                 }
                 const reader = new FileReader();
