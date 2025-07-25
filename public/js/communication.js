@@ -33,6 +33,100 @@ $(function () {
 
     let position_dragging = false;
 
+    const ss4TagMap = {
+        volume: 'Vol',
+        rampRate: 'VolC',
+        freq: 'BF',
+        amType: 'PAM_Pattern',
+        amDepth: 'PAM_MD',
+        amFreq: 'PAM_MF',
+        amType2: 'SAM_Pattern',
+        amDepth2: 'SAM_MD',
+        amFreq2: 'SAM_MF',
+        fmType: 'BFM_Pattern',
+        fmDepth: 'BFM_MD',
+        fmFreq: 'BFM_MF'
+    };
+
+    function getSubtrackValue(xml, tagName) {
+        const tag = xml.getElementsByTagName(tagName)[0];
+        if (tag === undefined) return;
+        const val = tag.getAttribute('V');
+        if (tagName.match(/_Pattern$/)) return tag.getAttribute('Type');
+        if (val.match(/[0-9]/)) return parseFloat(val.replace(/,/, '.'));
+        if (val.match(/True/)) return true;
+        if (val.match(/False/)) return false;
+    }
+
+    function convertSS4Step(step) {
+        let out = {};
+        Object.keys(ss4TagMap).forEach(function(key) {
+          let val = getSubtrackValue(step, ss4TagMap[key]);
+          if (val === undefined)
+              return;
+
+          /* ss4 expresses volume as 0-1 */
+          if (key == 'volume')
+              val *= 100;
+
+          out[key] = val;
+        });
+
+        if (Number.isFinite(out['rampRate']))
+          if (out['rampRate'] > 0)
+              out['rampTarget'] = 100;
+          else
+              out['rampTarget'] = 0;
+
+        if (out['amType'] === undefined && out['amFreq'] !== 0 && out['amDepth'] !== 0)
+            out['amType'] = 'sine';
+
+        if (out['amType2'] === undefined && out['amFreq2'] !== 0 && out['amDepth2'] !== 0)
+            out['amType2'] = 'sine';
+
+        if (out['fmType'] === undefined && out['fmFreq'] !== 0 && out['fmDepth'] !== 0)
+            out['fmType'] = 'sine';
+
+        return out;
+    }
+
+    /* Compatibility Note:
+     *   This does not support the SineSquare modulation types because
+     *   in the > 1000 SmrtStim4 files I have, not one uses them.
+     */
+    function convertSS4ToElectron(xmlstring) {
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlstring, 'text/xml');
+        let out = { meta: { version: 2 }, left: [], right: [] };
+        let scriptTime = 0;
+
+        const session = xml.getElementsByTagName('Session')[0];
+        if (session !== undefined) {
+            out['meta']['driverName'] = session.getAttribute('Creator')
+            out['meta']['driverComments'] = session.getAttribute('Name') + " " + session.getAttribute('Description')
+        }
+
+        const tracks = xml.getElementsByTagName('Track');
+        Array.from(tracks).forEach(function(track) {
+            const trackTime = parseInt(track.getAttribute('Time')) * 1000;
+            if (isNaN(trackTime)) return;
+            const subtracks = track.getElementsByTagName('Subtrack')
+            const left = subtracks[0];
+            const leftstep = convertSS4Step(left);
+            if (Object.keys(leftstep).length > 0)
+                out['left'].push({ stamp: scriptTime, message: leftstep });
+
+            const right = subtracks[1];
+            const rightstep = convertSS4Step(right);
+            if (Object.keys(rightstep).length > 0)
+                out['right'].push({ stamp: scriptTime, message: rightstep });
+
+            scriptTime += trackTime + 1000;
+        });
+        
+        return out;
+    }
+
     function resetChannelPositions() {
         channel_pos = {};
         channels.forEach((ch) => channel_pos[ch] = 0);
@@ -156,21 +250,21 @@ $(function () {
           socket.emit('triggerBottle', { sessId: sessId, driverToken: driverToken, bottleDuration: secs });
           bottle_countdown(secs);
         } else {
-            const channelSel = '#' + channel + '-channel-column ';
-            $(channelSel + 'input[name="volume"]').val(step['volume']);
-            $(channelSel + 'input[name="frequency"]').val(step['freq']);
-            $(channelSel + 'select[name="am-type"]').val(step['amType']);
-            $(channelSel + 'input[name="am-depth"]').val(step['amDepth']);
-            $(channelSel + 'input[name="am-frequency"]').val(step['amFreq']);
-            $(channelSel + 'select[name="am2-type"]').val(step['amType2']);
-            $(channelSel + 'input[name="am2-depth"]').val(step['amDepth2']);
-            $(channelSel + 'input[name="am2-frequency"]').val(step['amFreq2']);
-            $(channelSel + 'select[name="fm-type"]').val(step['fmType']);
-            $(channelSel + 'input[name="fm-depth"]').val(step['fmDepth']);
-            $(channelSel + 'input[name="fm-frequency"]').val(step['fmFreq']);
-            $(channelSel + 'input[name="ramp-target"]').val(step['rampTarget']);
-            $(channelSel + 'input[name="ramp-rate"]').val(step['rampRate']);
-            $(channelSel + '.apply-btn').click();
+            const $channelCol = $(`#${channel}-channel-column`);
+            if (step['volume'] !== undefined) $channelCol.find('input[name="volume"]').val(step['volume']);
+            if (step['freq'] !== undefined) $channelCol.find('input[name="frequency"]').val(step['freq']);
+            if (step['amType'] !== undefined) $channelCol.find('select[name="am-type"]').val(step['amType']).selectmenu('refresh');
+            if (step['amDepth'] !== undefined) $channelCol.find('input[name="am-depth"]').val(step['amDepth']);
+            if (step['amFreq'] !== undefined) $channelCol.find('input[name="am-frequency"]').val(step['amFreq']);
+            if (step['amType2'] !== undefined) $channelCol.find('select[name="am2-type"]').val(step['amType2']).selectmenu('refresh');
+            if (step['amDepth2'] !== undefined) $channelCol.find('input[name="am2-depth"]').val(step['amDepth2']);
+            if (step['amFreq2'] !== undefined) $channelCol.find('input[name="am2-frequency"]').val(step['amFreq2']);
+            if (step['fmType'] !== undefined) $channelCol.find('select[name="fm-type"]').val(step['fmType']).selectmenu('refresh');
+            if (step['fmDepth'] !== undefined) $channelCol.find('input[name="fm-depth"]').val(step['fmDepth']);
+            if (step['fmFreq'] !== undefined) $channelCol.find('input[name="fm-frequency"]').val(step['fmFreq']);
+            if (step['rampTarget'] !== undefined) $channelCol.find('input[name="ramp-target"]').val(step['rampTarget']);
+            if (step['rampRate'] !== undefined) $channelCol.find('input[name="ramp-rate"]').val(step['rampRate']);
+            $channelCol.find('.apply-btn').click();
           }
     }
 
@@ -262,10 +356,25 @@ $(function () {
         $("#load-file-picker").change(function(){
             if (this.files && this.files[0]) {
                 const filename = this.files[0].name;
+                let filetype = 'electron';
+                if (filename.match(/\.(SmrtStim4|ss4)$/)) {
+                  filetype = 'ss4';
+                }
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     try {
-                        script = JSON.parse(e.target.result);
+                        switch (filetype) {
+                          case 'ss4':
+                            window.ss4 = e.target.result; // DEBUG
+                            script = convertSS4ToElectron(e.target.result);
+                            break;
+                          case 'electron':
+                            script = JSON.parse(e.target.result);
+                            break;
+                          default:
+                            throw 'Invalid file type';
+                        }
+                        window.script = script // DEBUG
 
                         let fileDriver = '';
                         if (script['meta']) {
