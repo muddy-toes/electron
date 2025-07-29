@@ -321,7 +321,6 @@ div.mode-selector-box {
     border-radius: 5px;
     box-shadow: 0 -2px 3px rgba(0, 0, 0, 0.4) inset;
     color: #333;
-    height: 300px;
     display: inline-grid;
     margin-inline: 10px;
     padding: 20px;

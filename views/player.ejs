@@ -135,11 +135,11 @@
 
     <div class='slb-right'>
       <div class='load-file-picker-container'>
-        <input type="file" id="load-file-picker" accept="application/json" />
+          <input type="file" id="load-file-picker" accept="application/json,.SmrtStm4" />
         <span id="load-session">Load Session Script</span>
       </div>
       <div class='analyze-script-link'>
-        <a href="/analyze/" target="_blank" class='roundy-btn'>Analyze Script <img src='/external-link-icon.png' style='vertical-align: sub'/></a>
+        <a href="/analyze/" target="_blank" class='roundy-btn'>Analyze JSON Script <img src='/external-link-icon.png' style='vertical-align: sub'/></a>
       </div>
     </div>
     <div id="messages-target"></div>
@@ -164,7 +164,7 @@
     </div>
 
     <div id="controls">
-      <div id="left-channel-column">
+      <div id="left-channel-column" class="channel-column">
         <div class="color-header">
           <h2>Left Channel</h2>
           <button class="stop-btn">STOP [Esc]</button>
@@ -195,6 +195,16 @@
           <div class="form-row">
             <label title="The number of percentage points per second the volume will actually change. For example if you set target volume at 60% and change rate to 1% / sec when the current volume is 50%, the ramp will take 10 seconds to complete." style="cursor:help">Change Rate (% per second)</label>
             <input name="ramp-rate" value="0" class="spinner-change-rate"> %/sec
+          </div>
+
+          <h3>Volume Interval</h3>
+          <div class="form-row volOnOff">
+            <label title="Length of time to cycle signal on" style="cursor:help">Time On</label>
+            <input name="ton" value="0.1" class="spinner-on-off"> s
+            <label title="Time to ramp up signal when transitioning from off to on" style="cursor:help">Time Attack</label>
+            <input name="tatt" value="0.1" class="spinner-on-off"> s
+            <label title="Length of time to cycle signal off" style="cursor:help">Time Off</label>
+            <input name="toff" value="0.0" class="spinner-on-off"> s
           </div>
 
           <h3>Amplitude Modulation</h3>

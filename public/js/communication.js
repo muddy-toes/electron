@@ -45,7 +45,10 @@ $(function () {
         amFreq2: 'SAM_MF',
         fmType: 'BFM_Pattern',
         fmDepth: 'BFM_MD',
-        fmFreq: 'BFM_MF'
+        fmFreq: 'BFM_MF',
+        tOn: 'tOn',
+        tOff: 'tOff',
+        tAtt: 'tAtt'
     };
 
     function getSubtrackValue(xml, tagName) {
@@ -264,6 +267,9 @@ $(function () {
             if (step['fmFreq'] !== undefined) $channelCol.find('input[name="fm-frequency"]').val(step['fmFreq']);
             if (step['rampTarget'] !== undefined) $channelCol.find('input[name="ramp-target"]').val(step['rampTarget']);
             if (step['rampRate'] !== undefined) $channelCol.find('input[name="ramp-rate"]').val(step['rampRate']);
+            if (step['tOn'] !== undefined) $channelCol.find('input[name="ton"]').val(step['tOn']);
+            if (step['tOff'] !== undefined) $channelCol.find('input[name="toff"]').val(step['tOff']);
+            if (step['tAtt'] !== undefined) $channelCol.find('input[name="tatt"]').val(step['tAtt']);
             $channelCol.find('.apply-btn').click();
           }
     }
@@ -512,6 +518,10 @@ $(function () {
             $channelCol.find('input[name="fm-frequency"]').val(clamp(msg.fmFreq, 0, 100));
             $channelCol.find('input[name="ramp-rate"]').val(clamp(msg.rampRate, 0, 10));
             $channelCol.find('input[name="ramp-target"]').val(clamp(msg.rampTarget, 0, 100));
+            $channelCol.find('input[name="ton"]').val(clamp(msg.tOn, 0, 60));
+            const ton_current = parseFloat($channelCol.find('input[name="ton"]').val());
+            $channelCol.find('input[name="toff"]').val(clamp(msg.tOff, 0, 60));
+            $channelCol.find('input[name="tatt"]').val(clamp(msg.tAtt, 0, ton_current));
             if (msg.active) {
                 applyChanges(channel);
             } else {
@@ -742,7 +752,10 @@ $(function () {
                     fmDepth: parseFloat($(channelSel + 'input[name="fm-depth"]').val()),
                     fmFreq: parseFloat($(channelSel + 'input[name="fm-frequency"]').val()),
                     rampTarget: parseFloat($(channelSel + 'input[name="ramp-target"]').val()),
-                    rampRate: parseFloat($(channelSel + 'input[name="ramp-rate"]').val())
+                    rampRate: parseFloat($(channelSel + 'input[name="ramp-rate"]').val()),
+                    tOn: parseFloat($(channelSel + 'input[name="ton"]').val()),
+                    tOff: parseFloat($(channelSel + 'input[name="toff"]').val()),
+                    tAtt: parseFloat($(channelSel + 'input[name="tatt"]').val())
                 };
             };
 
