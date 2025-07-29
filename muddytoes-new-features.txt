@@ -25,10 +25,8 @@ So far, the new features are:
 - bottle prompting.  Driver can select from 1-10 seconds and the riders will get
   a full screen popup with a picture of a brown bottle and a countdown.  bottle
   prompts will be saved to session files and played back.
-
-
-Still pending:
 - A clear session history button, so if you've been playing a file but don't
   want it to be part of the session when you save later, you can start fresh.
-  Not totally sure about this one or the form it should take yet.
-
+- "Pro mode" controls which adds a second amplitude modulator and time 
+  on/off/attack controls similar to SmartStim 4's
+- You can now load and play SmartStim 4 session files.
