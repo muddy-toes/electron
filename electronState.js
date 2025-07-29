@@ -169,17 +169,15 @@ class ElectronState {
     }
 
     getSessionMessages(sessId) {
-        if (!(sessId in this.lastMessages) || !('left' in this.lastMessages[sessId]) || !('right' in this.lastMessages[sessId])) {
+        if (!(sessId in this.lastMessages) || (!('left' in this.lastMessages[sessId]) && !('right' in this.lastMessages[sessId]))) {
             return "No messages stored";
         }
         const lastmessages = this.lastMessages;
         const sessionflags = this.sessionFlags;
         let data_to_return = {
-            'meta': { driverName: sessionflags[sessId]['driverName'], driverComments: sessionflags[sessId]['driverComments'], version: 1, fileType: 'e l e c t r o n script' },
-            'left': lastmessages[sessId]['left'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
-            'right': lastmessages[sessId]['right'].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; }),
+            'meta': { driverName: sessionflags[sessId]['driverName'], driverComments: sessionflags[sessId]['driverComments'], version: 1, fileType: 'e l e c t r o n script' }
         };
-        ['pain-left', 'pain-right', 'bottle'].forEach(function(channel) {
+        ['left', 'right', 'pain-left', 'pain-right', 'bottle'].forEach(function(channel) {
           if (lastmessages[sessId][channel])
             data_to_return[channel] = lastmessages[sessId][channel].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; });
         });

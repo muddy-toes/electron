@@ -201,10 +201,11 @@ $(document).ready(function () {
         $('input[name=tatt], input[name=ton]').change(function (e) {
             const $tgt = $(e.currentTarget);
             const $col = $tgt.parents('.channel-column').first();
+            console.log("target %o col %o", $tgt, $col);
             const ch = $col.attr('id').match(/left/) ? 'left' : 'right';
             const ton_val = parseFloat($col.find('input[name=ton]').val());
-            const $tatt = parseFloat($col.find('input[name=tatt]'));
-            let tatt_val = $tatt.val();
+            const $tatt = $col.find('input[name=tatt]');
+            let tatt_val = parseFloat($tatt.val());
             if (tatt_val > ton_val) {
                 $tatt.val(ton_val);
                 tatt_val = ton_val;
@@ -338,9 +339,9 @@ $(document).ready(function () {
     // when clicking buttons or pressing return or escape
     window.applyChanges = function (channelName) {
         if (channelName == 'left') {
-            applyChanges('left', leftOsc, modL, fModL);
+            applyChanges('left', leftOsc, modL, fModL, modL2);
         } else if (channelName == 'right') {
-            applyChanges('right', rightOsc, modR, fModR);
+            applyChanges('right', rightOsc, modR, fModR, modR2);
         }
     };
 

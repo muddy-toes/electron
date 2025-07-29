@@ -204,7 +204,7 @@
             <div class="form-row volOnOff">
               <label title="Length of time to cycle signal on" style="cursor:help">Time On</label>
               <input name="ton" value="0.1" class="spinner-on-off"> s
-              <label title="Time to ramp up signal when transitioning from off to on" style="cursor:help">Time Attack</label>
+              <label title="Time to ramp up signal when transitioning from off to on, cannot exceed Time On" style="cursor:help">Time Attack</label>
               <input name="tatt" value="0.1" class="spinner-on-off"> s
               <label title="Length of time to cycle signal off" style="cursor:help">Time Off</label>
               <input name="toff" value="0.0" class="spinner-on-off"> s
@@ -278,7 +278,7 @@
           <button class="apply-btn">Apply [Return] ›</button>
         </div>
       </div>
-      <div id="right-channel-column">
+      <div id="right-channel-column" class="channel-column">
         <div class="color-header">
           <h2>Right Channel</h2>
           <button class="stop-btn">STOP [Esc]</button>
