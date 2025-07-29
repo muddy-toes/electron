@@ -1,0 +1,48 @@
+
+let promode = false;
+
+function loadPromode() {
+    const savedPromode = getPromodeCookie();
+    if (savedPromode) {
+        if (savedPromode === 'true') {
+            promode = false;
+        } else {
+            promode = true;
+        }
+        togglePromode();
+    }
+}
+
+function togglePromode() {
+    if (promode) {
+        promode = false;
+        $('.promode').slideUp();
+        setPromodeCookie("false", 30); // Save the user's choice in a cookie
+    } else {
+        promode = true;
+        $('.promode').slideDown();
+        setPromodeCookie("true", 30); // Save the user's choice in a cookie
+    }
+}
+
+
+function setPromodeCookie(value, days) {
+    const name = "promode";
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = "expires=" + d.toUTCString();
+    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+}
+
+function getPromodeCookie() {
+    const name = "promode";
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+

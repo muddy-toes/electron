@@ -371,8 +371,8 @@ $(function () {
                     try {
                         switch (filetype) {
                           case 'ss4':
-                            window.ss4 = e.target.result; // DEBUG
                             script = convertSS4ToElectron(e.target.result);
+                            $('.promode').slideDown(); // Ensure SS4 controls are visible, but don't update user's promode setting
                             break;
                           case 'electron':
                             script = JSON.parse(e.target.result);

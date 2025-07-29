@@ -24,12 +24,14 @@
   <script src="/js/visualization.waveform.js"></script>
   <script src="/js/sketch.js"></script>
   <script src="/js/themes.js"></script>
+  <script src="/js/promode.js"></script>
 
   <title>e l e c t r o n</title>
 </head>
 
 <body>
   <button onclick="toggleTheme()" id="theme-toggler">Toggle Theme</button>
+  <button onclick="togglePromode()" id="promode-toggler" title="Pro Mode adds additional features useful for SS4 compatibility" style="position:absolute;top:0;right:0">Toggle Pro Mode</button>
   <h1 class="electron-title"><a href="/">electron</a></h1>
 
   <div id="status-message">
@@ -197,14 +199,16 @@
             <input name="ramp-rate" value="0" class="spinner-change-rate"> %/sec
           </div>
 
-          <h3>Volume Interval</h3>
-          <div class="form-row volOnOff">
-            <label title="Length of time to cycle signal on" style="cursor:help">Time On</label>
-            <input name="ton" value="0.1" class="spinner-on-off"> s
-            <label title="Time to ramp up signal when transitioning from off to on" style="cursor:help">Time Attack</label>
-            <input name="tatt" value="0.1" class="spinner-on-off"> s
-            <label title="Length of time to cycle signal off" style="cursor:help">Time Off</label>
-            <input name="toff" value="0.0" class="spinner-on-off"> s
+          <div class="promode" style="display:none">
+            <h3>Volume Interval</h3>
+            <div class="form-row volOnOff">
+              <label title="Length of time to cycle signal on" style="cursor:help">Time On</label>
+              <input name="ton" value="0.1" class="spinner-on-off"> s
+              <label title="Time to ramp up signal when transitioning from off to on" style="cursor:help">Time Attack</label>
+              <input name="tatt" value="0.1" class="spinner-on-off"> s
+              <label title="Length of time to cycle signal off" style="cursor:help">Time Off</label>
+              <input name="toff" value="0.0" class="spinner-on-off"> s
+            </div>
           </div>
 
           <h3>Amplitude Modulation</h3>
@@ -227,7 +231,7 @@
             <input name="am-depth" value="10" class="spinner-change-rate"> %
           </div>
 
-          <div class="amp2">
+          <div class="promode amp2" style="display:none">
             <hr style='opacity:0.3; width:60%'/>
             <div class="form-row">
               <label title="The type of waveform to use for amplitude (volume) modulation." style="cursor:help">A.M. Type 2</label>

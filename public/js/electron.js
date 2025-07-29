@@ -17,6 +17,8 @@ $(document).ready(function () {
     initStopButtons();
     $('select').selectmenu();
 
+    loadPromode();
+
     // register UI events
     addListenerToApply('left', leftOsc, modL, fModL, modL2);
     addListenerToApply('right', rightOsc, modR, fModR, modR2);
