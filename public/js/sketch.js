@@ -8,9 +8,16 @@ function getModulationOscillator() {
     return newOscillator;
 }
 
+const onOffTimeouts = { left: null, right: null };
+
 // Initialize sine wave oscillators
 const leftOsc = new p5.Oscillator('sine');
+const leftEnv = new p5.Envelope();
+// leftOsc.amp(leftEnv);
+
 const rightOsc = new p5.Oscillator('sine');
+const rightEnv = new p5.Envelope();
+// rightOsc.amp(rightEnv);
 
 // Assign left oscillator to left channel and right oscillator to right channel
 leftOsc.pan(-1);

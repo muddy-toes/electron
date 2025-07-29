@@ -15,6 +15,11 @@ var electronConfig = {
             step: 0.01,
             min: 0,
             max: 100
+        },
+        'on-off': {
+            step: 0.1,
+            min: 0,
+            max: 10
         }
     }
 };

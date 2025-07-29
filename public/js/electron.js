@@ -4,6 +4,9 @@ $(document).ready(function () {
 
     let currentPainToolChannel;
     let painInProgress;
+    let tAtt = 0.1;
+    let tOn = 0.1;
+    let tOff = 0.0;
 
     // UI initialization (make the right channel UI a clone of the left one)
     $('#right-channel-column').append($('#left-channel-column .content').clone());
@@ -73,6 +76,13 @@ $(document).ready(function () {
         validateRange($(chSelector + 'input[name="fm-frequency"]'), 0, 100);
         validateRange($(chSelector + 'input[name="ramp-rate"]'), 0, 10);
         validateRange($(chSelector + 'input[name="ramp-target"]'), 0, 100);
+        validateRange($(chSelector + 'input[name="toff"]'), 0, 60);
+        validateRange($(chSelector + 'input[name="ton"]'), 0, 60);
+        tOn = parseFloat($(chSelector + 'input[name=ton]').val());
+        validateRange($(chSelector + 'input[name="tatt"]'), 0, tOn);
+
+        tAtt = parseFloat($(chSelector + 'input[name=tatt]').val());
+        tOff = parseFloat($(chSelector + 'input[name=toff]').val());
 
         const frequency = parseFloat($(chSelector + 'input[name="frequency"]').val());
         const volume = 0.01 * parseFloat($(chSelector + 'input[name="volume"]').val());
@@ -146,8 +156,29 @@ $(document).ready(function () {
         }
 
         osc.start();
+        onOffCycle_On(channelName);
     }
 
+    function onOffCycle_On(ch) {
+        const $col = $('#' + ch + '-channel-column');
+        const osc = ch == 'left' ? leftOsc : rightOsc;
+        if (tOn > 0) {
+            const vol_current = parseFloat($col.find('input[name=volume]').val()) / 100;
+            osc.amp(vol_current, tAtt);
+        }
+        clearTimeout(onOffTimeouts[ch]);
+        onOffTimeouts[ch] = setTimeout(function(){ onOffCycle_Off(ch) }, tOn * 1000);
+    }
+
+    function onOffCycle_Off(ch) {
+        const $col = $('#' + ch + '-channel-column');
+        const osc = ch == 'left' ? leftOsc : rightOsc;
+        if (tOff > 0) {
+            osc.amp(0);
+        }
+        clearTimeout(onOffTimeouts[ch]);
+        onOffTimeouts[ch] = setTimeout(function(){ onOffCycle_On(ch) }, tOff * 1000);
+    }
 
     function validateRange(field, min, max) {
         const value = parseFloat(field.val());
@@ -163,12 +194,25 @@ $(document).ready(function () {
         $('.spinner-volume').spinner(electronConfig.dataTypes['volume']);
         $('.spinner-frequency').spinner(electronConfig.dataTypes['frequency']);
         $('.spinner-change-rate').spinner(electronConfig.dataTypes['change-rate']);
+        $('.spinner-on-off').spinner(electronConfig.dataTypes['on-off']);
+
+        $('input[name=tatt], input[name=ton]').change(function (e) {
+            const $tgt = $(e.currentTarget);
+            const $col = $tgt.parents('.channel-column').first();
+            const ch = $col.attr('id').match(/left/) ? 'left' : 'right';
+            const ton_val = parseFloat($col.find('input[name=ton]').val());
+            const $tatt = parseFloat($col.find('input[name=tatt]'));
+            let tatt_val = $tatt.val();
+            if (tatt_val > ton_val) {
+                $tatt.val(ton_val);
+                tatt_val = ton_val;
+            }
+        });
 
         $('.ui-spinner-button').click(function () {
             $(this).siblings('input').change();
         });
     }
-
 
     function initSliders() {
         $('.slider-wrapper').each(function () {
@@ -302,9 +346,11 @@ $(document).ready(function () {
     window.stopChannel = function (channelName) {
         if (channelName == 'left') {
             leftOsc.stop();
+            clearTimeout(onOffTimeouts['left']);
             rampInfo.left.rate = 0;
         } else if (channelName == 'right') {
             rightOsc.stop();
+            clearTimeout(onOffTimeouts['right']);
             rampInfo.right.rate = 0;
         }
     };
