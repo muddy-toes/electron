@@ -111,7 +111,7 @@ $(function () {
 
         const tracks = xml.getElementsByTagName('Track');
         Array.from(tracks).forEach(function(track) {
-            const trackTime = parseInt(track.getAttribute('Time')) * 1000;
+            const trackTime = parseFloat(track.getAttribute('Time').replace(/,/g, '.')) * 1000;
             if (isNaN(trackTime)) return;
             const subtracks = track.getElementsByTagName('Subtrack')
             const left = subtracks[0];
