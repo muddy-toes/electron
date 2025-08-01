@@ -19,7 +19,14 @@ function generateAutomatedSessId() {
     return text;
 }
 
+function logger(...args) {
+    args[0] = '[%s] ' + args[0];
+    args.splice(1, 0, (new Date()).toLocaleString());
+    console.log(...args);
+}
+
 module.exports = {
     generateToken,
     generateAutomatedSessId,
+    logger
 };

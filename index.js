@@ -17,6 +17,8 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+const { logger } = require('./utils');
+
 function remote_ip(req) {
   return req.header('x-forwarded-for') || req.socket.remoteAddress;
 }
@@ -30,14 +32,14 @@ app.set('views', path.join(__dirname, 'views'));
 
 // home page
 app.get('/', function (req, res) {
-    console.log("%s GET /", remote_ip(req));
+    logger("%s GET /", remote_ip(req));
     res.render('index', { publicSessions: electronState.getPublicSessions() });
 });
 
 // actually start new automated driver
 app.use('/start-automated-driver', inputValidationMiddleware.validateAutomatedDriverInput);
 app.post('/start-automated-driver', function (req, res) {
-    console.log("%s GET /start-automated-driver", remote_ip(req));
+    logger("%s GET /start-automated-driver", remote_ip(req));
     const minFrequency = parseInt(req.body['min-frequency']);
     const maxFrequency = parseInt(req.body['max-frequency']);
     const startFrequency = parseInt(req.body['start-frequency']);
@@ -71,7 +73,7 @@ app.post('/start-automated-driver', function (req, res) {
 
 // set parameters for new automated driver
 app.get('/config-automated-driver', function (req, res) {
-    console.log('%s GET /config-automated-driver', remote_ip(req));
+    logger('%s GET /config-automated-driver', remote_ip(req));
     res.render('cfgautomated');
 });
 
@@ -79,13 +81,13 @@ app.get('/config-automated-driver', function (req, res) {
 app.get('/player/:mode/:sessId', function (req, res) {
     const mode = req.params.mode;
     const sessId = req.params.sessId;
-    console.log('%s GET /player/%s/%s', remote_ip(req), mode, sessId);
+    logger('%s GET /player/%s/%s', remote_ip(req), mode, sessId);
     if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
         res.render('player', { flags: flags });
     } else if (mode === 'play' && sessId === 'solo') {
-        console.log('User playing solo');
+        logger('User playing solo');
         // solo play
         res.render('player', { flags: { driverName: 'Yourself' } });
     } else {
@@ -101,4 +103,4 @@ io.on('connection', socketHandler(electronState));
 
 // init the server!
 app.use(express.static('public'));
-server.listen(PORT, () => console.log(`e l e c t r o n initialized and server now listening on port ${PORT}`));
+server.listen(PORT, () => logger(`e l e c t r o n initialized and server now listening on port ${PORT}`));
