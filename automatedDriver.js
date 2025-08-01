@@ -1,3 +1,5 @@
+const { logger } = require('./utils');
+
 class AutomatedDriver {
     constructor(sessId, config) {
         this.verbose = false;
@@ -139,7 +141,7 @@ class AutomatedDriver {
     processChannel(channel, channelName, otherChannel, elapsedMinutes, electronState) {
         // first, we consider the possibility of pain!
         if (Math.random() < (this.painProbability * 0.01) && elapsedMinutes > 0) {
-            if (electronState.getVerbose()) console.log(`Automated driver ${this.sessId} is sending PAIN signal to the ${channelName.toUpperCase()} channel`);
+            if (electronState.getVerbose()) logger(`Automated driver ${this.sessId} is sending PAIN signal to the ${channelName.toUpperCase()} channel`);
             this.processPain(channel, channelName, electronState);
             return;
         }
@@ -152,7 +154,7 @@ class AutomatedDriver {
 
         this.varyFrequency(channel, otherChannel.freq);
         this.emitToRiders(channel, channelName, electronState);
-        if (electronState.getVerbose()) console.log(`Automated driver ${this.sessId} made changes to the ${channelName.toUpperCase()} channel. Elapsed minutes: ${elapsedMinutes.toFixed(2)}`);
+        if (electronState.getVerbose()) logger(`Automated driver ${this.sessId} made changes to the ${channelName.toUpperCase()} channel. Elapsed minutes: ${elapsedMinutes.toFixed(2)}`);
     }
 
     processPain(channel, channelName, electronState) {
@@ -198,7 +200,7 @@ class AutomatedDriver {
 
             // if it has been more than 5 minutes and no one has joined, kill it
             if (elapsedMinutes >= 5 && !this.inUse) {
-                console.log(`Automated driver ${this.sessId} has no listeners!`);
+                logger(`Automated driver ${this.sessId} has no listeners!`);
                 clearTimeout(this.stopTimeoutId);
                 this.stop(electronState);
             }
@@ -212,14 +214,14 @@ class AutomatedDriver {
             this.stop(electronState);
         }, 60 * this.sessionDuration * 1000);
 
-        console.log(`Automated driver ${this.sessId} has been initialized`);
+        logger(`Automated driver ${this.sessId} has been initialized`);
         this.runActionsOnChannels(0, electronState);
     }
 
     stop(electronState) {
         clearInterval(this.intervalId);
         electronState.unregisterAutomatedDriver(this.sessId);
-        console.log(`Automated driver ${this.sessId} has been stopped`);
+        logger(`Automated driver ${this.sessId} has been stopped`);
     }
 }
 

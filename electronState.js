@@ -1,6 +1,7 @@
 // places to store the current state of the application
 // as we don't use a database of any kind (it's all in memory!)
 const AutomatedDriver = require('./automatedDriver');
+const { logger } = require('./utils');
 
 class ElectronState {
     constructor(config={}) {
@@ -15,8 +16,8 @@ class ElectronState {
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
         this.sessionFlags = {};         // sessionFlags[sessId][flagname]
                                         // flagnames in use: blindfoldRiders, publicSession, driverName
-        console.log("start");
-        if (this.verbose) console.log("verbose logging enabled");
+        logger("start");
+        if (this.verbose) logger("verbose logging enabled");
     }
 
     getVerbose() {
@@ -55,7 +56,7 @@ class ElectronState {
         delete this.driverTokens[sessId];
         delete this.driverSockets[sessId];
         delete this.riders[sessId];
-        console.log("Active sessions: %d", Object.keys(this.lastMessages).length);
+        logger("Active sessions: %d", Object.keys(this.lastMessages).length);
     }
 
     setSessionFlag(sessId, flagname, flagval) {
@@ -207,7 +208,7 @@ class ElectronState {
                 this.riders[sessId].splice(index, 1);
                 delete this.trafficLights[socket.id];
                 if (! this.driverSockets[sessId]) {
-                    console.log(`Last rider left, no driver present, session ended, ${sessId}`);
+                    logger(`Last rider left, no driver present, session ended, ${sessId}`);
                     this.cleanupSessionData(sessId);
                 }
             }
@@ -216,16 +217,16 @@ class ElectronState {
         if (! found_rider) {
             for (const sessId in this.driverSockets) {
                 if (this.driverSockets[sessId] === socket) {
-                    console.log('Driver disconnected for ' + sessId);
+                    logger('Driver disconnected for ' + sessId);
                     delete this.driverSockets[sessId];
                     delete this.driverTokens[sessId];
                     if (this.riders[sessId] && this.riders[sessId].length > 0) {
                         this.riders[sessId].forEach(function(s) {
-                            console.log('Send driverLost to rider socket id ' + s.id);
+                            logger('Send driverLost to rider socket id ' + s.id);
                             s.emit('driverLost');
                         });
                     } else {
-                        console.log(`Driver left, no riders present, session ended, ${sessId}`);
+                        logger(`Driver left, no riders present, session ended, ${sessId}`);
                         this.cleanupSessionData(sessId);
                     }
                 }
