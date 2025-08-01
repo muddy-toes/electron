@@ -7,13 +7,6 @@ $(document).ready(function () {
     let tAtt = 0.1;
     let tOn = 0.1;
     let tOff = 0.0;
-    let bodyEscStamp = null;
-    let bodyEscCount = 0;
-
-    // If you whack esc BODY_ESC_TIMES_TO_STOP times within BODY_ESC_WITHIN_SECONDS seconds,
-    // it hits both stop buttons
-    const BODY_ESC_TIMES_TO_STOP = 4;
-    const BODY_ESC_WITHIN_SECONDS = 2;
 
     // UI initialization (make the right channel UI a clone of the left one)
     $('#right-channel-column').append($('#left-channel-column .content').clone());
@@ -34,19 +27,10 @@ $(document).ready(function () {
     initPainTool('right');
 
     $('body').on('keyup', function(e) {
-        if (e.keyCode != 27) return;
-        const now = Date.now();
-        const within_time = (now - bodyEscStamp < BODY_ESC_WITHIN_SECONDS * 1000);
-        if (within_time && bodyEscCount >= BODY_ESC_TIMES_TO_STOP) {
-          $('.stop-btn').click();
-          bodyEscCount = 0;
-        } else if (within_time) {
-          bodyEscCount++;
-          bodyEscStamp = Date.now();
-        } else {
-          bodyEscCount = 1;
-          bodyEscStamp = Date.now();
-        }
+        if (e.keyCode === 27)
+            $('.stop-btn').click();
+        else if (e.keyCode === 13)
+            $('.apply-btn').click();
     });
 
     $('#clear-steps-help').on('click', function() {
