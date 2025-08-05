@@ -250,7 +250,7 @@ $(function () {
         } else if (channel == 'bottle' && step['bottleDuration']) {
           const secs = parseInt(step['bottleDuration']) || 0;
           socket.emit('triggerBottle', { sessId: sessId, driverToken: driverToken, bottleDuration: secs });
-          bottle_countdown(secs);
+          bottleCountdown(secs);
         } else {
             // These fields may not be in all json files.  If they're not there, set them to their inactive defaults:
             if (step['amType2'] === undefined) step['amType2'] = 'none';
@@ -278,7 +278,7 @@ $(function () {
           }
     }
 
-    function bottle_countdown(secs) {
+    function bottleCountdown(secs) {
         if (!secs)
             secs = 0;
         if (secs === 0) {
@@ -307,7 +307,7 @@ $(function () {
         rider_seconds_div.css('left', `${500 + $('#ride-info').offset().left - (rider_seconds_div.width() / 2)}px`).css('opacity', '1');
         $(".bottle-countdown").fadeOut(1000, function() {
             if (secs > 0) {
-                bottle_countdown(secs - 1);
+                bottleCountdown(secs - 1);
             }
         });
     }
@@ -595,7 +595,7 @@ $(function () {
         socket.on('bottle', function(msg) {
           if (!authorizedPlaying) return;
           if (!msg || !msg.bottleDuration || isNaN(parseInt(msg.bottleDuration))) return;
-          bottle_countdown(parseInt(msg.bottleDuration));
+          bottleCountdown(parseInt(msg.bottleDuration));
         });
 
         socket.on('updateFlags', function(msg) {
@@ -680,7 +680,7 @@ $(function () {
             $('#trigger-bottle-prompt').on('click', function() {
               const secs = parseInt($('#bottle-duration').val()) || 0;
               socket.emit('triggerBottle', { sessId: sessId, driverToken: driverToken, bottleDuration: secs });
-              bottle_countdown(secs);
+              bottleCountdown(secs);
             });
 
             $('#rider-bottle-countdown').remove();
