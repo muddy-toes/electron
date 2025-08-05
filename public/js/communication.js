@@ -28,6 +28,7 @@ $(function () {
     let firstStepStamp = 0;
     let scriptTimer = 0;
     let applysteps = true;
+    let bottleSecs = 0;
     let channel_pos = {};
     resetChannelPositions();
 
@@ -278,10 +279,9 @@ $(function () {
           }
     }
 
-    function bottleCountdown(secs) {
-        if (!secs)
-            secs = 0;
-        if (secs === 0) {
+    function bottleCountdown(secs=0) {
+        if (secs > 0) bottleSecs = secs;
+        if (bottleSecs === 0) {
             $('#trigger-bottle-prompt').prop('disabled', false); // re-enable the trigger button
             $('.bottle-countdown, #rider-bottle-countdown').fadeOut(); // hide the blocker and driver's display
             return false;
@@ -293,23 +293,25 @@ $(function () {
          * The rider display is #rider-bottle-countdown which contains a .bottle-countdown and the
          * driver's display is just a .bottle-countdown because it's much simpler.
          */
-        const center_line_px = $('#ride-info').offset().left + $('#ride-info').width() / 2;
+        const center_line_px = $(window).width() / 2;
         const bottle_img = $('#rider-bottle-countdown img');
         bottle_img.css('opacity', '0.01');
         $('#rider-bottle-countdown').show(); // the modal background blocker
         const img_width = bottle_img.width();
         bottle_img.css('left', `${center_line_px - img_width / 2}px`).css('opacity', '1');
         $('#trigger-bottle-prompt').prop('disabled', true); // disable the trigger button while we're counting
-        $('.bottle-countdown .seconds').text(secs.toString());
+        $('.bottle-countdown .seconds').text(bottleSecs.toString());
         const rider_seconds_div = $('#rider-bottle-countdown .seconds');
         rider_seconds_div.css('opacity', '0.01')
         $('.bottle-countdown').show();
-        rider_seconds_div.css('left', `${500 + $('#ride-info').offset().left - (rider_seconds_div.width() / 2)}px`).css('opacity', '1');
-        $(".bottle-countdown").fadeOut(1000, function() {
-            if (secs > 0) {
-                bottleCountdown(secs - 1);
+        rider_seconds_div.css('left', `${center_line_px - (rider_seconds_div.width() / 2)}px`).css('opacity', '1');
+        $('.bottle-countdown').fadeOut(800);
+        setTimeout(function() {
+            if (bottleSecs > 0) {
+                bottleSecs--;
+                bottleCountdown();
             }
-        });
+        }, 1000);
     }
 
     function initSaveLoadScript() {
