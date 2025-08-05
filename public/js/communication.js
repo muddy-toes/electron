@@ -139,6 +139,7 @@ $(function () {
     function startScriptPlaying(ramp_up=true) {
         if (window.script_player_interval === undefined) {
             $('#playPauseButton').attr('title', 'Pause');
+            $('#rider-bottle-countdown-container').show();
             resumeScriptVolume();
             if (ramp_up) applysteps = false;
             setTimeout(function() { applysteps = true }, RESUME_RAMP_SECS * 1000);
@@ -163,6 +164,7 @@ $(function () {
             clearInterval(window.script_player_interval);
             window.script_player_interval = undefined;
             $('#playPauseButton').attr('title', 'Play');
+            $('#rider-bottle-countdown-container').hide();
 
             if (ramp_down) {
                 $("input[name=ramp-target]").val(0);
@@ -685,7 +687,7 @@ $(function () {
               bottleCountdown(secs);
             });
 
-            $('#rider-bottle-countdown').remove();
+            $('#rider-bottle-countdown-container').hide();
 
             socket.on('updateFlags', function(msg) {
                 // if (window.console) console.log("updateFlags %o", msg);
