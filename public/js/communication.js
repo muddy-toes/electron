@@ -253,6 +253,11 @@ $(function () {
           socket.emit('triggerBottle', { sessId: sessId, driverToken: driverToken, bottleDuration: secs });
           bottle_countdown(secs);
         } else {
+            // These fields may not be in all json files.  If they're not there, set them to their inactive defaults:
+            if (step['amType2'] === undefined) step['amType2'] = 'none';
+            if (step['tOn'] === undefined) step['tOn'] = 0.1;
+            if (step['tOff'] === undefined) step['tOff'] = 0;
+
             const $channelCol = $(`#${channel}-channel-column`);
             if (step['volume'] !== undefined) $channelCol.find('input[name="volume"]').val(step['volume']);
             if (step['freq'] !== undefined) $channelCol.find('input[name="frequency"]').val(step['freq']);
