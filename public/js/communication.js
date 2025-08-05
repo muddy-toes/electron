@@ -153,7 +153,7 @@ $(function () {
             message['rampTarget'] = message['volume'];
             message['rampRate'] = 100 / PAUSE_RAMP_SECS;
             message['volume'] = current_vol;
-            apply_step(ch, message);
+            applyStep(ch, message);
         });
     }
 
@@ -222,7 +222,7 @@ $(function () {
                 if (script[ch] !== undefined && script[ch][ch_pos] !== undefined && script[ch][ch_pos]['stamp'] !== undefined && script[ch][ch_pos]['stamp'] <= scriptTimer) {
                     const step = script[ch][ch_pos];
                     channel_pos[ch]++;
-                    apply_step(ch, step['message']);
+                    applyStep(ch, step['message']);
                 }
             });
         }
@@ -241,7 +241,7 @@ $(function () {
         updateScriptTimes();
     }
 
-    function apply_step(channel, step) {
+    function applyStep(channel, step) {
         if (window.console) console.log("Step %s: %o", channel, step);
         if (channel.match(/^pain-/)) {
             if (window.console) console.log("EMIT %s, %o", channel, step); // dbg
