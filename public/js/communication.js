@@ -244,7 +244,6 @@ $(function () {
     function applyStep(channel, step) {
         if (window.console) console.log("Step %s: %o", channel, step);
         if (channel.match(/^pain-/)) {
-            if (window.console) console.log("EMIT %s, %o", channel, step); // dbg
             step['sessId'] = sessId;
             step['driverToken'] = driverToken;
             socket.emit(channel, step);
@@ -448,7 +447,6 @@ $(function () {
                             if (window.console) console.log("Failed to adjust first step start times: %o", e);
                         }
                           
-                        window.dbgscript = script;
                         socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: filename, fileDriver: fileDriver, duration: scriptDuration });
                         $('.show-not-playing').hide();
                         $('.show-playing').show();
