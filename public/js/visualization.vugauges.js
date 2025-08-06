@@ -5,6 +5,7 @@ let currentLevelR = 0;
 
 function drawVuGauges() {
     background(40, 35, 30);
+    angleMode(RADIANS);
 
     let leftMax = 0;
     let rightMax = 0;
