@@ -6,31 +6,29 @@ let currentLevelR = 0;
 function drawVuGauges() {
     background(40, 35, 30);
 
-    let al = 0;
-    let ar = 0;
+    let leftMax = 0;
+    let rightMax = 0;
 
     if (leftOsc.started) {
-        let amplL = wavLa.waveform();
-        let amplL2 = wavLa2.waveform();
+        const amplL = wavLa.waveform();
+        const amplL2 = wavLa2.waveform();
         // NOTE: Need to pass a string to wavLf.waveform() otherwise clips to [-1,1]
-        let freqL = wavLf.waveform('float');
+        const freqL = wavLf.waveform('float');
         // NOTE: Total amplitude (volume + AM depth) can be greater than 1,
         // resulting in clipping and distortion of the tone.
         // However, we clamp the VU Meter to a maximum of 1.
-        let leftMax = Math.abs(leftOsc.getAmp() + amplL[0] + amplL2[0]);
-        al = Math.min(leftMax, 1);
+        leftMax = Math.abs(leftOsc.getAmp() + amplL[0] + amplL2[0]);
     }
 
     if (rightOsc.started) {
-        let amplR = wavRa.waveform();
-        let amplR2 = wavRa2.waveform();
-        let freqR = wavRf.waveform('float');
-        let rightMax = Math.abs(rightOsc.getAmp() + amplR[0] + amplR2[0]);
-        ar = Math.min(rightMax, 1);
+        const amplR = wavRa.waveform();
+        const amplR2 = wavRa2.waveform();
+        const freqR = wavRf.waveform('float');
+        rightMax = Math.abs(rightOsc.getAmp() + amplR[0] + amplR2[0]);
     }
 
-    targetLevelL = map(al, 0, 1, 0, 100);
-    targetLevelR = map(ar, 0, 1, 0, 100);
+    targetLevelL = map(leftMax, 0, 1, 0, 100);
+    targetLevelR = map(rightMax, 0, 1, 0, 100);
     
     targetLevelL = constrain(targetLevelL, 0, 100);
     targetLevelR = constrain(targetLevelR, 0, 100);
