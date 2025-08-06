@@ -4,9 +4,10 @@ $(document).ready(function () {
 
     let currentPainToolChannel;
     let painInProgress;
-    let tAtt = 0.1;
-    let tOn = 0.1;
-    let tOff = 0.0;
+    const tAtt = { left: 0.1, right: 0.1 };
+    const tOn = { left: 0.1, right: 0.1 };
+    const tOff = { left: 0.0, right: 0.0 };
+    const onOffTimeouts = { left: null, right: null };
 
     // UI initialization (make the right channel UI a clone of the left one)
     $('#right-channel-column').append($('#left-channel-column .content').clone());
@@ -86,11 +87,11 @@ $(document).ready(function () {
         validateRange($(chSelector + 'input[name="ramp-target"]'), 0, 100);
         validateRange($(chSelector + 'input[name="toff"]'), 0, 60);
         validateRange($(chSelector + 'input[name="ton"]'), 0, 60);
-        tOn = parseFloat($(chSelector + 'input[name=ton]').val());
-        validateRange($(chSelector + 'input[name="tatt"]'), 0, tOn);
+        tOn[channelName] = parseFloat($(chSelector + 'input[name=ton]').val());
+        validateRange($(chSelector + 'input[name="tatt"]'), 0, tOn[channelName]);
 
-        tAtt = parseFloat($(chSelector + 'input[name=tatt]').val());
-        tOff = parseFloat($(chSelector + 'input[name=toff]').val());
+        tAtt[channelName] = parseFloat($(chSelector + 'input[name=tatt]').val());
+        tOff[channelName] = parseFloat($(chSelector + 'input[name=toff]').val());
 
         const frequency = parseFloat($(chSelector + 'input[name="frequency"]').val());
         const volume = 0.01 * parseFloat($(chSelector + 'input[name="volume"]').val());
@@ -170,22 +171,22 @@ $(document).ready(function () {
     function onOffCycle_On(ch) {
         const $col = $('#' + ch + '-channel-column');
         const osc = ch == 'left' ? leftOsc : rightOsc;
-        if (tOn > 0) {
+        if (tOn[ch] > 0) {
             const vol_current = parseFloat($col.find('input[name=volume]').val()) / 100;
-            osc.amp(vol_current, tAtt);
+            osc.amp(vol_current, tAtt[ch]);
         }
         clearTimeout(onOffTimeouts[ch]);
-        onOffTimeouts[ch] = setTimeout(function(){ onOffCycle_Off(ch) }, tOn * 1000);
+        onOffTimeouts[ch] = setTimeout(function(){ onOffCycle_Off(ch) }, tOn[ch] * 1000);
     }
 
     function onOffCycle_Off(ch) {
         const $col = $('#' + ch + '-channel-column');
         const osc = ch == 'left' ? leftOsc : rightOsc;
-        if (tOff > 0) {
+        if (tOff[ch] > 0) {
             osc.amp(0);
         }
         clearTimeout(onOffTimeouts[ch]);
-        onOffTimeouts[ch] = setTimeout(function(){ onOffCycle_On(ch) }, tOff * 1000);
+        onOffTimeouts[ch] = setTimeout(function(){ onOffCycle_On(ch) }, tOff[ch] * 1000);
     }
 
     function validateRange(field, min, max) {
@@ -207,7 +208,7 @@ $(document).ready(function () {
         $('input[name=tatt], input[name=ton]').change(function (e) {
             const $tgt = $(e.currentTarget);
             const $col = $tgt.parents('.channel-column').first();
-            console.log("target %o col %o", $tgt, $col);
+            if (window.console) console.log("target %o col %o", $tgt, $col);
             const ch = $col.attr('id').match(/left/) ? 'left' : 'right';
             const ton_val = parseFloat($col.find('input[name=ton]').val());
             const $tatt = $col.find('input[name=tatt]');
