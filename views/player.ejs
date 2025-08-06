@@ -21,6 +21,7 @@
   <script src="/js/visualization.lissajous.js"></script>
   <script src="/js/visualization.spectrum.js"></script>
   <script src="/js/visualization.vumeter.js"></script>
+  <script src="/js/visualization.vugauges.js"></script>
   <script src="/js/visualization.waveform.js"></script>
   <script src="/js/sketch.js"></script>
   <script src="/js/themes.js"></script>
@@ -298,12 +299,14 @@
     <div class="tab">
       <button class="tablinks active" onclick="selectVisualization(event, 'Waveform')">Waveform</button>
       <button class="tablinks" onclick="selectVisualization(event, 'VU Meter')">VU Meter</button>
+      <button class="tablinks" onclick="selectVisualization(event, 'VU Gauges')">VU Gauges</button>
       <button class="tablinks" onclick="selectVisualization(event, 'Spectrum')">Spectrum</button>
       <button class="tablinks" onclick="selectVisualization(event, 'Lissajous')">Lissajous</button>
     </div>
 
     <div id="Waveform" class="tabcontent"></div>
     <div id="VU Meter" class="tabcontent"></div>
+    <div id="VU Gauges" class="tabcontent"></div>
     <div id="Spectrum" class="tabcontent"></div>
     <div id="Lissajous" class="tabcontent"></div>
 
