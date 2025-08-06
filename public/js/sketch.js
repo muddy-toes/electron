@@ -103,6 +103,8 @@ function draw() {
         drawWaveform();
     } else if (visualization == "VU Meter") {
         drawVuMeter();
+    } else if (visualization == "VU Gauges") {
+        drawVuGauges();
     } else if (visualization == "Spectrum") {
         drawSpectrum();
     } else if (visualization == "Lissajous") {
