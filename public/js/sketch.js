@@ -8,8 +8,6 @@ function getModulationOscillator() {
     return newOscillator;
 }
 
-const onOffTimeouts = { left: null, right: null };
-
 // Initialize sine wave oscillators
 const leftOsc = new p5.Oscillator('sine');
 
