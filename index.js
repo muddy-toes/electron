@@ -1,6 +1,9 @@
 // if true, log all actions to console instead of just join/part sessions
 const verbose = false;
 
+// Feature flags.  Set to false to disable.  Accessible in player.ejs via features['name'] and in client js via feature_name
+const features = { promode: true };
+
 const express = require('express');
 const path = require('path');
 const http = require('http');
@@ -85,11 +88,11 @@ app.get('/player/:mode/:sessId', function (req, res) {
     if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
-        res.render('player', { flags: flags });
+        res.render('player', { flags: flags, features: features });
     } else if (mode === 'play' && sessId === 'solo') {
         logger('User playing solo');
         // solo play
-        res.render('player', { flags: { driverName: 'Yourself' } });
+        res.render('player', { flags: { driverName: 'Yourself' }, features: features });
     } else {
         // something went wrong -> 404!
         res.status(404);
