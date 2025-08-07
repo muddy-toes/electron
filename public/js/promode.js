@@ -18,13 +18,14 @@ function togglePromode() {
         promode = false;
         $('.promode').slideUp();
         setPromodeCookie("false", 30); // Save the user's choice in a cookie
+        $(document).trigger('promode-off');
     } else {
         promode = true;
         $('.promode').slideDown();
         setPromodeCookie("true", 30); // Save the user's choice in a cookie
+        $(document).trigger('promode-on');
     }
 }
-
 
 function setPromodeCookie(value, days) {
     const name = "promode";

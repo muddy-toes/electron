@@ -602,6 +602,7 @@ $(function () {
           bottleCountdown(parseInt(msg.bottleDuration));
         });
 
+        // This is the rider updateFlags.  There is another for drivers
         socket.on('updateFlags', function(msg) {
             if (msg['blindfoldRiders']) {
                 $("#controls").slideUp();
@@ -609,6 +610,13 @@ $(function () {
             } else if (msg['blindfoldRiders'] == false) {
                 $("#nocontrols").fadeOut();
                 $("#controls").slideDown();
+            }
+
+            if (msg['proMode'] !== undefined) {
+                if (msg['proMode'])
+                    $('.promode').slideDown();
+                else
+                    $('.promode').slideUp();
             }
 
             const name = (msg['driverName'] || 'Anonymous').replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
@@ -644,6 +652,7 @@ $(function () {
         $('button.pain-btn').remove();
         $('button.stop-btn').remove();
         $('#drive-info').remove();
+        $('#promode-toggler').remove();
     } else {
         // ---DRIVER---
         $('#status-message').html('<p>Attempting to register as driver of Session ID ' + sessId + '.</p>');
@@ -664,6 +673,13 @@ $(function () {
             $('#blindfold-riders').on('change', function(e) {
                 const new_state = $(e.currentTarget).is(":checked");
                 socket.emit('setBlindfoldRiders', { sessId: sessId, driverToken: driverToken, blindfoldRiders: new_state });
+            });
+
+            $(document).on('promode-off', function() {
+                socket.emit('setPromode', { sessId: sessId, driverToken: driverToken, proMode: false });
+            });
+            $(document).on('promode-on', function() {
+                socket.emit('setPromode', { sessId: sessId, driverToken: driverToken, proMode: true });
             });
 
             $('.set-settings').on('click', function() {
@@ -689,13 +705,19 @@ $(function () {
 
             $('#rider-bottle-countdown-container').hide();
 
+            // This is the driver updateFlags, there is another for riders
             socket.on('updateFlags', function(msg) {
-                // if (window.console) console.log("updateFlags %o", msg);
                 $("#blindfold-riders").prop('checked',  msg['blindfoldRiders'] ? true : false);
                 $("#public-session").prop('checked',  msg['publicSession'] ? true : false);
                 $("#driver-name").val(msg['driverName']);
                 $('#driver-cam-url').val(msg['camUrl']);
                 $('#driver-comments').val(msg['driverComments']);
+                if (msg['proMode'] !== undefined) {
+                    if (msg['proMode'])
+                        $('.promode').slideDown();
+                    else
+                        $('.promode').slideUp();
+                }
             });
 
             // initialize box that displays how many riders are connected and update it every 5 seconds

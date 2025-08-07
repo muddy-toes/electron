@@ -6,6 +6,7 @@ module.exports = function (electronState) {
 
         function updateRidersFlags(sessId) {
             const flags = electronState.getSessionFlags(sessId)
+            if (electronState.getVerbose()) logger("updateRidersFlags, flags=%o", flags);
             electronState.getRiderSockets(sessId).forEach(function (s) {
                 s.emit('updateFlags', flags);
             });
@@ -60,6 +61,7 @@ module.exports = function (electronState) {
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('driverGained');
                 });
+                socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
             } else {
                 socket.emit('driverRejected');
                 logger('User REJECTED as driver for ' + sessId);
@@ -103,11 +105,20 @@ module.exports = function (electronState) {
             updateRidersFlags(msg.sessId);
         });
 
+        socket.on('setPromode', function(msg) {
+            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+                return;
+            }
+            if (electronState.getVerbose()) logger("setPromode=%o, sessId=%s", msg.proMode, msg.sessId);
+            electronState.setSessionFlag(msg.sessId, 'proMode', msg.proMode ? true : false);
+            updateRidersFlags(msg.sessId);
+        });
+
         socket.on('setSettings', function(msg) {
             if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 return;
             }
-            const currentFlags = electronState.getSessionFlags();
+            const currentFlags = electronState.getSessionFlags(msg.sessId);
 
             let name = msg.driverName;
             if (!name)

@@ -15,7 +15,7 @@ class ElectronState {
         this.automatedDrivers = {};     // stores automated drivers by their session ids
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
         this.sessionFlags = {};         // sessionFlags[sessId][flagname]
-                                        // flagnames in use: blindfoldRiders, publicSession, driverName
+                                        // flagnames in use: blindfoldRiders, publicSession, driverName, proMode
         logger("start");
         if (this.verbose) logger("verbose logging enabled");
     }
