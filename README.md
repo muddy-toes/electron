@@ -28,6 +28,26 @@ In "solo" mode, users can experiment with waveform generation without sharing it
 
 There is also a feature that allows users to set up an automated session driven by a simple AI.
 
+
+## SmartStim4 file support
+
+Electron now supports playback of SS4 files in limited fashion.
+
+I had to add a second Amplitude Modulation section because SS4 has one.  Rather than only show it while playing an SS4 file, I've just let it be a new part of the interface which can be
+enabled/disabled with the new "pro mode" button at the very top right of the interface.
+
+If you want to update your electron but don't want to enable SmartStim support or the "pro mode" features, you can disable it by setting the "promode" feature flag to false at the top of index.js.
+
+Based on the > 1000 example files I have from the Stimaddict archive, I've decided not to bother supporting certain features that it seems aren't widely used:
+
+  - Three scripts used a square wave and otherwise it's all sine, so I didn't worry about support for the sine/square hybrid or the uni- and bi-polar waveforms.
+
+  - Volume ramp is supported, but no one ever sets Max or Min values, so I just set the ramp target to 0 or 100 based on whether the ramp rate is negative or positive.  It seems that it gates how far
+    it ramps based on the length of time that step is playing.
+
+  - SS4 supports ramping not only for volume but also for every other setting.  I'd like to support that as well, but haven't done it yet.
+
+
 ## Automated Driver Feature
 
 The application includes an Automated Driver feature that generates random changes in waveform parameters at specified intervals. This feature uses a configuration object to manage settings for the automated driver.
@@ -59,12 +79,7 @@ The configuration parameters are as follows:
 - `painMinShockLength` and `painMaxShockLength`: Length of each individual shock when the optional pain feature kicks in.
 - `painMinTimeBetweenShocks` and `painMaxTimeBetweenShocks`: Rest between each individual shock when the optional pain feature kicks in.
 
-## Contributing
-
-If you have any suggestions or improvements, feel free to open an issue or submit a pull request. However, note that I currently have limited time to dedicate to this project, so things will move very slowly.
-
-At the moment, the best way in which you can contribute is by creating a responsive and usable mobile UI, as the current one is starting to show its age, and doesn't work great on mobile devices.
-
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
+
