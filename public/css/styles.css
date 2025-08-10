@@ -107,7 +107,6 @@ div.color-header h2 {
     font-weight: 700;
     line-height: 1em;
     padding: 0.5em;
-    position: relative;
     text-decoration: none;
 }
 .small.roundy-btn {
@@ -476,20 +475,28 @@ div.mode-selector-box p {
 }
 
 .controls-container {
-  position: relative;
   min-height: 5rem;
   text-align: left;
   .fields {
-    position: absolute;
-    left: 0;
     display: inline-block;
-    width: 50%;
+    width: 45%;
+    .field {
+      display: flex;
+      justify-content: space-between;
+      input {
+        max-height: 1.5em;
+        margin-left: 1em;
+        flex-grow: 1;
+      }
+      button {
+        max-height: 2em;
+      }
+    }
   }
   .toggles {
-    position: absolute;
-    right: 0;
     display: inline-block;
-    width: 50%;
+    margin-left: 8%;
+    width: 45%;
   }
 }
 
@@ -512,6 +519,7 @@ div.mode-selector-box p {
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap-reverse;
 }
 
 .save-load-bar .slb-left {

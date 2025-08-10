@@ -86,17 +86,21 @@
     </div>
     <div class="controls-container">
       <div class="fields">
-        <label for="driver-name">Your name for the session:</label>
-        <input type="text" maxlength="20" id="driver-name" value="<%= flags['driverName'] %>"/>
-        <button class="set-settings">Set</button>
-        <br/>
-        <label for="driver-cam-url">URL for camming:</label>
-        <input type="text" maxlength="100" id="driver-cam-url" placeholder="https://"/>
-        <button class="set-settings">Set</button>
-        <br/>
-        <label for="driver-comments">Session info for riders:</label>
-        <input type="text" maxlength="100" id="driver-comments" placeholder="What kind of drive?  Pain tools used?"/>
-        <button class="set-settings">Set</button>
+        <div class="field">
+          <label for="driver-name">Your name for the session:</label>
+          <input type="text" maxlength="20" id="driver-name" value="<%= flags['driverName'] %>"/>
+          <button class="set-settings">Set</button>
+        </div>
+        <div class="field">
+          <label for="driver-cam-url">URL for camming:</label>
+          <input type="text" maxlength="100" id="driver-cam-url" placeholder="https://"/>
+          <button class="set-settings">Set</button>
+        </div>
+        <div class="field">
+          <label for="driver-comments">Session info for riders:</label>
+          <input type="text" maxlength="100" id="driver-comments" placeholder="What kind of drive?  Pain tools used?"/>
+          <button class="set-settings">Set</button>
+        </div>
       </div>
       <div class="toggles">
         <input type="checkbox" id="public-session" title="Check box to show this session on the public list" />
