@@ -5,7 +5,7 @@ const { logger } = require('./utils');
 
 class ElectronState {
     constructor(config={}) {
-        this.verbose = config['verbose'] || false;
+        this.config = config;
         this.driverTokens = {};         // stores the authentication tokens of drivers
         this.driverSockets = {};        // stores sockets for people driving sessions
         this.riders = {};               // stores all sockets for people riding each session
@@ -17,11 +17,11 @@ class ElectronState {
         this.sessionFlags = {};         // sessionFlags[sessId][flagname]
                                         // flagnames in use: blindfoldRiders, publicSession, driverName, proMode
         logger("start");
-        if (this.verbose) logger("verbose logging enabled");
+        if (this.config.verbose) logger("verbose logging enabled");
     }
 
     getVerbose() {
-      return this.verbose;
+      return this.config.verbose;
     }
 
     initSessionData(sessId) {
@@ -135,7 +135,11 @@ class ElectronState {
         const stamp_offset = now - this.previousMessageStamp[sessId][channel];
         this.previousMessageStamp[sessId][channel] = now;
         this.lastMessages[sessId][channel] ||= [];
-        this.lastMessages[sessId][channel].push({ stamp: stamp_offset, message: message });
+
+        let m = {...message};
+        if (! this.config?.features?.promode) this.config?.promodeKeys?.forEach(function(key) { delete m[key] });
+
+        this.lastMessages[sessId][channel].push({ stamp: stamp_offset, message: m });
     }
 
     clearLastMessages(sessId) {
