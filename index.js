@@ -1,8 +1,16 @@
-// if true, log all actions to console instead of just join/part sessions
-const verbose = false;
+const config = {
+    // if true, log all actions to console instead of just join/part sessions
+    verbose: false,
 
-// Feature flags.  Set to false to disable.  Accessible in player.ejs via features['name'] and in client js via feature_name
-const features = { promode: true };
+    // Feature flags.  Set to false to disable.  Accessible in player.ejs via features['name'] and in client js via feature_name
+    features: {
+        promode: true
+    },
+
+    promodeKeys: [
+        'amType2', 'amDepth2', 'amFreq2', 'tOn', 'tOff', 'tAtt'
+    ]
+    };
 
 const express = require('express');
 const path = require('path');
@@ -15,7 +23,7 @@ const socketHandler = require('./socketHandler');
 const { generateAutomatedSessId } = require('./utils');
 
 const PORT = process.env.PORT || 5000;
-const electronState = new ElectronState({ verbose: verbose });
+const electronState = new ElectronState(config);
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
