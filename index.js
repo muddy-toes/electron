@@ -96,11 +96,11 @@ app.get('/player/:mode/:sessId', function (req, res) {
     if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
-        res.render('player', { flags: flags, features: features });
+        res.render('player', { flags: flags, features: config.features });
     } else if (mode === 'play' && sessId === 'solo') {
         logger('User playing solo');
         // solo play
-        res.render('player', { flags: { driverName: 'Yourself' }, features: features });
+        res.render('player', { flags: { driverName: 'Yourself' }, features: config.features });
     } else {
         // something went wrong -> 404!
         res.status(404);
