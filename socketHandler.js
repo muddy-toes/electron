@@ -44,6 +44,7 @@ module.exports = function (electronState) {
             if (lastRight) {
                 socket.emit('right', lastRight.message);
             }
+            // logger("SID %s, sending updateFlags: %o", sessId, electronState.getSessionFlags(sessId));
             socket.emit('updateFlags', electronState.getSessionFlags(sessId));
         });
 
