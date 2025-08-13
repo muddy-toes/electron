@@ -62,7 +62,7 @@ app.post('/start-automated-driver', function (req, res) {
     const sessId = generateAutomatedSessId();
 
     const sessionConfig = {
-        verbose: verbose,
+        verbose: config.verbose,
         sessionDuration: sessionDuration,
         minAMDepth: amPreset,
         maxAMDepth: amPreset * 3,
