@@ -196,6 +196,20 @@ h2 {
     margin-bottom: 10px;
 }
 
+.form-row.flex {
+    height: fit-content;
+    display: flex;
+    justify-content: space-between;
+
+    .spinner-ramp {
+        max-width: 3em;
+    }
+    
+    .cancel-ramp {
+        cursor: pointer;
+    }
+}
+
 .form-row input,
 .form-row select {
     background: #FFF;
@@ -205,10 +219,10 @@ h2 {
     width: 110px;
 }
 
-.form-row label {
+.form-row > label {
     display: inline-block;
     font-weight: 600;
-    width: 230px;
+    /*width: 230px;*/
 }
 
 .form-row .detailed-description {

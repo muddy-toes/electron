@@ -34,6 +34,16 @@ $(document).ready(function () {
             $('.apply-btn').click();
     });
 
+
+    if (feature_promode) {
+        $('.cancel-ramp').on('click', function(e) {
+            const $tgt = $(e.currentTarget);
+            const $rampSpinner = $tgt.prev();
+            if (! $rampSpinner.is(".ui-spinner")) return;
+            $rampSpinner.find('input').val('0.00').change();
+        });
+    }
+
     $('#clear-steps-help').on('click', function() {
         const dialog = $('#clear-steps-help-dialog').dialog({
             autoOpen: true,
@@ -203,6 +213,7 @@ $(document).ready(function () {
         $('.spinner-volume').spinner(electronConfig.dataTypes['volume']);
         $('.spinner-frequency').spinner(electronConfig.dataTypes['frequency']);
         $('.spinner-change-rate').spinner(electronConfig.dataTypes['change-rate']);
+        $('.spinner-ramp').spinner(electronConfig.dataTypes['spinner-ramp']);
         $('.spinner-on-off').spinner(electronConfig.dataTypes['on-off']);
 
         $('input[name=tatt], input[name=ton]').change(function (e) {
@@ -305,15 +316,27 @@ $(document).ready(function () {
         }
     };
 
+    // This doesn't include ramp-rate -> volume because it's the only one with a target
+    const rampAffectsMap = {
+        'freq-ramp': 'frequency',
+        'am-depth-ramp': 'am-depth',
+        'am-frequency-ramp': 'am-frequency',
+        'am2-depth-ramp': 'am2-depth',
+        'am2-frequency-ramp': 'am2-frequency',
+        'fm-depth-ramp': 'fm-depth',
+        'fm-frequency-ramp': 'fm-frequency'
+    };
 
     // monitor volume ramps every 100 ms
     setInterval(function () {
         ['left', 'right'].forEach(function (channelName) {
-            const chSelector = '#' + channelName + '-channel-column ';
+            const $chCol = $(`#${channelName}-channel-column`);
+
+            // volume ramp
             const rampRate = rampInfo[channelName].rate;
             if (rampRate > 0) {
                 const rampTarget = rampInfo[channelName].target;
-                let volume = parseFloat($(chSelector + 'input[name="volume"]').val());
+                let volume = parseFloat($chCol.find('input[name="volume"]').val());
                 if (rampTarget > volume) {
                     volume = volume + rampRate / 10; // 10 times every second
                     volume = Math.min(rampTarget, volume);
@@ -323,12 +346,12 @@ $(document).ready(function () {
                 }
 
                 volume = volume.toFixed(3);
-                $(chSelector + 'input[name="volume"]').val(volume);
-                $(chSelector + 'input[name="volume"]').change();
+                $chCol.find('input[name="volume"]').val(volume);
+                $chCol.find('input[name="volume"]').change();
 
                 if (volume == rampTarget) {
                     // ramp finished executing
-                    $(chSelector + 'input[name="ramp-rate"]').val(0);
+                    $chCol.find('input[name="ramp-rate"]').val(0);
                     rampInfo[channelName].rate = 0;
                 }
 
@@ -338,6 +361,17 @@ $(document).ready(function () {
                     rightOsc.amp(volume / 100);
                 }
             }
+
+            // other ramps
+            if (! feature_promode ) return;
+            Object.keys(rampAffectsMap).forEach(function(rampkey) {
+                const affects = rampAffectsMap[rampkey];
+                let rampval = parseFloat($chCol.find(`input[name="${rampkey}"]`).val());
+                if (isNaN(rampval)) rampval = 0;
+                let curval = parseFloat($chCol.find(`input[name="${affects}"]`).val());
+                if (isNaN(curval)) curval = 0;
+                $chCol.find(`input[name="${affects}"]`).val((curval + rampval).toFixed(2)).change();
+            });
         });
     }, 100);
 

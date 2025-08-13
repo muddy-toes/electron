@@ -194,9 +194,18 @@
           <div class="form-row">
             <div class="slider-wrapper" data-target-field="volume" data-slider-type="volume"></div>
           </div>
-          <div class="form-row">
+          <div class="form-row flex">
             <label title="The number of times per second the wave oscillates. Higher values usually feel smoother and lower values feel harsher." style="cursor:help">Frequency</label>
+            <span>
             <input name="frequency" value="2000" class="spinner-frequency"> Hz.
+            </span>
+            <% if (features['promode']) { %>
+              <span class='promode' style='display: none'>
+                <label>Ramp</label>
+                <input name="freq-ramp" value="0.00" class="spinner-ramp">
+                <span class='cancel-ramp'>X</span>
+              </span>
+            <% } %>
           </div>
           <div class="form-row">
             <div class="slider-wrapper" data-target-field="frequency" data-slider-type="frequency"></div>
@@ -237,9 +246,16 @@
               <option value="triangle">Triangle</option>
             </select>
           </div>
-          <div class="form-row">
+          <div class="form-row flex">
             <label title="How many times per second the amplitude (volume) modulation will be performed." style="cursor:help">A.M. Frequency</label>
-            <input name="am-frequency" value="0" class="spinner-change-rate"> Hz.
+            <span><input name="am-frequency" value="0" class="spinner-change-rate"> Hz.</span>
+            <% if (features['promode']) { %>
+              <span class='promode' style='display: none'>
+                <label>Ramp</label>
+                <input name="am-frequency-ramp" value="0.00" class="spinner-ramp">
+                <span class='cancel-ramp'>X</span>
+              </span>
+            <% } %>
           </div>
           <div class="form-row">
             <label title="How many percentage points the amplitude (volume) will be altered by in each cycle. For example, if your current volume is 75% and you set the A.M. Depth to 5% the volume will oscillate between 70% and 80%." style="cursor:help">A.M. Depth</label>

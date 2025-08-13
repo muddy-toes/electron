@@ -20,6 +20,11 @@ var electronConfig = {
             step: 0.1,
             min: 0,
             max: 10
+        },
+        'spinner-ramp': {
+            step: 0.01,
+            min: -100,
+            max: 100
         }
     }
 };

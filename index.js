@@ -8,9 +8,9 @@ const config = {
     },
 
     promodeKeys: [
-        'amType2', 'amDepth2', 'amFreq2', 'tOn', 'tOff', 'tAtt'
+        'freqRamp', 'amFreqRamp', 'amDepthRamp', 'amType2', 'amDepth2', 'amDepthRamp2', 'amFreq2', 'amFreqRamp2', 'fmFreqRamp', 'fmDepthRamp', 'tOn', 'tOff', 'tAtt'
     ]
-    };
+};
 
 const express = require('express');
 const path = require('path');
