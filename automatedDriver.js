@@ -9,6 +9,8 @@ class AutomatedDriver {
             this[key] = value;
         });
 
+        this.next_bottle = 0;
+
         // set initial internal state
         this.inUse = false; // is anyone listening to this session?
         this.sessId = sessId;
@@ -23,6 +25,14 @@ class AutomatedDriver {
 
         this.leftChannel = { ...defaultChannelState };
         this.rightChannel = { ...defaultChannelState };
+    }
+
+    setNextBottle() {
+        const now = Date.now();
+        this.next_bottle = parseInt(now + (Math.random() * (this.bottlePromptingMax - this.bottlePromptingMin) + this.bottlePromptingMin) * 1000);
+        if (this.verbose)
+            logger("Automated driver %o setNextBottle min/max/next %o/%o/%o",
+                   this.sessId, this.bottlePromptingMin, this.bottlePromptingMax, parseInt((this.next_bottle - now) / 1000));
     }
 
     updateVolume(channel, elapsedMinutes) {
@@ -172,6 +182,15 @@ class AutomatedDriver {
     }
 
     runActionsOnChannels(elapsedMinutes, electronState) {
+        if (this.bottlePromptingMin > 0 && Math.random() < this.bottlePromptingProbability && Date.now() > this.next_bottle) {
+            const duration = parseInt(Math.random() * 5 + 5);
+            this.setNextBottle();
+            if (electronState.getVerbose()) logger(`Automated driver ${this.sessId} sending bottle prompt for ${duration}s.  Next eligible in ${parseInt((this.next_bottle - Date.now()) / 1000)}s.  Elapsed minutes: ${elapsedMinutes.toFixed(2)}`);
+            electronState.getRiderSockets(this.sessId).forEach(function (s) {
+                s.emit('bottle', { bottleDuration: duration });
+            });
+        }
+
         if (Math.random() < 0.5 || elapsedMinutes === 0) {
             // 50% chance of making changes to the left channel
             this.processChannel(this.leftChannel, 'left', this.rightChannel, elapsedMinutes, electronState);
@@ -184,6 +203,8 @@ class AutomatedDriver {
     }
 
     run(electronState) {
+        this.verbose = electronState.getVerbose();
+        this.setNextBottle();
         this.intervalId = setInterval(() => {
             const elapsedMinutes = (new Date() - this.startTime) / 60000;
             if (Math.random() >= this.noChangesProbability) {
