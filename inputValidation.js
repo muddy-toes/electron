@@ -5,6 +5,9 @@ module.exports = {
         const startFrequency = parseInt(req.body['start-frequency']);
         const startVolume = parseInt(req.body['start-volume']);
         const amPreset = parseInt(req.body['am-preset']);
+        const bottlePromptingRaw = req.body['bottle-prompting'].split(/-/);
+        const bottlePromptingMin = bottlePromptingRaw[0] == '0' ? 0 : parseInt(bottlePromptingRaw[0]);
+        const bottlePromptingMax = bottlePromptingRaw[0] == '0' ? 0 : parseInt(bottlePromptingRaw[1]);
         const sessionDuration = parseInt(req.body['session-duration']);
         const painProbability = parseInt(req.body['pain-probability']);
         const painIntensity = parseInt(req.body['pain-intensity']);
@@ -17,6 +20,11 @@ module.exports = {
             isNaN(sessionDuration) ||
             isNaN(painProbability) ||
             isNaN(painIntensity) ||
+            isNaN(bottlePromptingMin) ||
+            isNaN(bottlePromptingMax) ||
+            bottlePromptingMin > bottlePromptingMax ||
+            (bottlePromptingMin > 0 && bottlePromptingMin < 240) ||
+            (bottlePromptingMax > 0 && bottlePromptingMax < 480) ||
             minFrequency < 100 || minFrequency > 3000 ||
             maxFrequency < 100 || maxFrequency > 3000 ||
             startFrequency < 0 || startFrequency < minFrequency || startFrequency > maxFrequency ||

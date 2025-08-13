@@ -30,6 +30,7 @@
       </div>
       <div class="content">
         <form id="automated-session-form" method="post" action="/start-automated-driver">
+
           <h3>Frequencies</h3>
           <div class="form-row">
             <label>Minimum Frequency</label>
@@ -46,6 +47,7 @@
               Should be between minimum and maximum frequency values.
             </div>
           </div>
+
           <h3>Volume</h3>
           <div class="form-row">
             <label>Starting Volume</label>
@@ -70,6 +72,7 @@
               Expressed as a % of volume, not used directly as A.M. Depth.
             </div>
           </div>
+
           <h3>Duration</h3>
           <div class="form-row">
             <label>Session Duration</label>
@@ -83,6 +86,19 @@
               <option value="60">60 minutes</option>
             </select>
           </div>
+
+          <h3>Bottle Prompts</h3>
+          <div class="form-row">
+            <label>Bottle Prompt Frequency</label>
+            <select name="bottle-prompting">
+              <option value="0">None</option>
+              <option value="240-480">Frequent</option>
+              <option value="360-660">Normal</option>
+              <option value="480-900">Infrequent</option>
+              <option value="720-1200">Seldom</option>
+            </select>
+          </div>
+
           <h3>Pain</h3>
           <div class="form-row">
             <label>Pain probability</label>
@@ -103,6 +119,7 @@
               <option value="15">Very high</option>
             </select>
           </div>
+
           <button class="apply-btn" type="submit">Start Automated Session</button>
         </form>
       </div>

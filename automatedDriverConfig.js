@@ -3,6 +3,9 @@ const automatedDriverConfig = {
     endMaxVolumeChange: 5,
     noChangesProbability: 0.3,
     msBetweenUpdates: 15000,
+    bottlePromptingMin: 0,
+    bottlePromptingMax: 0,
+    bottlePromptingProbability: 0.75, // percent chance of sending the bottle once time has arrived
     painMinShocks: 5,
     painMaxShocks: 15,
     painMinShockLength: 0.05,

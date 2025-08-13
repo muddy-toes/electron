@@ -1,6 +1,6 @@
 const config = {
     // if true, log all actions to console instead of just join/part sessions
-    verbose: false,
+    verbose: true,
 
     // Feature flags.  Set to false to disable.  Accessible in player.ejs via features['name'] and in client js via feature_name
     features: {
@@ -59,10 +59,16 @@ app.post('/start-automated-driver', function (req, res) {
     const sessionDuration = parseInt(req.body['session-duration']);
     const painProbability = parseInt(req.body['pain-probability']);
     const painIntensity = parseInt(req.body['pain-intensity']);
+    const bottlePromptingRaw = req.body['bottle-prompting'].split(/-/);
+    const bottlePromptingMin = bottlePromptingRaw[0] == '0' ? 0 : parseInt(bottlePromptingRaw[0]);
+    const bottlePromptingMax = bottlePromptingRaw[0] == '0' ? 0 : parseInt(bottlePromptingRaw[1]);
     const sessId = generateAutomatedSessId();
 
     const sessionConfig = {
+        ...automatedDriverConfig,
         verbose: config.verbose,
+        bottlePromptingMin: bottlePromptingMin,
+        bottlePromptingMax: bottlePromptingMax,
         sessionDuration: sessionDuration,
         minAMDepth: amPreset,
         maxAMDepth: amPreset * 3,
@@ -71,8 +77,7 @@ app.post('/start-automated-driver', function (req, res) {
         initialFrequency: startFrequency,
         startVolume: startVolume,
         painProbability: painProbability,
-        painIntensity: painIntensity,
-        ...automatedDriverConfig
+        painIntensity: painIntensity
     };
 
     if (electronState.startAutomatedDriver(sessId, sessionConfig)) {
