@@ -187,23 +187,46 @@
         </div>
         <div class="content">
           <h3>Basic Parameters</h3>
-          <div class="form-row">
-            <label title="How intense the signal is, from 0% to 100%." style="cursor:help">Volume</label>
-            <input name="volume" value="50" class="spinner-volume"> %
+          <div class="form-row flex">
+            <span>
+              <label title="How intense the signal is, from 0% to 100%." style="cursor:help">Volume</label>
+              <br class="promode" style="display: block" />
+              <input name="volume" value="50" class="spinner-volume"> %
+            </span>
+            <% if (features['promode']) { %>
+              <span class='promode' style='display: none'>
+                <label title="The value by which the volume should be constantly adjusted toward Target.  Set to negative to move downward." style="cursor:help">Ramp</label>
+                <br/>
+                <input name="vol-ramp" value="0.00" class="spinner-ramp">
+                <span class='cancel-ramp'>X</span>
+              </span>
+              <span class='promode' style='display: none'>
+                <label title="The volume will automatically change until this value is reached." style="cursor:help">Target</label>
+                <br/>
+                <input name="vol-target" value="0" class="spinner-volume">
+              </span>
+            <% } %>
           </div>
           <div class="form-row">
             <div class="slider-wrapper" data-target-field="volume" data-slider-type="volume"></div>
           </div>
           <div class="form-row flex">
-            <label title="The number of times per second the wave oscillates. Higher values usually feel smoother and lower values feel harsher." style="cursor:help">Frequency</label>
             <span>
-            <input name="frequency" value="2000" class="spinner-frequency"> Hz.
+              <label title="The number of times per second the wave oscillates. Higher values usually feel smoother and lower values feel harsher." style="cursor:help">Frequency</label>
+              <br class="promode" style="display: block" />
+              <input name="frequency" value="2000" class="spinner-frequency"> Hz.
             </span>
             <% if (features['promode']) { %>
               <span class='promode' style='display: none'>
-                <label>Ramp</label>
+                <label title="The value by which the frequency should be constantly adjusted toward Target.  Set to negative to move downward." style="cursor:help">Ramp</label>
+                <br/>
                 <input name="freq-ramp" value="0.00" class="spinner-ramp">
                 <span class='cancel-ramp'>X</span>
+              </span>
+              <span class='promode' style='display: none'>
+                <label title="The frequency will automatically change until this value is reached." style="cursor:help">Target</label>
+                <br/>
+                <input name="freq-target" value="0" class="spinner-frequency">
               </span>
             <% } %>
           </div>
@@ -211,26 +234,34 @@
             <div class="slider-wrapper" data-target-field="frequency" data-slider-type="frequency"></div>
           </div>
 
-          <h3>Volume Ramp</h3>
-          <div class="form-row">
-            <label title="The volume will automatically change until this value is reached." style="cursor:help">Target Volume</label>
-            <input name="ramp-target" value="50" class="spinner-volume"> %
-          </div>
-          <div class="form-row">
-            <label title="The number of percentage points per second the volume will actually change. For example if you set target volume at 60% and change rate to 1% / sec when the current volume is 50%, the ramp will take 10 seconds to complete." style="cursor:help">Change Rate (% per second)</label>
-            <input name="ramp-rate" value="0" class="spinner-change-rate"> %/sec
+          <div class="classicmode" style="display: block">
+            <h3>Volume Ramp</h3>
+            <div class="form-row">
+              <label title="The volume will automatically change until this value is reached." style="cursor:help">Target Volume</label>
+              <input name="vol-target" value="50" class="spinner-volume"> %
+            </div>
+            <div class="form-row">
+              <label title="The number of percentage points per second the volume will actually change. For example if you set target volume at 60% and change rate to 1% / sec when the current volume is 50%, the ramp will take 10 seconds to complete." style="cursor:help">Change Rate (% per second)</label>
+              <input name="vol-ramp" value="0" class="spinner-ramp"> %/sec
+            </div>
           </div>
 
           <% if (features['promode']) { %>
             <div class="promode" style="display:none">
               <h3>Volume Interval</h3>
-              <div class="form-row volOnOff">
-                <label title="Length of time to cycle signal on" style="cursor:help">Time On</label>
-                <input name="ton" value="0.1" class="spinner-on-off"> s
-                <label title="Time to ramp up signal when transitioning from off to on, cannot exceed Time On" style="cursor:help">Time Attack</label>
-                <input name="tatt" value="0.1" class="spinner-on-off"> s
-                <label title="Length of time to cycle signal off" style="cursor:help">Time Off</label>
-                <input name="toff" value="0.0" class="spinner-on-off"> s
+              <div class="form-row flex volOnOff">
+                <span>
+                  <label title="Length of time to cycle signal on" style="cursor:help">Time On</label>
+                  <input name="ton" value="0.1" class="spinner-on-off"> s
+                </span>
+                <span>
+                  <label title="Time to ramp up signal when transitioning from off to on, cannot exceed Time On" style="cursor:help">Time Attack</label>
+                  <input name="tatt" value="0.1" class="spinner-on-off"> s
+                </span>
+                <span>
+                  <label title="Length of time to cycle signal off" style="cursor:help">Time Off</label>
+                  <input name="toff" value="0.0" class="spinner-on-off"> s
+                </span>
               </div>
             </div>
           <% } %>
@@ -247,19 +278,44 @@
             </select>
           </div>
           <div class="form-row flex">
-            <label title="How many times per second the amplitude (volume) modulation will be performed." style="cursor:help">A.M. Frequency</label>
-            <span><input name="am-frequency" value="0" class="spinner-change-rate"> Hz.</span>
+            <span>
+              <label title="How many times per second the amplitude (volume) modulation will be performed." style="cursor:help">A.M. Frequency</label>
+              <br class="promode" style="display: block" />
+              <input name="am-frequency" value="0" class="spinner-change-rate"> Hz.
+            </span>
             <% if (features['promode']) { %>
               <span class='promode' style='display: none'>
                 <label>Ramp</label>
+                <br/>
                 <input name="am-frequency-ramp" value="0.00" class="spinner-ramp">
                 <span class='cancel-ramp'>X</span>
               </span>
+              <span class='promode' style='display: none'>
+                <label>Target</label>
+                <br/>
+                <input name="am-frequency-target" value="0" class="spinner-change-rate">
+              </span>
             <% } %>
           </div>
-          <div class="form-row">
-            <label title="How many percentage points the amplitude (volume) will be altered by in each cycle. For example, if your current volume is 75% and you set the A.M. Depth to 5% the volume will oscillate between 70% and 80%." style="cursor:help">A.M. Depth</label>
-            <input name="am-depth" value="10" class="spinner-change-rate"> %
+          <div class="form-row flex">
+            <span>
+              <label title="How many percentage points the amplitude (volume) will be altered by in each cycle. For example, if your current volume is 75% and you set the A.M. Depth to 5% the volume will oscillate between 70% and 80%." style="cursor:help">A.M. Depth</label>
+              <br class="promode" style="display: block" />
+              <input name="am-depth" value="10" class="spinner-change-rate"> %
+            </span>
+            <% if (features['promode']) { %>
+              <span class='promode' style='display: none'>
+                <label>Ramp</label>
+                <br/>
+                <input name="am-depth-ramp" value="0.00" class="spinner-ramp">
+                <span class='cancel-ramp'>X</span>
+              </span>
+              <span class='promode' style='display: none'>
+                <label>Target</label>
+                <br/>
+                <input name="am-depth-target" value="0" class="spinner-change-rate">
+              </span>
+            <% } %>
           </div>
 
           <% if (features['promode']) { %>
@@ -275,21 +331,52 @@
                   <option value="triangle">Triangle</option>
                 </select>
               </div>
-              <div class="form-row">
-                <label title="How many times per second the amplitude (volume) modulation will be performed." style="cursor:help">A.M. Frequency 2</label>
-                <input name="am2-frequency" value="0" class="spinner-change-rate">
+              <div class="form-row flex">
+                <span>
+                  <label title="How many times per second the amplitude (volume) modulation will be performed." style="cursor:help">A.M. Frequency 2</label>
+                  <br class="promode" style="display: block" />
+                  <input name="am2-frequency" value="0" class="spinner-change-rate">
+                </span>
+                <% if (features['promode']) { %>
+                  <span class='promode' style='display: none'>
+                    <label>Ramp</label>
+                    <br/>
+                    <input name="am2-frequency-ramp" value="0.00" class="spinner-ramp">
+                    <span class='cancel-ramp'>X</span>
+                  </span>
+                  <span class='promode' style='display: none'>
+                    <label>Target</label>
+                    <br/>
+                    <input name="am2-frequency-target" value="0" class="spinner-change-rate">
+                  </span>
+                <% } %>
               </div>
-              <div class="form-row">
-                <label title="How many percentage points the amplitude (volume) will be altered by in each cycle. For example, if your current volume is 75% and you set the A.M. Depth to 5% the volume will oscillate between 70% and 80%." style="cursor:help">A.M. Depth 2</label>
-                <input name="am2-depth" value="10" class="spinner-change-rate"> %
+              <div class="form-row flex">
+                <span>
+                  <label title="How many percentage points the amplitude (volume) will be altered by in each cycle. For example, if your current volume is 75% and you set the A.M. Depth to 5% the volume will oscillate between 70% and 80%." style="cursor:help">A.M. Depth 2</label>
+                  <br class="promode" style="display: block" />
+                  <input name="am2-depth" value="10" class="spinner-change-rate"> %
+                </span>
+                <% if (features['promode']) { %>
+                  <span class='promode' style='display: none'>
+                    <label>Ramp</label>
+                    <br/>
+                    <input name="am2-depth-ramp" value="0.00" class="spinner-ramp">
+                    <span class='cancel-ramp'>X</span>
+                  </span>
+                  <span class='promode' style='display: none'>
+                    <label>Target</label>
+                    <br/>
+                    <input name="am2-depth-target" value="0" class="spinner-change-rate">
+                  </span>
+                <% } %>
               </div>
             </div>
           <% } %>
 
           <h3>Frequency Modulation</h3>
           <div class="form-row">
-            <label title="The type of waveform to use for frequency modulation." style="cursor:help">F.M.
-              Type</label>
+            <label title="The type of waveform to use for frequency modulation." style="cursor:help">F.M. Type</label>
             <select name="fm-type">
               <option value="none">None</option>
               <option value="sine">Sine</option>
@@ -298,13 +385,45 @@
               <option value="triangle">Triangle</option>
             </select>
           </div>
-          <div class="form-row">
-            <label title="How many times per second the frequency modulation will be performed." style="cursor:help">F.M. Frequency</label>
-            <input name="fm-frequency" value="0" class="spinner-change-rate"> Hz.
+          <div class="form-row flex">
+            <span>
+              <label title="How many times per second the frequency modulation will be performed." style="cursor:help">F.M. Frequency</label>
+              <br class="promode" style="display: block" />
+              <input name="fm-frequency" value="0" class="spinner-change-rate"> Hz.
+            </span>
+            <% if (features['promode']) { %>
+              <span class='promode' style='display: none'>
+                <label>Ramp</label>
+                <br/>
+                <input name="fm-frequency-ramp" value="0.00" class="spinner-ramp">
+                <span class='cancel-ramp'>X</span>
+              </span>
+              <span class='promode' style='display: none'>
+                <label>Target</label>
+                <br/>
+                <input name="fm-frequency-target" value="0" class="spinner-change-rate">
+              </span>
+            <% } %>
           </div>
-          <div class="form-row">
-            <label title="How many hertz the frequency will be altered by in each cycle. For example, if your current frequency is 2000 Hz and you set the F.M. Depth to 50 Hz the frequency will oscillate between 1950 and 2050 Hz." style="cursor:help">F.M. Depth</label>
-            <input name="fm-depth" value="10" class="spinner-change-rate"> Hz.
+          <div class="form-row flex">
+            <span>
+              <label title="How many hertz the frequency will be altered by in each cycle. For example, if your current frequency is 2000 Hz and you set the F.M. Depth to 50 Hz the frequency will oscillate between 1950 and 2050 Hz." style="cursor:help">F.M. Depth</label>
+              <br class="promode" style="display: block" />
+              <input name="fm-depth" value="10" class="spinner-change-rate"> Hz.
+            </span>
+            <% if (features['promode']) { %>
+              <span class='promode' style='display: none'>
+                <label>Ramp</label>
+                <br/>
+                <input name="fm-depth-ramp" value="0.00" class="spinner-ramp">
+                <span class='cancel-ramp'>X</span>
+              </span>
+              <span class='promode' style='display: none'>
+                <label>Target</label>
+                <br/>
+                <input name="fm-depth-target" value="0" class="spinner-change-rate">
+              </span>
+            <% } %>
           </div>
 
           <button class="pain-btn">Pain Tool</button>

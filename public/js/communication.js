@@ -174,8 +174,8 @@ $(function () {
             $('#rider-bottle-countdown-container').hide();
 
             if (ramp_down) {
-                $("input[name=ramp-target]").val(0);
-                $("input[name=ramp-rate]").val(100 / PAUSE_RAMP_SECS);
+                $("input[name=vol-target]").val(0);
+                $("input[name=vol-ramp]").val(100 / PAUSE_RAMP_SECS);
                 $(".apply-btn").click();
             }
         }
@@ -279,8 +279,8 @@ $(function () {
             if (step['fmType'] !== undefined) $channelCol.find('select[name="fm-type"]').val(step['fmType']).selectmenu('refresh');
             if (step['fmDepth'] !== undefined) $channelCol.find('input[name="fm-depth"]').val(step['fmDepth']);
             if (step['fmFreq'] !== undefined) $channelCol.find('input[name="fm-frequency"]').val(step['fmFreq']);
-            if (step['rampTarget'] !== undefined) $channelCol.find('input[name="ramp-target"]').val(step['rampTarget']);
-            if (step['rampRate'] !== undefined) $channelCol.find('input[name="ramp-rate"]').val(step['rampRate']);
+            if (step['rampTarget'] !== undefined) $channelCol.find('input[name="vol-target"]').val(step['rampTarget']);
+            if (step['rampRate'] !== undefined) $channelCol.find('input[name="vol-ramp"]').val(step['rampRate']);
             if (step['tOn'] !== undefined) $channelCol.find('input[name="ton"]').val(step['tOn']);
             if (step['tOff'] !== undefined) $channelCol.find('input[name="toff"]').val(step['tOff']);
             if (step['tAtt'] !== undefined) $channelCol.find('input[name="tatt"]').val(step['tAtt']);
@@ -387,7 +387,7 @@ $(function () {
                         switch (filetype) {
                           case 'ss4':
                             script = convertSS4ToElectron(e.target.result);
-                            $('.promode').slideDown(); // Ensure SS4 controls are visible, but don't update user's promode setting
+                            $(document).trigger('promode-on', false);
                             break;
                           case 'electron':
                             script = JSON.parse(e.target.result);
@@ -530,8 +530,8 @@ $(function () {
             $channelCol.find('select[name="fm-type"]').val(msg.fmType).selectmenu('refresh');
             $channelCol.find('input[name="fm-depth"]').val(clamp(msg.fmDepth, 0, 1000));
             $channelCol.find('input[name="fm-frequency"]').val(clamp(msg.fmFreq, 0, 100));
-            $channelCol.find('input[name="ramp-rate"]').val(clamp(msg.rampRate, 0, 10));
-            $channelCol.find('input[name="ramp-target"]').val(clamp(msg.rampTarget, 0, 100));
+            $channelCol.find('input[name="vol-ramp"]').each((i, el) => $(el).val(clamp(msg.rampRate, 0, 10)));
+            $channelCol.find('input[name="vol-target"]').each((i, el) => $(el).val(clamp(msg.rampTarget, 0, 100)));
             $channelCol.find('input[name="ton"]').val(clamp(msg.tOn, 0, 60));
             const ton_current = parseFloat($channelCol.find('input[name="ton"]').val());
             $channelCol.find('input[name="toff"]').val(clamp(msg.tOff, 0, 60));
@@ -621,9 +621,9 @@ $(function () {
 
             if (msg['proMode'] !== undefined) {
                 if (msg['proMode'])
-                    $('.promode').slideDown();
+                    $(document).trigger('promode-on', false);
                 else
-                    $('.promode').slideUp();
+                    $(document).trigger('promode-off', false);
             }
 
             const name = (msg['driverName'] || 'Anonymous').replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
@@ -721,9 +721,9 @@ $(function () {
                 $('#driver-comments').val(msg['driverComments']);
                 if (msg['proMode'] !== undefined) {
                     if (msg['proMode'])
-                        $('.promode').slideDown();
+                        $(document).trigger('promode-on', false);
                     else
-                        $('.promode').slideUp();
+                        $(document).trigger('promode-off', false);
                 }
             });
 
@@ -787,8 +787,8 @@ $(function () {
                     fmType: $(channelSel + 'select[name="fm-type"]').val(),
                     fmDepth: parseFloat($(channelSel + 'input[name="fm-depth"]').val()),
                     fmFreq: parseFloat($(channelSel + 'input[name="fm-frequency"]').val()),
-                    rampTarget: parseFloat($(channelSel + 'input[name="ramp-target"]').val()),
-                    rampRate: parseFloat($(channelSel + 'input[name="ramp-rate"]').val()),
+                    rampTarget: parseFloat($(channelSel + 'input[name="vol-target"]').val()),
+                    rampRate: parseFloat($(channelSel + 'input[name="vol-ramp"]').val()),
                     tOn: parseFloat($(channelSel + 'input[name="ton"]').val()),
                     tOff: parseFloat($(channelSel + 'input[name="toff"]').val()),
                     tAtt: parseFloat($(channelSel + 'input[name="tatt"]').val())

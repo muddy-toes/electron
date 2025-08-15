@@ -2,28 +2,42 @@
 let promode = false;
 
 function loadPromode() {
+    $(document).on('promode-on', promodeOn);
+    $(document).on('promode-off', promodeOff);
+
     const savedPromode = getPromodeCookie();
     if (savedPromode) {
         if (savedPromode === 'true') {
-            promode = false;
+            $(document).trigger('promode-on');
         } else {
-            promode = true;
+            $(document).trigger('promode-off');
         }
-        togglePromode();
     }
 }
 
-function togglePromode() {
+function promodeOn(setcookie=true) {
+    promode = false;
+    togglePromode(setcookie);
+}
+
+function promodeOff(setcookie=true) {
+    promode = true;
+    togglePromode();
+}
+
+function togglePromode(setcookie=true) {
     if (promode) {
         promode = false;
-        $('.promode').slideUp();
-        setPromodeCookie("false", 30); // Save the user's choice in a cookie
-        $(document).trigger('promode-off');
+        $('body .promode').hide();
+        $('body').removeClass('promode').addClass('classicmode');
+        $('body .classicmode').slideDown();
+        if (setcookie) setPromodeCookie("false", 30); // Save the user's choice in a cookie
     } else {
         promode = true;
-        $('.promode').slideDown();
-        setPromodeCookie("true", 30); // Save the user's choice in a cookie
-        $(document).trigger('promode-on');
+        $('body .classicmode').hide();
+        $('body').removeClass('classicmode').addClass('promode');
+        $('body .promode').slideDown();
+        if (setcookie) setPromodeCookie("true", 30); // Save the user's choice in a cookie
     }
 }
 

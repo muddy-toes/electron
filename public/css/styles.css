@@ -14,6 +14,10 @@ body {
     font-family: Cabin, sans-serif;
 }
 
+label {
+    font-weight: bold;
+}
+
 #main-container,
 #status-message,
 #initialize-audio,
@@ -204,10 +208,39 @@ h2 {
     .spinner-ramp {
         max-width: 3em;
     }
+
+    .spinner-frequency, .spinner-volume, .spinner-change-rate {
+        max-width: 5em;
+    }
+
     
     .cancel-ramp {
         cursor: pointer;
     }
+}
+
+body.classicmode {
+    .form-row > label {
+        min-width: 27vh;
+        display: inline-block;
+    }
+
+    .form-row > span > label:first-child {
+        min-width: 27vh;
+        display: inline-block;
+    }
+}
+
+body.promode {
+    .form-row > label {
+        margin-right: 2em;
+        display: inline-block;
+    }
+}
+
+
+.volOnOff span {
+    min-width: 33.3%;
 }
 
 .form-row input,

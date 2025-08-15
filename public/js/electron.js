@@ -9,6 +9,60 @@ $(document).ready(function () {
     const tOff = { left: 0.0, right: 0.0 };
     const onOffTimeouts = { left: null, right: null };
 
+    const rampAffectsMap = {
+        'vol-ramp': {
+            target: 'vol-target',
+            affects: 'volume',
+            apply: function(channelName, newval) { (channelName == 'left' ? leftOsc : rightOsc).amp(newval * 0.01) }
+        },
+        'freq-ramp': {
+            target: 'freq-target',
+            affects: 'frequency',
+            apply: function(channelName, newval) { (channelName == 'left' ? leftOsc : rightOsc).freq(newval) }
+        },
+        'am-depth-ramp': {
+            target: 'am-depth-target',
+            affects: 'am-depth',
+            apply: function(channelName, newval) { (channelName == 'left' ? modL : modR).amp(newval * 0.01) }
+        },
+        'am-frequency-ramp': {
+            target: 'am-frequency-target',
+            affects: 'am-frequency',
+            apply: function(channelName, newval) { (channelName == 'left' ? modL : modR).freq(newval) }
+        },
+        'am2-depth-ramp': {
+            target: 'am2-depth-target',
+            affects: 'am2-depth',
+            apply: function(channelName, newval) { (channelName == 'left' ? modL2 : modR2).amp(newval * 0.01) }
+        },
+        'am2-frequency-ramp': {
+            target: 'am2-frequency-target',
+            affects: 'am2-frequency',
+            apply: function(channelName, newval) { (channelName == 'left' ? modL2 : modR2).freq(newval) }
+        },
+        'fm-depth-ramp': {
+            target: 'fm-depth-target',
+            affects: 'fm-depth',
+            apply: function(channelName, newval) { (channelName == 'left' ? fModL : fModR).amp(newval * 0.01) }
+        },
+        'fm-frequency-ramp': {
+            target: 'fm-frequency-target',
+            affects: 'fm-frequency',
+            apply: function(channelName, newval) { (channelName == 'left' ? fModL : fModR).freq(newval) }
+        }
+    };
+    window.rampAffectsMap = rampAffectsMap;
+
+    // object to store the latest ramp information that was applied
+    const rampInfo = { left: {}, right: {} };
+    ['left', 'right'].forEach(function(channelName) {
+        Object.keys(rampAffectsMap).forEach(function(rampkey){
+            const targetkey = rampAffectsMap[rampkey]['target'];
+            rampInfo[channelName][rampkey] = 0;
+            rampInfo[channelName][targetkey] = parseFloat($(`#${channelName}-channel-column input[name="${targetkey}"]`).val());
+        });
+    });
+
     // UI initialization (make the right channel UI a clone of the left one)
     $('#right-channel-column').append($('#left-channel-column .content').clone());
 
@@ -19,6 +73,12 @@ $(document).ready(function () {
     $('select').selectmenu();
 
     loadPromode();
+
+    // This equalizes the two instances of vol-ramp/vol-target in the promode/classicmode blocks when either changes
+    $('input[name="vol-ramp"],input[name="vol-target"]').on('change', function(e) { 
+        const $tgt = $(e.currentTarget);
+        $tgt.parents('.channel-column').first().find(`input[name="${$tgt.attr('name')}"]`).val($tgt.val());
+    });
 
     // register UI events
     addListenerToApply('left', leftOsc, modL, fModL, modL2);
@@ -39,8 +99,9 @@ $(document).ready(function () {
         $('.cancel-ramp').on('click', function(e) {
             const $tgt = $(e.currentTarget);
             const $rampSpinner = $tgt.prev();
-            if (! $rampSpinner.is(".ui-spinner")) return;
-            $rampSpinner.find('input').val('0.00').change();
+            if (! $rampSpinner.is('.ui-spinner')) return;
+            $rampSpinner.find('input').val('0.00');
+            $tgt.parents('.channel-column').first().find('.apply-btn').click();
         });
     }
 
@@ -82,43 +143,47 @@ $(document).ready(function () {
 
 
     function applyChanges(channelName, osc, ampModulator, freqModulator, ampModulator2) {
-        const chSelector = '#' + channelName + '-channel-column ';
+        const $chControls = $(`#${channelName}-channel-column`);
 
         // NOTE: If you change any of these ranges, also change it in in the socket.on in public/js/communication.js
-        validateRange($(chSelector + 'input[name="frequency"]'), 10, 3000);
-        validateRange($(chSelector + 'input[name="volume"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="am-depth"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="am-frequency"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="am2-depth"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="am2-frequency"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="fm-depth"]'), 0, 1000);
-        validateRange($(chSelector + 'input[name="fm-frequency"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="ramp-rate"]'), 0, 10);
-        validateRange($(chSelector + 'input[name="ramp-target"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="toff"]'), 0, 60);
-        validateRange($(chSelector + 'input[name="ton"]'), 0, 60);
-        tOn[channelName] = parseFloat($(chSelector + 'input[name=ton]').val());
-        validateRange($(chSelector + 'input[name="tatt"]'), 0, tOn[channelName]);
+        validateRange($chControls.find('input[name="frequency"]'), 10, 3000);
+        validateRange($chControls.find('input[name="volume"]'), 0, 100);
+        validateRange($chControls.find('input[name="am-depth"]'), 0, 100);
+        validateRange($chControls.find('input[name="am-frequency"]'), 0, 100);
+        validateRange($chControls.find('input[name="am2-depth"]'), 0, 100);
+        validateRange($chControls.find('input[name="am2-frequency"]'), 0, 100);
+        validateRange($chControls.find('input[name="fm-depth"]'), 0, 1000);
+        validateRange($chControls.find('input[name="fm-frequency"]'), 0, 100);
+        validateRange($chControls.find('input[name="vol-ramp"]'), 0, 10);
+        validateRange($chControls.find('input[name="vol-target"]'), 0, 100);
+        validateRange($chControls.find('input[name="toff"]'), 0, 60);
+        validateRange($chControls.find('input[name="ton"]'), 0, 60);
+        tOn[channelName] = parseFloat($chControls.find('input[name=ton]').val());
+        validateRange($chControls.find('input[name="tatt"]'), 0, tOn[channelName]);
 
-        tAtt[channelName] = parseFloat($(chSelector + 'input[name=tatt]').val());
-        tOff[channelName] = parseFloat($(chSelector + 'input[name=toff]').val());
+        tAtt[channelName] = parseFloat($chControls.find('input[name=tatt]').val());
+        tOff[channelName] = parseFloat($chControls.find('input[name=toff]').val());
 
-        const frequency = parseFloat($(chSelector + 'input[name="frequency"]').val());
-        const volume = 0.01 * parseFloat($(chSelector + 'input[name="volume"]').val());
+        const frequency = parseFloat($chControls.find('input[name="frequency"]').val());
+        const volume = 0.01 * parseFloat($chControls.find('input[name="volume"]').val());
 
-        const amDepth = 0.01 * parseFloat($(chSelector + 'input[name="am-depth"]').val());
-        const amFrequency = parseFloat($(chSelector + 'input[name="am-frequency"]').val());
-        const amType = $(chSelector + 'select[name="am-type"]').val();
-        const amDepth2 = 0.01 * parseFloat($(chSelector + 'input[name="am2-depth"]').val());
-        const amFrequency2 = parseFloat($(chSelector + 'input[name="am2-frequency"]').val());
-        const amType2 = $(chSelector + 'select[name="am2-type"]').val();
+        const amDepth = 0.01 * parseFloat($chControls.find('input[name="am-depth"]').val());
+        const amFrequency = parseFloat($chControls.find('input[name="am-frequency"]').val());
+        const amType = $chControls.find('select[name="am-type"]').val();
+        const amDepth2 = 0.01 * parseFloat($chControls.find('input[name="am2-depth"]').val());
+        const amFrequency2 = parseFloat($chControls.find('input[name="am2-frequency"]').val());
+        const amType2 = $chControls.find('select[name="am2-type"]').val();
 
-        const fmDepth = parseFloat($(chSelector + 'input[name="fm-depth"]').val());
-        const fmFrequency = parseFloat($(chSelector + 'input[name="fm-frequency"]').val());
-        const fmType = $(chSelector + 'select[name="fm-type"]').val();
+        const fmDepth = parseFloat($chControls.find('input[name="fm-depth"]').val());
+        const fmFrequency = parseFloat($chControls.find('input[name="fm-frequency"]').val());
+        const fmType = $chControls.find('select[name="fm-type"]').val();
 
-        rampInfo[channelName].rate = parseFloat($(chSelector + 'input[name="ramp-rate"]').val());
-        rampInfo[channelName].target = parseFloat($(chSelector + 'input[name="ramp-target"]').val());
+        Object.keys(rampAffectsMap).forEach(function(rampkey){
+            const targetkey = rampAffectsMap[rampkey]['target'];
+            rampInfo[channelName][rampkey] = parseFloat($chControls.find(`input[name="${rampkey}"]`).val());
+            rampInfo[channelName][targetkey] = parseFloat($chControls.find(`input[name="${targetkey}"]`).val());
+            // console.log("Applied channel %s ramp %s=%o target %s=%o", channelName, rampkey, rampInfo[channelName][rampkey], targetkey, rampInfo[channelName][targetkey]);
+        });
 
         // handle A.M.
         if (amFrequency > 0 && amDepth > 0 && amType != 'none') {
@@ -200,14 +265,16 @@ $(document).ready(function () {
     }
 
     function validateRange(field, min, max) {
-        const value = parseFloat(field.val());
-        if (value < min) {
-            field.val(min);
-        } else if (value > max) {
-            field.val(max);
-        }
+        field.each(function(i, el) {
+            const $el = $(el);
+            const value = parseFloat($el.val());
+            if (value < min) {
+                $el.val(min);
+            } else if (value > max) {
+                $el.val(max);
+            }
+        });
     }
-
 
     function initSpinners() {
         $('.spinner-volume').spinner(electronConfig.dataTypes['volume']);
@@ -303,74 +370,34 @@ $(document).ready(function () {
         });
     }
 
-
-    // object to store the latest ramp information that was applied
-    let rampInfo = {
-        left: {
-            target: 50,
-            rate: 0
-        },
-        right: {
-            target: 50,
-            rate: 0
-        }
-    };
-
-    // This doesn't include ramp-rate -> volume because it's the only one with a target
-    const rampAffectsMap = {
-        'freq-ramp': 'frequency',
-        'am-depth-ramp': 'am-depth',
-        'am-frequency-ramp': 'am-frequency',
-        'am2-depth-ramp': 'am2-depth',
-        'am2-frequency-ramp': 'am2-frequency',
-        'fm-depth-ramp': 'fm-depth',
-        'fm-frequency-ramp': 'fm-frequency'
-    };
-
-    // monitor volume ramps every 100 ms
+    window.rampstatus = {};
+    // monitor ramps every 100 ms
     setInterval(function () {
         ['left', 'right'].forEach(function (channelName) {
             const $chCol = $(`#${channelName}-channel-column`);
 
-            // volume ramp
-            const rampRate = rampInfo[channelName].rate;
-            if (rampRate > 0) {
-                const rampTarget = rampInfo[channelName].target;
-                let volume = parseFloat($chCol.find('input[name="volume"]').val());
-                if (rampTarget > volume) {
-                    volume = volume + rampRate / 10; // 10 times every second
-                    volume = Math.min(rampTarget, volume);
-                } else {
-                    volume = volume - rampRate / 10; // 10 times every second
-                    volume = Math.max(rampTarget, volume);
-                }
-
-                volume = volume.toFixed(3);
-                $chCol.find('input[name="volume"]').val(volume);
-                $chCol.find('input[name="volume"]').change();
-
-                if (volume == rampTarget) {
-                    // ramp finished executing
-                    $chCol.find('input[name="ramp-rate"]').val(0);
-                    rampInfo[channelName].rate = 0;
-                }
-
-                if (channelName == 'left') {
-                    leftOsc.amp(volume / 100);
-                } else if (channelName == 'right') {
-                    rightOsc.amp(volume / 100);
-                }
-            }
-
-            // other ramps
-            if (! feature_promode ) return;
             Object.keys(rampAffectsMap).forEach(function(rampkey) {
-                const affects = rampAffectsMap[rampkey];
-                let rampval = parseFloat($chCol.find(`input[name="${rampkey}"]`).val());
-                if (isNaN(rampval)) rampval = 0;
-                let curval = parseFloat($chCol.find(`input[name="${affects}"]`).val());
-                if (isNaN(curval)) curval = 0;
-                $chCol.find(`input[name="${affects}"]`).val((curval + rampval).toFixed(2)).change();
+                if ($('body').is('.classicmode') && key != 'vol-ramp') return;
+
+                const targetkey = rampAffectsMap[rampkey]['target']; 
+                const affects = rampAffectsMap[rampkey]['affects'];
+                const rampval = rampInfo[channelName][rampkey];
+                const targetval = rampInfo[channelName][targetkey];
+                const curval = parseFloat($chCol.find(`input[name="${affects}"]`).val());
+                window.rampstatus[rampkey] = `affects ${affects} rampval ${rampval} targetval ${targetval} curval ${curval}`;
+
+                if (isNaN(targetval) || isNaN(rampval) || isNaN(curval)) return; // Don't try to ramp with a NaN value.  Something has gone wrong.
+
+                if (curval == targetval) return; // target reached
+
+                let newval = curval + rampval;
+                if (newval > targetval && rampval > 0 || newval < targetval && rampval < 0)
+                  newval = targetval;
+
+                const places = parseFloat(newval.toFixed(2)) == parseFloat(newval.toFixed(3)) ? 2 : 3;
+                $chCol.find(`input[name="${affects}"]`).val(newval.toFixed(places));
+
+                rampAffectsMap[rampkey]['apply'](channelName, newval);
             });
         });
     }, 100);
@@ -391,11 +418,11 @@ $(document).ready(function () {
         if (channelName == 'left') {
             leftOsc.stop();
             clearTimeout(onOffTimeouts['left']);
-            rampInfo.left.rate = 0;
+            rampInfo.left['vol-ramp'] = 0;
         } else if (channelName == 'right') {
             rightOsc.stop();
             clearTimeout(onOffTimeouts['right']);
-            rampInfo.right.rate = 0;
+            rampInfo.right['vol-ramp'] = 0;
         }
     };
 
@@ -410,10 +437,10 @@ $(document).ready(function () {
         let osc;
         if (channelName == 'left') {
             osc = leftOsc;
-            rampInfo.left.rate = 0;
+            rampInfo.left['vol-ramp'] = 0;
         } else if (channelName == 'right') {
             osc = rightOsc;
-            rampInfo.right.rate = 0;
+            rampInfo.left['vol-ramp'] = 0;
         }
 
         const wasRunning = osc.started;
