@@ -18,9 +18,18 @@ class AutomatedDriver {
         const defaultChannelState = {
             volume: this.startVolume,
             freq: this.initialFrequency,
+            fmType: 'none',
+            fmDepth: 0,
+            fmFreq: 0,
             amType: 'none',
             amDepth: 0,
-            amFreq: 0
+            amFreq: 0,
+            amType2: 'none',
+            amDepth2: 0,
+            amFreq2: 0,
+            tOn: 0.1,
+            tAtt: 0.1,
+            tOff: 0
         };
 
         this.leftChannel = { ...defaultChannelState };
@@ -52,6 +61,24 @@ class AutomatedDriver {
         channel.volume = Math.round(channel.volume);
     }
 
+    toggleFM(channel, elapsedMinutes) {
+        // Randomly enable or disable FM
+        if (channel.fmType !== 'none') {
+            channel.fmType = 'none';
+            channel.fmFreq = 0;
+            channel.fmDepth = 0;
+        } else {
+            channel.fmType = this.getRandomAMType();
+            // Increase max value from 2 to 10 over session
+            const fmFreqMax = Math.min(2 + 8 * (elapsedMinutes / this.sessionDuration), 10);
+            channel.fmFreq = parseFloat((Math.random() * fmFreqMax).toFixed(2));
+
+            let fmDepth = this.minFMDepth + Math.random() * (this.maxFMDepth - this.minFMDepth);
+            fmDepth = fmDepth * (channel.volume / 100.0); // make FM depth proportional to volume
+            channel.fmDepth = parseFloat(fmDepth).toFixed(2);
+        }
+    }
+
     toggleAM(channel, elapsedMinutes) {
         // Randomly enable or disable AM
         if (channel.amType !== 'none') {
@@ -67,6 +94,24 @@ class AutomatedDriver {
             let amDepth = this.minAMDepth + Math.random() * (this.maxAMDepth - this.minAMDepth);
             amDepth = amDepth * (channel.volume / 100.0); // make AM depth proportional to volume
             channel.amDepth = parseFloat(amDepth).toFixed(2);
+        }
+    }
+
+    toggleAM2(channel, elapsedMinutes) {
+        // Randomly enable or disable AM2
+        if (channel.amType2 !== 'none') {
+            channel.amType2 = 'none';
+            channel.amFreq2 = 0;
+            channel.amDepth2 = 0;
+        } else {
+            channel.amType2 = this.getRandomAMType();
+            // Increase max value from 2 to 10 over session
+            const amFreqMax = Math.min(2 + 8 * (elapsedMinutes / this.sessionDuration), 10);
+            channel.amFreq2 = parseFloat((Math.random() * amFreqMax).toFixed(2));
+
+            let amDepth = this.minAMDepth2 + Math.random() * (this.maxAMDepth2 - this.minAMDepth2);
+            amDepth = amDepth * (channel.volume / 100.0); // make AM depth proportional to volume
+            channel.amDepth2 = parseFloat(amDepth).toFixed(2);
         }
     }
 
@@ -110,13 +155,19 @@ class AutomatedDriver {
         const msg = {
             volume: channel.volume,
             freq: channel.freq,
+            fmType: channel.fmType,
+            fmDepth: channel.fmDepth,
+            fmFreq: channel.fmFreq,
             amType: channel.amType,
             amDepth: channel.amDepth,
             amFreq: channel.amFreq,
+            amType2: channel.amType2,
+            amDepth2: channel.amDepth2,
+            amFreq2: channel.amFreq2,
+            tOn: 0.1,
+            tAtt: 0.1,
+            tOff: 0,
             active: true,
-            fmType: 'none',
-            fmDepth: 10,
-            fmFreq: 0,
             rampTarget: channel.volume,
             rampRate: 0
         };
@@ -131,9 +182,15 @@ class AutomatedDriver {
         const msg = {
             volume: channel.volume,
             freq: channel.freq,
+            fmType: 'none',
+            fmDepth: channel.fmDepth,
+            fmFreq: channel.fmFreq,
             amType: 'none',
             amDepth: channel.amDepth,
             amFreq: channel.amFreq,
+            amType2: 'none',
+            amDepth2: channel.amDepth2,
+            amFreq2: channel.amFreq2,
             active: true,
             fmType: 'none',
             fmDepth: 10,
@@ -157,9 +214,17 @@ class AutomatedDriver {
         }
 
         this.updateVolume(channel, elapsedMinutes);
+        if (Math.random() < 0.3 && this.minFMDepth > 0) {
+            // 30% chance of making changes to the FM
+            this.toggleFM(channel, elapsedMinutes);
+        }
         if (Math.random() < 0.3 && this.minAMDepth > 0) {
             // 30% chance of making changes to the AM
             this.toggleAM(channel, elapsedMinutes);
+        }
+        if (Math.random() < 0.3 && this.minAMDepth2 > 0) {
+            // 30% chance of making changes to the AM
+            this.toggleAM2(channel, elapsedMinutes);
         }
 
         this.varyFrequency(channel, otherChannel.freq);

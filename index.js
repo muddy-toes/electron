@@ -55,7 +55,9 @@ app.post('/start-automated-driver', function (req, res) {
     const maxFrequency = parseInt(req.body['max-frequency']);
     const startFrequency = parseInt(req.body['start-frequency']);
     const startVolume = parseInt(req.body['start-volume']);
+    const fmPreset = parseInt(req.body['fm-preset']);
     const amPreset = parseInt(req.body['am-preset']);
+    const amPreset2 = parseInt(req.body['am2-preset']);
     const sessionDuration = parseInt(req.body['session-duration']);
     const painProbability = parseInt(req.body['pain-probability']);
     const painIntensity = parseInt(req.body['pain-intensity']);
@@ -64,20 +66,42 @@ app.post('/start-automated-driver', function (req, res) {
     const bottlePromptingMax = bottlePromptingRaw[0] == '0' ? 0 : parseInt(bottlePromptingRaw[1]);
     const sessId = generateAutomatedSessId();
 
+    const painProbDesc = {
+        5: 'Low',
+        10: 'Medium',
+        20: 'High',
+        30: 'Very High'
+    };
+    const painLevelDesc = {
+        4: 'Low',
+        8: 'Medium',
+        10: 'High',
+        15: 'Very High'
+    };
+    let driverComments = `${sessionDuration}m session. `;
+    driverComments += painProbability == 0 ? 'No pain tools. ' : `Pain tools ${painProbDesc[painProbability]} probability at a ${painLevelDesc[painIntensity]} level. `;
+    driverComments += bottlePromptingMax == 0 ? 'No bottle prompting. ' : 'Bottle prompting used. '
+
     const sessionConfig = {
         ...automatedDriverConfig,
         verbose: config.verbose,
         bottlePromptingMin: bottlePromptingMin,
         bottlePromptingMax: bottlePromptingMax,
         sessionDuration: sessionDuration,
+        minFMDepth: fmPreset,
+        maxFMDepth: fmPreset * 3,
         minAMDepth: amPreset,
         maxAMDepth: amPreset * 3,
+        minAMDepth2: amPreset2,
+        maxAMDepth2: amPreset2 * 3,
         minFrequency: minFrequency,
         maxFrequency: maxFrequency,
         initialFrequency: startFrequency,
         startVolume: startVolume,
         painProbability: painProbability,
-        painIntensity: painIntensity
+        painIntensity: painIntensity,
+        proMode: (amPreset2 != 0),
+        driverComments: driverComments
     };
 
     if (electronState.startAutomatedDriver(sessId, sessionConfig)) {
