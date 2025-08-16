@@ -27,13 +27,6 @@ $(document).ready(function () {
     initPainTool('left');
     initPainTool('right');
 
-    $('body').on('keyup', function(e) {
-        if (e.keyCode === 27)
-            $('.stop-btn').click();
-        else if (e.keyCode === 13)
-            $('.apply-btn').click();
-    });
-
     $('#clear-steps-help').on('click', function() {
         const dialog = $('#clear-steps-help-dialog').dialog({
             autoOpen: true,
@@ -49,6 +42,7 @@ $(document).ready(function () {
 
     function addListenerToApply(channelName, osc, ampModulator, freqModulator, ampModulator2) {
         const chSelector = '#' + channelName + '-channel-column ';
+
         $(chSelector + '.apply-btn').click(function () {
             applyChanges(channelName, osc, ampModulator, freqModulator, ampModulator2);
             // send event to communication module can capture it
@@ -67,6 +61,13 @@ $(document).ready(function () {
                 // send event to communication module can capture it
                 $(window).trigger('stopped-' + channelName);
             }
+        });
+
+        $('body').on('keyup', function(e) {
+            if (e.keyCode === 27)
+                $('.stop-btn').click();
+            else if (e.keyCode === 13)
+                $('.apply-btn').click();
         });
     }
 
