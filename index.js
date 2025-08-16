@@ -104,6 +104,7 @@ app.post('/start-automated-driver', function (req, res) {
         driverComments: driverComments
     };
 
+    if (config.verbose) logger("Starting AutomatedDriver with config: %o", sessionConfig);
     if (electronState.startAutomatedDriver(sessId, sessionConfig)) {
         res.render('automated', { sessId: sessId, sessDuration: sessionConfig.sessionDuration });
     } else {

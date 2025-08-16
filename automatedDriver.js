@@ -40,7 +40,7 @@ class AutomatedDriver {
         const now = Date.now();
         this.next_bottle = parseInt(now + (Math.random() * (this.bottlePromptingMax - this.bottlePromptingMin) + this.bottlePromptingMin) * 1000);
         if (this.verbose)
-            logger("Automated driver %o setNextBottle min/max/next %o/%o/%o",
+            logger("Automated driver %s setNextBottle min/max/next %o/%o/%o",
                    this.sessId, this.bottlePromptingMin, this.bottlePromptingMax, parseInt((this.next_bottle - now) / 1000));
     }
 
