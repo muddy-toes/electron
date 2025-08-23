@@ -134,10 +134,19 @@ module.exports = function (electronState) {
             electronState.setSessionFlag(msg.sessId, 'driverName', name);
 
             let url = msg.camUrl.slice(0, 100);
+            logger("Setting flags, got url=%s", url);
             // I want to try to protect riders from bad urls as much as I can but not break
             // it either.  At least we can make sure it's an http/https url...
-            if (!url || !url.match(/^https?:\/\//i))
-              url = '';
+            const camUrlList = electronState.getCamUrlList();
+            logger("camlist: %o", camUrlList);
+            if (camUrlList.length == 0) {
+                if (!url || !url.match(/^https?:\/\//i))
+                    url = '';
+            } else {
+                if (camUrlList.map((item) => item.name).filter((name) => name === url)[0] === undefined)
+                    url = '';
+            }
+            logger("Post check url=%s", url);
 
             if (electronState.getVerbose() && currentFlags['camUrl'] != url) logger("setSettings camUrl, raw=%o, processed=%o, sessId=%s", msg.camUrl, url, msg.sessId);
             electronState.setSessionFlag(msg.sessId, 'camUrl', url);

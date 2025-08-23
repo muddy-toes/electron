@@ -483,8 +483,8 @@ div.mode-selector-box p {
     .field {
       display: flex;
       justify-content: space-between;
-      input {
-        max-height: 1.5em;
+      input,select {
+        max-height: 2em;
         margin-left: 1em;
         flex-grow: 1;
       }
