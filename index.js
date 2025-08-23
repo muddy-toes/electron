@@ -7,6 +7,13 @@ const config = {
         promode: true
     },
 
+    camUrlList: [
+        { name: 'eStimStation Stimroom', url: 'https://discord.com/channels/786142403987505182/1309514473157165177', default: true },
+        { name: 'eStimStation Sunday Drive', url: 'https://discord.com/channels/786142403987505182/1060818089547157555' },
+        { name: 'eStimStation Hangout', url: 'https://discord.com/channels/786142403987505182/1124800414978674828' },
+        { name: 'Ask your driver', message: 'Ask your driver' }
+    ],
+
     promodeKeys: [
         'amType2', 'amDepth2', 'amFreq2', 'tOn', 'tOff', 'tAtt'
     ]
@@ -126,11 +133,11 @@ app.get('/player/:mode/:sessId', function (req, res) {
     if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
-        res.render('player', { flags: flags, features: config.features });
+        res.render('player', { flags: flags, features: config.features, camUrlList: config.camUrlList });
     } else if (mode === 'play' && sessId === 'solo') {
         logger('User playing solo');
         // solo play
-        res.render('player', { flags: { driverName: 'Yourself' }, features: config.features });
+        res.render('player', { flags: { driverName: 'Yourself' }, features: config.features, camUrlList: [] });
     } else {
         // something went wrong -> 404!
         res.status(404);

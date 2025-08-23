@@ -624,9 +624,20 @@ $(function () {
             $("#driver-nametag .nametag").text(name);
 
             if (msg['camUrl']) {
-                $('#cam-url .cam-url-link').html(`<a target="_blank" href="${msg['camUrl']}">${msg['camUrl']}</a>`);
-                initialize_cam_url_warning_dismissal();
-                $('#cam-url .cam-url-warning').show();
+                if (camUrlList.length == 0) {
+                    $('#cam-url .cam-url-link').html(`<a target="_blank" href="${msg['camUrl']}">${msg['camUrl']}</a>`);
+                    initialize_cam_url_warning_dismissal();
+                    $('#cam-url .cam-url-warning').show();
+                } else {
+                    const camlistItem = camUrlList.filter((item) => item.name == msg['camUrl'])[0];
+                    if (camlistItem !== undefined) {
+                        if (camlistItem['url'] === undefined && camlistItem['message'] !== undefined) {
+                            $('#cam-url .cam-url-link').text(camlistItem['message']);
+                        } else {
+                            $('#cam-url .cam-url-link').html(`<a target="_blank" href="${camlistItem['url']}">${camlistItem['name']}</a>`);
+                        }
+                    }
+                }
                 $('#cam-url').fadeIn();
             } else {
                 $('#cam-url').fadeOut();
@@ -687,9 +698,16 @@ $(function () {
                 const name = $('#driver-name').val().replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
                 const comments = $('#driver-comments').val().slice(0, 100);
                 const url = $('#driver-cam-url').val();
-                if (url && !url.match(/^https?:\/\//i)) {
-                    $('#status-message').append("<p>Invalid Cam URL.  Has to be an HTTP/HTTPS URL.</p>");
-                    return false;
+                if (camUrlList.length == 0) {
+                    if (url && !url.match(/^https?:\/\//i)) {
+                        $('#status-message').append("<p>Invalid Cam URL.  Has to be an HTTP/HTTPS URL.</p>");
+                        return false;
+                    }
+                } else {
+                    if (camUrlList.map((item) => item.name).filter((name) => name === url)[0] === undefined) {
+                        $('#status-message').append("<p>Invalid Cam Selection.  Item not in list</p>");
+                        return false;
+                    }
                 }
                 socket.emit('setSettings', { sessId: sessId, driverToken: driverToken, driverName: name, camUrl: url, driverComments: comments });
             });
