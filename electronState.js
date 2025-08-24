@@ -247,7 +247,10 @@ class ElectronState {
             this.automatedDrivers[sessId] = new AutomatedDriver(sessId, automatedDriverConfig);
             this.initSessionData(sessId);
             this.setSessionFlag(sessId, 'driverName', 'Autodriver');
-            this.setSessionFlag(sessId, 'proMode', false);
+            this.setSessionFlag(sessId, 'publicSession', false);
+            this.setSessionFlag(sessId, 'blindfoldRiders', false);
+            this.setSessionFlag(sessId, 'proMode', automatedDriverConfig['proMode']);
+            this.setSessionFlag(sessId, 'driverComments', automatedDriverConfig['driverComments']);
             this.automatedDrivers[sessId].run(this);
             return true;
         } else {

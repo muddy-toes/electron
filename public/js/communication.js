@@ -563,7 +563,8 @@ $(function () {
         $('#ride-info').show();
 
         // show traffic light container
-        $('#traffic-light').show();
+        if (! sessId.match(/^AUTO\d+/) )
+            $('#traffic-light').show();
         // event listeners for traffic light system
         $(window).on('traffic-light', function () {
             const data = {
