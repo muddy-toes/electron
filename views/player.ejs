@@ -12,10 +12,11 @@
   <link rel="stylesheet" href="/css/player-styles.css">
   <link rel="stylesheet" href="" id='darkmode-stylesheet'>
 
-  <script>
+  <script type="text/javascript">
     <% Object.keys(features).forEach(function(key) { %>
       const feature_<%= key %> = <%= features[key] %>;
     <% }) %>
+    const camUrlList = <%- JSON.stringify(camUrlList) || [] %>;
   </script>
 
   <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
@@ -58,14 +59,13 @@
       <span class='file-playing-info'><%= flags['filePlaying'] %></span>
       <span class='file-driver-info'><%= flags['fileDriver'] ? `by ${flags['fileDriver']}` : '' %></span>
     </p>
-    <p id='cam-url' style="<%= flags['camUrl'] ? '' : 'display:none;' %>">
+    <p id='cam-url'>
       This is where riders are camming:
       <br/>
       <span class='cam-url-link'>
-        <a target="_blank" href="<%= flags['camUrl'] %>"><%= flags['camUrl'] %></a>
+        <a target="_blank" href=""></a>
       </span>
       <br/>
-      <span class='cam-url-warning'><b>WARNING:</b> Use your judgement before clicking.<br/>If the cam link looks sketchy and you don't know your driver, don't click on it.</span>
     </p>
     <p id='comments' style="<%= flags['driverComments'] ? '' : 'display:none;' %>">
       Session info from driver:
@@ -92,8 +92,16 @@
           <button class="set-settings">Set</button>
         </div>
         <div class="field">
-          <label for="driver-cam-url">URL for camming:</label>
-          <input type="text" maxlength="100" id="driver-cam-url" placeholder="https://"/>
+          <label for="driver-cam-url">Room for camming:</label>
+          <% if (camUrlList.length == 0) { %>
+            <input type="text" maxlength="100" id="driver-cam-url" placeholder="https://"/>
+          <% } else { %>
+            <select id="driver-cam-url" required>
+              <% camUrlList.forEach(function(item) { %>
+                <option <%= item.default ? 'selected="selected"' : ''%>><%= item.name %></option>
+              <% }); %>
+            </select>
+          <% } %>
           <button class="set-settings">Set</button>
         </div>
         <div class="field">
@@ -229,7 +237,7 @@
           <h3>Amplitude Modulation</h3>
           <div class="form-row">
             <label title="The type of waveform to use for amplitude (volume) modulation." style="cursor:help">A.M. Type</label>
-            <select name="am-type">
+            <select class="selectmenu" name="am-type">
               <option value="none">None</option>
               <option value="sine">Sine</option>
               <option value="sawtooth">Sawtooth</option>
@@ -251,7 +259,7 @@
               <hr style='opacity:0.3; width:60%'/>
               <div class="form-row">
                 <label title="The type of waveform to use for amplitude (volume) modulation." style="cursor:help">A.M. Type 2</label>
-                <select name="am2-type">
+                <select class="selectmenu" name="am2-type">
                   <option value="none">None</option>
                   <option value="sine">Sine</option>
                   <option value="sawtooth">Sawtooth</option>
@@ -274,7 +282,7 @@
           <div class="form-row">
             <label title="The type of waveform to use for frequency modulation." style="cursor:help">F.M.
               Type</label>
-            <select name="fm-type">
+            <select class="selectmenu" name="fm-type">
               <option value="none">None</option>
               <option value="sine">Sine</option>
               <option value="sawtooth">Sawtooth</option>

@@ -20,6 +20,10 @@ class ElectronState {
         if (this.config.verbose) logger("verbose logging enabled");
     }
 
+    getCamUrlList() {
+      return this.config.camUrlList;
+    }
+
     getVerbose() {
       return this.config.verbose;
     }
@@ -33,6 +37,12 @@ class ElectronState {
 
         // New driver, reset some settings...
         this.sessionFlags[sessId]['driverName'] = 'Anonymous';
+        if (this.config.camUrlList.length > 0) {
+            const defaultItem = this.config.camUrlList.filter((item) => item.default)[0];
+            if (defaultItem !== undefined) {
+                this.sessionFlags[sessId]['camUrl'] = defaultItem.name;
+            }
+        }
         delete this.sessionFlags[sessId]['filePlaying'];
         delete this.sessionFlags[sessId]['fileDriver'];
 

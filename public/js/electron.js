@@ -16,7 +16,7 @@ $(document).ready(function () {
     initSpinners();
     initSliders();
     initStopButtons();
-    $('select').selectmenu();
+    $('select.selectmenu').selectmenu();
 
     loadPromode();
 
