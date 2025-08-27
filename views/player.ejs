@@ -53,12 +53,14 @@
     <p id='driver-nametag'>
       Your driver's name is <span class="nametag"><%= flags['driverName'] %></span>
     </p>
-    <p id='file-playing' style="<%= flags['filePlaying'] ? '' : 'display:none;' %>">
-      Currently playing a recorded session:
-      <br/>
-      <span class='file-playing-info'><%= flags['filePlaying'] %></span>
-      <span class='file-driver-info'><%= flags['fileDriver'] ? `by ${flags['fileDriver']}` : '' %></span>
-    </p>
+    <div id='file-playing-blindfold'>
+      <p id='file-playing' style='display:none;'>
+        Currently playing a recorded session:
+        <br/>
+        <span class='file-playing-info'></span>
+        <span class='file-driver-info'></span>
+      </p>
+    </div>
     <p id='cam-url'>
       This is where riders are camming:
       <br/>
