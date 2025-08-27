@@ -607,9 +607,11 @@ $(function () {
         socket.on('updateFlags', function(msg) {
             if (msg['blindfoldRiders']) {
                 $("#controls").slideUp();
+                $("#file-playing-blindfold").hide();
                 $("#nocontrols").fadeIn();
             } else if (msg['blindfoldRiders'] == false) {
                 $("#nocontrols").fadeOut();
+                $("#file-playing-blindfold").show();
                 $("#controls").slideDown();
             }
 
