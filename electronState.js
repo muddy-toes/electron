@@ -16,8 +16,8 @@ class ElectronState {
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
         this.sessionFlags = {};         // sessionFlags[sessId][flagname]
                                         // flagnames in use: blindfoldRiders, publicSession, driverName, proMode
-        logger("start");
-        if (this.config.verbose) logger("verbose logging enabled");
+        logger("[] startup");
+        if (this.config.verbose) logger("[] verbose logging enabled");
     }
 
     getCamUrlList() {
@@ -66,7 +66,8 @@ class ElectronState {
         delete this.driverTokens[sessId];
         delete this.driverSockets[sessId];
         delete this.riders[sessId];
-        logger("Active sessions: %d", Object.keys(this.lastMessages).length);
+        logger("[%s] End session", sessId);
+        logger("[] Active sessions: %d", Object.keys(this.lastMessages).length);
     }
 
     setSessionFlag(sessId, flagname, flagval) {
@@ -222,7 +223,7 @@ class ElectronState {
                 this.riders[sessId].splice(index, 1);
                 delete this.trafficLights[socket.id];
                 if (! this.driverSockets[sessId]) {
-                    logger(`Last rider left, no driver present, session ended, ${sessId}`);
+                    logger('[%s] Last rider left, no driver present, ending session', sessId);
                     this.cleanupSessionData(sessId);
                 }
             }
@@ -231,16 +232,16 @@ class ElectronState {
         if (! found_rider) {
             for (const sessId in this.driverSockets) {
                 if (this.driverSockets[sessId] === socket) {
-                    logger('Driver disconnected for ' + sessId);
+                    logger('[%s] Driver disconnected', sessId);
                     delete this.driverSockets[sessId];
                     delete this.driverTokens[sessId];
                     if (this.riders[sessId] && this.riders[sessId].length > 0) {
                         this.riders[sessId].forEach(function(s) {
-                            logger('Send driverLost to rider socket id ' + s.id);
+                            logger('[%s] Send driverLost to rider socket id %s', sessId, s.id);
                             s.emit('driverLost');
                         });
                     } else {
-                        logger(`Driver left, no riders present, session ended, ${sessId}`);
+                        logger('[%s] Driver left, no riders present, ending session', sessId);
                         this.cleanupSessionData(sessId);
                     }
                 }
