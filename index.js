@@ -43,14 +43,14 @@ app.set('views', path.join(__dirname, 'views'));
 
 // home page
 app.get('/', function (req, res) {
-    logger("%s GET /", remote_ip(req));
+    logger("[] %s GET /", remote_ip(req));
     res.render('index', { publicSessions: electronState.getPublicSessions() });
 });
 
 // actually start new automated driver
 app.use('/start-automated-driver', inputValidationMiddleware.validateAutomatedDriverInput);
 app.post('/start-automated-driver', function (req, res) {
-    logger("%s GET /start-automated-driver", remote_ip(req));
+    logger("[] %s GET /start-automated-driver", remote_ip(req));
     const minFrequency = parseInt(req.body['min-frequency']);
     const maxFrequency = parseInt(req.body['max-frequency']);
     const startFrequency = parseInt(req.body['start-frequency']);
@@ -104,7 +104,7 @@ app.post('/start-automated-driver', function (req, res) {
         driverComments: driverComments
     };
 
-    if (config.verbose) logger("Starting AutomatedDriver with config: %o", sessionConfig);
+    if (config.verbose) logger("[%s] Starting AutomatedDriver with config: %o", sessId, sessionConfig);
     if (electronState.startAutomatedDriver(sessId, sessionConfig)) {
         res.render('automated', { sessId: sessId, sessDuration: sessionConfig.sessionDuration });
     } else {
@@ -114,7 +114,7 @@ app.post('/start-automated-driver', function (req, res) {
 
 // set parameters for new automated driver
 app.get('/config-automated-driver', function (req, res) {
-    logger('%s GET /config-automated-driver', remote_ip(req));
+    logger('[] %s GET /config-automated-driver', remote_ip(req));
     res.render('cfgautomated');
 });
 
@@ -122,13 +122,13 @@ app.get('/config-automated-driver', function (req, res) {
 app.get('/player/:mode/:sessId', function (req, res) {
     const mode = req.params.mode;
     const sessId = req.params.sessId;
-    logger('%s GET /player/%s/%s', remote_ip(req), mode, sessId);
+    logger('[%s] %s GET /player/%s/%s', sessId, remote_ip(req), mode, sessId);
     if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
         res.render('player', { flags: flags, features: config.features });
     } else if (mode === 'play' && sessId === 'solo') {
-        logger('User playing solo');
+        logger('[] User playing solo');
         // solo play
         res.render('player', { flags: { driverName: 'Yourself' }, features: config.features });
     } else {
@@ -144,4 +144,4 @@ io.on('connection', socketHandler(electronState));
 
 // init the server!
 app.use(express.static('public'));
-server.listen(PORT, () => logger(`e l e c t r o n initialized and server now listening on port ${PORT}`));
+server.listen(PORT, () => logger('[] e l e c t r o n initialized and server now listening on port %d', PORT));
