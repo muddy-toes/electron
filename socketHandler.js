@@ -2,7 +2,11 @@ const { logger, generateToken } = require('./utils');
 
 module.exports = function (electronState) {
     return function (socket) {
-        if (electronState.getVerbose()) logger('[] Socket connected from %s', socket.request.connection.remoteAddress);
+        if (electronState.getVerbose()) logger('[] Socket connected from %s', remote_ip());
+
+        function remote_ip() {
+            return socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+        }
 
         function updateRidersFlags(sessId) {
             const flags = electronState.getSessionFlags(sessId)
@@ -20,12 +24,12 @@ module.exports = function (electronState) {
             if (!electronState.driverTokenExists(sessId)) {
                 // this session doesn't exist, apparently
                 socket.emit('riderRejected');
-                logger('[%s] User REJECTED as rider', sessId);
+                logger('[%s] User REJECTED as rider from %s', sessId, remote_ip());
                 return;
             }
 
             // store the socket for this new rider
-            logger('[%s] User APPROVED as rider from %s', sessId, socket.request.connection.remoteAddress);
+            logger('[%s] User APPROVED as rider from %s', sessId, remote_ip());
             electronState.addRiderSocket(sessId, socket);
         });
 
@@ -58,14 +62,14 @@ module.exports = function (electronState) {
                 const token = generateToken();
                 electronState.addDriverToken(sessId, token, socket);
                 socket.emit('driverToken', token);
-                logger('[%s] User APPROVED as driver from %s', sessId, socket.request.connection.remoteAddress);
+                logger('[%s] User APPROVED as driver from %s', sessId, remote_ip());
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('driverGained');
                 });
                 socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
             } else {
                 socket.emit('driverRejected');
-                logger('[%s] User REJECTED as driver', sessId);
+                logger('[%s] User REJECTED as driver from %s', sessId, remote_ip());
             }
         });
 
@@ -287,7 +291,7 @@ module.exports = function (electronState) {
         // ====== disconnect ======
         // remove person from list of riders if they close the connection
         socket.on('disconnect', function () {
-            if (electronState.getVerbose()) logger('[] Socket disconnected from %s', socket.request.connection.remoteAddress);
+            if (electronState.getVerbose()) logger('[] Socket disconnected from %s', remote_ip());
             electronState.onDisconnect(socket);
         });
     };
