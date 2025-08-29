@@ -29,8 +29,8 @@ module.exports = function (electronState) {
             }
 
             // store the socket for this new rider
-            logger('[%s] User APPROVED as rider from %s', sessId, remote_ip());
             electronState.addRiderSocket(sessId, socket);
+            logger('[%s] User APPROVED as rider from %s (session riders: %d)', sessId, remote_ip(), electronState.getRiderSockets(sessId).length);
         });
 
         // ====== requestLast ======
@@ -62,7 +62,7 @@ module.exports = function (electronState) {
                 const token = generateToken();
                 electronState.addDriverToken(sessId, token, socket);
                 socket.emit('driverToken', token);
-                logger('[%s] User APPROVED as driver from %s', sessId, remote_ip());
+                logger('[%s] User APPROVED as driver from %s (session riders: %d)', sessId, remote_ip(), electronState.getRiderSockets(msg.sessId).length);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('driverGained');
                 });

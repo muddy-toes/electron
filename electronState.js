@@ -205,6 +205,7 @@ class ElectronState {
 
     onDisconnect(socket) {
         let found_rider = false;
+        const remote_ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
 
         for (const sessId in this.riders) {
             const index = this.riders[sessId].indexOf(socket);
@@ -212,6 +213,7 @@ class ElectronState {
                 found_rider = true;
                 this.riders[sessId].splice(index, 1);
                 delete this.trafficLights[socket.id];
+                logger('[%s] Rider left from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId].length);
                 if (! this.driverSockets[sessId]) {
                     logger('[%s] Last rider left, no driver present, ending session', sessId);
                     this.cleanupSessionData(sessId);
@@ -222,7 +224,7 @@ class ElectronState {
         if (! found_rider) {
             for (const sessId in this.driverSockets) {
                 if (this.driverSockets[sessId] === socket) {
-                    logger('[%s] Driver disconnected', sessId);
+                    logger('[%s] Driver disconnected from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId].length);
                     delete this.driverSockets[sessId];
                     delete this.driverTokens[sessId];
                     if (this.riders[sessId] && this.riders[sessId].length > 0) {
