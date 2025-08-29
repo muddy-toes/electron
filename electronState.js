@@ -229,7 +229,8 @@ class ElectronState {
                     delete this.driverTokens[sessId];
                     if (this.riders[sessId] && this.riders[sessId].length > 0) {
                         this.riders[sessId].forEach(function(s) {
-                            logger('[%s] Send driverLost to rider socket id %s', sessId, s.id);
+                            const rider_ip = s.handshake.headers['x-forwarded-for'] || s.handshake.address;
+                            logger('[%s] Send driverLost to rider at %s', sessId, rider_ip);
                             s.emit('driverLost');
                         });
                     } else {
