@@ -162,21 +162,25 @@
 
   <div id="main-container">
 
-    <div class="traffic-light" id="traffic-light" style="display: none;">
-      <div class="traffic-light-explanation">
-        <p>Use this tool to indicate the driver how you are feeling.</p>
-        <ul>
-          <li>GREEN means you are enjoying yourself.</li>
-          <li>YELLOW means you are getting close to your limits / need a break.</li>
-          <li>RED means you need the power to be dialed down / stop.</li>
-        </ul>
+    <% if (playlistSession) { %>
+      <div class="traffic-light" id="traffic-light" style="display: none;"></div>
+    <% } else { %>
+      <div class="traffic-light" id="traffic-light" style="display: none;">
+        <div class="traffic-light-explanation">
+          <p>Use this tool to indicate the driver how you are feeling.</p>
+          <ul>
+            <li>GREEN means you are enjoying yourself.</li>
+            <li>YELLOW means you are getting close to your limits / need a break.</li>
+            <li>RED means you need the power to be dialed down / stop.</li>
+          </ul>
+        </div>
+        <div class="traffic-light-container">
+          <button class="green" title="Green" data-traffic-light="G"></button>
+          <button class="yellow" title="Yellow" data-traffic-light="Y"></button>
+          <button class="red" title="Red" data-traffic-light="R"></button>
+        </div>
       </div>
-      <div class="traffic-light-container">
-        <button class="green" title="Green" data-traffic-light="G"></button>
-        <button class="yellow" title="Yellow" data-traffic-light="Y"></button>
-        <button class="red" title="Red" data-traffic-light="R"></button>
-      </div>
-    </div>
+    <% } %>
 
     <div id="controls">
       <div id="left-channel-column" class="channel-column">

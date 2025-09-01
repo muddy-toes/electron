@@ -1,6 +1,8 @@
 // places to store the current state of the application
 // as we don't use a database of any kind (it's all in memory!)
+const fs = require('fs');
 const AutomatedDriver = require('./automatedDriver');
+const PlaylistDriver = require('./playlistDriver');
 const { logger } = require('./utils');
 
 class ElectronState {
@@ -214,7 +216,7 @@ class ElectronState {
                 this.riders[sessId].splice(index, 1);
                 delete this.trafficLights[socket.id];
                 logger('[%s] Rider left from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId]?.length || 0);
-                if (! this.driverSockets[sessId]) {
+                if (! this.driverSockets[sessId] && ! this.automatedDrivers[sessId]) {
                     logger('[%s] Last rider left, no driver present, ending session', sessId);
                     this.cleanupSessionData(sessId);
                 }
@@ -265,6 +267,25 @@ class ElectronState {
     unregisterAutomatedDriver(sessId) {
         delete this.automatedDrivers[sessId];
         this.cleanupSessionData(sessId);
+    }
+
+    startPlaylistDriver(playlistConfig) {
+        const sessId = playlistConfig.sessId;
+        const dir = playlistConfig.directory;
+        if( ! fs.lstatSync(dir).isDirectory() ) {
+          logger('[] Configured playlist directory is not a directory: %s', dir);
+          return false;
+        }
+        this.automatedDrivers[sessId] = new PlaylistDriver(sessId, playlistConfig);
+        this.initSessionData(sessId);
+        this.setSessionFlag(sessId, 'driverName', playlistConfig.driverName || 'Playlistdriver');
+        this.setSessionFlag(sessId, 'publicSession', playlistConfig.public);
+        this.setSessionFlag(sessId, 'blindfoldRiders', false);
+        this.setSessionFlag(sessId, 'proMode', true);
+        this.setSessionFlag(sessId, 'driverComments', playlistConfig.driverComments);
+        this.automatedDrivers[sessId].run(this);
+        return true;
+
     }
 
 }

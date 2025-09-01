@@ -42,13 +42,13 @@ module.exports = function (electronState) {
             const lastRight = electronState.getLastMessage(sessId, 'right');
             // logger("[%s] sending lastLeft: %o", sessId, lastLeft);
             // logger("[%s] sending lastRight: %o", sessId, lastRight);
-            if (lastLeft) {
+            if (lastLeft !== undefined && lastLeft !== null) {
                 socket.emit('left', lastLeft.message);
             }
-            if (lastRight) {
+            if (lastRight !== undefined && lastRight !== null) {
                 socket.emit('right', lastRight.message);
             }
-            // logger("[%s] sending updateFlags: %o", sessId, electronState.getSessionFlags(sessId));
+            logger("[%s] sending updateFlags: %o", sessId, electronState.getSessionFlags(sessId));
             socket.emit('updateFlags', electronState.getSessionFlags(sessId));
         });
 
