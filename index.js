@@ -139,7 +139,7 @@ app.get('/player/:mode/:sessId', function (req, res) {
     } else if (mode === 'play' && sessId === 'solo') {
         logger('[] User playing solo');
         // solo play
-        res.render('player', { flags: { driverName: 'Yourself' }, features: config.features });
+        res.render('player', { flags: { driverName: 'Yourself' }, features: config.features, playlistSession: false });
     } else {
         // something went wrong -> 404!
         res.status(404);
