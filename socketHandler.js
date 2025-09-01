@@ -37,6 +37,9 @@ module.exports = function (electronState) {
         // send the last status for the left & right channels so this new rider
         // is synchronized with the current status
         socket.on('requestLast', function (msg) {
+            if (!msg.sessId || !electronState.validateRider(msg.sessId, socket)) {
+                return;
+            }
             const sessId = msg.sessId;
             const lastLeft = electronState.getLastMessage(sessId, 'left');
             const lastRight = electronState.getLastMessage(sessId, 'right');
@@ -280,6 +283,9 @@ module.exports = function (electronState) {
         // handles the red / yellow / green traffic light system that riders
         // use to inform drivers about how they are doing
         socket.on('trafficLight', function (msg) {
+            if (!msg.sessId || !electronState.validateRider(msg.sessId, socket)) {
+                return;
+            }
             electronState.setRiderTrafficLight(msg.sessId, socket, msg.color);
             const riderData = electronState.getRiderData(msg.sessId);
             const driverSocket = electronState.getDriverSocket(msg.sessId);

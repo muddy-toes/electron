@@ -112,6 +112,14 @@ class ElectronState {
         }
     }
 
+    validateRider(sessId, socket) {
+        if (this.riders[sessId]) {
+          return this.riders[sessId].includes(socket)
+        } else {
+          return false;
+        }
+    }
+
     getRiderSockets(sessId) {
         if (!(sessId in this.riders)) {
             return [];

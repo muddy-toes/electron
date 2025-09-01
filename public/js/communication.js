@@ -550,6 +550,7 @@ $(function () {
         socket.emit('registerRider', { sessId: sessId });
         socket.on('riderRejected', function () {
             $('#status-message').html('<p>Could not join session ' + sessId + '. Please check the Session ID.</p>');
+            $('#initialize-audio').hide();
         });
 
         $('#initialize-audio').show();
