@@ -7,7 +7,10 @@ module.exports = {
         const fmPreset = parseInt(req.body['fm-preset']);
         const amPreset = parseInt(req.body['am-preset']);
         const amPreset2 = parseInt(req.body['am2-preset']);
-        const bottlePromptingRaw = req.body['bottle-prompting'].split(/-/);
+        const bottlePromptingRaw = req.body['bottle-prompting']?.split(/-/);
+        if (bottlePromptingRaw === undefined)
+            return res.status(400).send('Invalid input values');
+
         const bottlePromptingMin = bottlePromptingRaw[0] == '0' ? 0 : parseInt(bottlePromptingRaw[0]);
         const bottlePromptingMax = bottlePromptingRaw[0] == '0' ? 0 : parseInt(bottlePromptingRaw[1]);
         const sessionDuration = parseInt(req.body['session-duration']);
