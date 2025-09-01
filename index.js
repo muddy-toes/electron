@@ -11,12 +11,14 @@ const config = {
         'amType2', 'amDepth2', 'amFreq2', 'tOn', 'tOff', 'tAtt'
     ],
 
+    // Comment this section to disable it
     playlistSession: {
         sessId: 'goon_drive', // Must be 10 characters exactly
         directory: './session_files',
         public: true,
         driverName: 'GoonDriver',
         driverComments: 'The files never stop, so you never have to.  No pain tools.',
+        camUrl: 'https://discord.com/channels/786142403987505182/1309514473157165177',
         channels: ['left', 'right', 'bottle']
     }
 };
