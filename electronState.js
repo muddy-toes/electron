@@ -224,7 +224,7 @@ class ElectronState {
         if (! found_rider) {
             for (const sessId in this.driverSockets) {
                 if (this.driverSockets[sessId] === socket) {
-                    logger('[%s] Driver disconnected from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId].length);
+                    logger('[%s] Driver disconnected from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId]?.length || 0);
                     delete this.driverSockets[sessId];
                     delete this.driverTokens[sessId];
                     if (this.riders[sessId] && this.riders[sessId].length > 0) {
