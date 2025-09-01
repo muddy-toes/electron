@@ -78,12 +78,13 @@ class PlaylistDriver {
                         script = JSON.parse(scriptRaw);
                     }
                 } catch (err) {
-                    logger('[] Error parsing file %s: %s', filepath, err);
+                    logger('[%s] Error parsing file %s: %s', sessId, filepath, err);
                     return;
                 }
                 self.lastNFiles.push(filepath)
                 if (self.lastNFiles.length > self.noRepeatNFiles) self.lastNFiles.splice(0, 1)
 
+                logger('[%s] Now playing: %s', sessId, filepath);
                 fileDriver = '';
                 scriptVersion = 0;
                 if (script['meta']) {
@@ -100,7 +101,7 @@ class PlaylistDriver {
 
                 // Upgrade script version
                 if (scriptVersion > 2) {
-                  logger('[] Cannot load script version great than 2 from file %s', filepath);
+                  logger('[%s] Cannot load script version greater than 2 from file %s', sessId, filepath);
                   return;
                 } else if (scriptVersion < 2) {
                     channels.forEach(function(ch) {
@@ -141,7 +142,7 @@ class PlaylistDriver {
                     scriptDuration = lastStep;
                     // if (electronState.getVerbose()) logger("firstStepStamp=%d, scriptDuration=%d", firstStepStamp, scriptDuration);
                 } catch(err) {
-                    logger("[] Failed to adjust first step start times: %o", err);
+                    logger("[%s] Failed to adjust first step start times: %o", sessId, err);
                 }
 
                 const fileinfo = path.basename(filepath).replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
@@ -195,7 +196,7 @@ class PlaylistDriver {
             */
         }, 250);
 
-        logger(`Playlist driver ${sessId} has been initialized`);
+        logger('[%s] Playlist driver has been initialized', sessId);
     }
 }
 
