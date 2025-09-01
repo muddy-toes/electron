@@ -78,7 +78,7 @@ class ElectronState {
             return;
 
           if (sessionFlags[sessId]['publicSession']) {
-            const ridercount = (riders[sessId] || []).length;
+            const ridercount = riders[sessId]?.length || 0;
             publiclist.push({ sessId: sessId, name: sessionFlags[sessId]['driverName'] || sessId, riders: ridercount });
           }
         });
@@ -213,7 +213,7 @@ class ElectronState {
                 found_rider = true;
                 this.riders[sessId].splice(index, 1);
                 delete this.trafficLights[socket.id];
-                logger('[%s] Rider left from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId].length);
+                logger('[%s] Rider left from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId]?.length || 0);
                 if (! this.driverSockets[sessId]) {
                     logger('[%s] Last rider left, no driver present, ending session', sessId);
                     this.cleanupSessionData(sessId);
