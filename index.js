@@ -25,7 +25,7 @@ const config = {
         public: true,
         driverName: 'GoonDriver',
         driverComments: 'The files never stop, so you never have to.  No pain tools.',
-        camUrl: 'https://discord.com/channels/786142403987505182/1309514473157165177',
+        camUrl: 'eStimStation Stimroom',
         channels: ['left', 'right', 'bottle']
     }
 };
