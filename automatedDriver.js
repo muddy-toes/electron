@@ -40,7 +40,7 @@ class AutomatedDriver {
         const now = Date.now();
         this.next_bottle = parseInt(now + (Math.random() * (this.bottlePromptingMax - this.bottlePromptingMin) + this.bottlePromptingMin) * 1000);
         if (this.verbose)
-            logger("Automated driver %s setNextBottle min/max/next %o/%o/%o",
+            logger("[%s] Automated driver setNextBottle min/max/next %o/%o/%o",
                    this.sessId, this.bottlePromptingMin, this.bottlePromptingMax, parseInt((this.next_bottle - now) / 1000));
     }
 
@@ -208,7 +208,7 @@ class AutomatedDriver {
     processChannel(channel, channelName, otherChannel, elapsedMinutes, electronState) {
         // first, we consider the possibility of pain!
         if (Math.random() < (this.painProbability * 0.01) && elapsedMinutes > 0) {
-            if (electronState.getVerbose()) logger(`Automated driver ${this.sessId} is sending PAIN signal to the ${channelName.toUpperCase()} channel`);
+            if (electronState.getVerbose()) logger('[%s] Automated driver is sending PAIN signal to the %s channel', this.sessId, channelName.toUpperCase());
             this.processPain(channel, channelName, electronState);
             return;
         }
@@ -229,7 +229,7 @@ class AutomatedDriver {
 
         this.varyFrequency(channel, otherChannel.freq);
         this.emitToRiders(channel, channelName, electronState);
-        if (electronState.getVerbose()) logger(`Automated driver ${this.sessId} made changes to the ${channelName.toUpperCase()} channel. Elapsed minutes: ${elapsedMinutes.toFixed(2)}`);
+        if (electronState.getVerbose()) logger('[%s] Automated driver made changes to the %s channel. Elapsed minutes: %f', this.sessId, channelName.toUpperCase(), elapsedMinutes.toFixed(2));
     }
 
     processPain(channel, channelName, electronState) {
@@ -250,7 +250,7 @@ class AutomatedDriver {
         if (this.bottlePromptingMin > 0 && Math.random() < this.bottlePromptingProbability && Date.now() > this.next_bottle) {
             const duration = parseInt(Math.random() * 5 + 5);
             this.setNextBottle();
-            if (electronState.getVerbose()) logger(`Automated driver ${this.sessId} sending bottle prompt for ${duration}s.  Next eligible in ${parseInt((this.next_bottle - Date.now()) / 1000)}s.  Elapsed minutes: ${elapsedMinutes.toFixed(2)}`);
+            if (electronState.getVerbose()) logger('[%s] Automated driver %s sending bottle prompt for %ds.  Next eligible in %ds.  Elapsed minutes: %f', this.sessId, duration, parseInt((this.next_bottle - Date.now()) / 1000), elapsedMinutes.toFixed(2));
             electronState.getRiderSockets(this.sessId).forEach(function (s) {
                 s.emit('bottle', { bottleDuration: duration });
             });
@@ -286,7 +286,7 @@ class AutomatedDriver {
 
             // if it has been more than 5 minutes and no one has joined, kill it
             if (elapsedMinutes >= 5 && !this.inUse) {
-                logger(`Automated driver ${this.sessId} has no listeners!`);
+                logger('[%s] Automated driver has no riders', this.sessId);
                 clearTimeout(this.stopTimeoutId);
                 this.stop(electronState);
             }
@@ -300,14 +300,14 @@ class AutomatedDriver {
             this.stop(electronState);
         }, 60 * this.sessionDuration * 1000);
 
-        logger(`Automated driver ${this.sessId} has been initialized`);
+        logger('[%s] Automated driver has been initialized', this.sessId);
         this.runActionsOnChannels(0, electronState);
     }
 
     stop(electronState) {
         clearInterval(this.intervalId);
         electronState.unregisterAutomatedDriver(this.sessId);
-        logger(`Automated driver ${this.sessId} has been stopped`);
+        logger('[%s] Automated driver has been stopped', this.sessId);
     }
 }
 
