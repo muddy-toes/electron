@@ -281,6 +281,16 @@ $(function () {
           }
     }
 
+    function setLastBottleTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        let ampm = 'AM';
+        if (hours >= 12) ampm = 'PM';
+        if (hours >= 13) hours -= 12;
+        const timestr = `${hours}:${now.getMinutes()} ${ampm}`;
+        $('#lastBottle').text(`Last bottle prompt at: ${timestr}`);
+    }
+
     function bottleCountdown(secs=0) {
         if (secs > 0) bottleSecs = secs;
         if (bottleSecs === 0) {
@@ -288,6 +298,9 @@ $(function () {
             $('.bottle-countdown, #rider-bottle-countdown').fadeOut(); // hide the blocker and driver's display
             return false;
         }
+
+        setLastBottleTime();
+
         /* Most of this is positioning the bottle and digits.  I set their
          * opacities to 0.01 and show them to get their width, since you can't get
          * the width of a display:none object, then set the opacity to 1 to show it.
