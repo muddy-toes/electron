@@ -145,14 +145,14 @@ module.exports = function (electronState) {
             // it either.  At least we can make sure it's an http/https url...
             const camUrlList = electronState.getCamUrlList();
             logger("camlist: %o", camUrlList);
-            if (camUrlList.length == 0) {
+            if (!camUrlList || camUrlList.length == 0) {
                 if (!url || !url.match(/^https?:\/\//i))
                     url = '';
             } else {
                 if (camUrlList.map((item) => item.name).filter((name) => name === url)[0] === undefined)
                     url = '';
             }
-            logger("Post check url=%s", url);
+            logger('Post check url=%s', url);
 
             if (electronState.getVerbose() && currentFlags['camUrl'] != url) logger("[%s] setSettings camUrl, raw=%o, processed=%o", msg.sessId, msg.camUrl, url);
             electronState.setSessionFlag(msg.sessId, 'camUrl', url);

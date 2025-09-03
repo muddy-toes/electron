@@ -29,6 +29,11 @@ In "solo" mode, users can experiment with waveform generation without sharing it
 There is also a feature that allows users to set up an automated session driven by a simple AI.
 
 
+## Configuration
+
+Copy `config.js-dist` to `config.js` and edit it to specify your site preferences.  Options are documented in the file.
+
+
 ## SmartStim4 file support
 
 Electron now supports playback of SS4 files in limited fashion.
@@ -80,21 +85,11 @@ The configuration parameters are as follows:
 - `painMinShockLength` and `painMaxShockLength`: Length of each individual shock when the optional pain feature kicks in.
 - `painMinTimeBetweenShocks` and `painMaxTimeBetweenShocks`: Rest between each individual shock when the optional pain feature kicks in.
 
-
 ## Playlist Driver feature
 
-This is an always-running drive that plays session files randomly from a specified directory.  See the `playlistSession` config section at the top of `index.js` for options.
+This is an always-running drive that plays session files randomly from a specified directory.
 
-The options are:
-
-- `sessId`: The static session ID.  It MUST be exactly 10 characters long.
-- `directory`: The directory containing the session files you want to play.
-- `public`: Whether the drive is on the Public Sessions list.  It should be.  This is more fun when we're all doing it together.
-- `driverName`: The displayed name to show as the driver
-- `driverComments`: Whatever message you want to display to the riders`
-- `camUrl`: A URL where riders can cam together
-- `channels`: An array containing a set of the electron channel names, ['left', 'right', 'bottle', 'pain-left', 'pain-right'].  If you leave the pain ones out, it won't processes pain steps from the
-  files.  If you leave bottle out, it won't do bottle prompts, etc.
+See config.js-dist for config options.
 
 
 ## License

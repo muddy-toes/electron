@@ -640,7 +640,7 @@ $(function () {
             $("#driver-nametag .nametag").text(name);
 
             if (msg['camUrl']) {
-                if (camUrlList.length == 0) {
+                if (!camUrlList || camUrlList.length == 0) {
                     $('#cam-url .cam-url-link').html(`<a target="_blank" href="${msg['camUrl']}">${msg['camUrl']}</a>`);
                     initialize_cam_url_warning_dismissal();
                     $('#cam-url .cam-url-warning').show();

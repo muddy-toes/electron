@@ -39,12 +39,14 @@ class ElectronState {
 
         // New driver, reset some settings...
         this.sessionFlags[sessId]['driverName'] = 'Anonymous';
-        if (this.config.camUrlList.length > 0) {
+        if (this.config.camUrlList && this.config.camUrlList.length > 0) {
             const defaultItem = this.config.camUrlList.filter((item) => item.default)[0];
             if (defaultItem !== undefined) {
                 this.sessionFlags[sessId]['camUrl'] = defaultItem.name;
             }
+        } else {
         }
+        delete this.sessionFlags[sessId]['camUrl'];
         delete this.sessionFlags[sessId]['filePlaying'];
         delete this.sessionFlags[sessId]['fileDriver'];
 

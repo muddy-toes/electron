@@ -1,0 +1,58 @@
+module.exports = {
+    // if true, log all actions to console instead of just join/part sessions
+    verbose: true,
+
+    // Feature flags.  Set any one to false to disable it.
+    features: {
+        // Promode availability.  If false, this will disable the promode button, the additional settings, and the ability to 
+        // playback SmrtStm4 files.
+        promode: true
+    },
+
+    /* If this section is enabled, instead of the driver typing any URL for camming, they'll be given a list of options.
+     * If this section is commented, the driver will be given a text box to enter any URL.
+     *
+     * camUrlList is an array of objects, like [{ name: 'First Option', url: 'http://first.example.com/' }, {...}, ...]
+     * object keys:
+     *   - name: required and is the display name of the item
+     *   - url: optional and is the URL for the riders to link to
+     *   - message: optional in place of url and will be displayed as text instead of a link
+     *   - default: may be set to true to choose the default option.  Only one should be default: true.
+     */
+//    camUrlList: [
+//        { name: 'eStimStation Stimroom', url: 'https://discord.com/channels/786142403987505182/1309514473157165177', default: true },
+//        { name: 'eStimStation Hangout', url: 'https://discord.com/channels/786142403987505182/1124800414978674828' },
+//        { name: 'Ask your driver', message: 'Ask your driver' }
+//    ],
+
+    /* Comment this section to disable it.
+     * Options are:
+     *   - sessId: The static session ID.  It MUST be exactly 10 characters long.
+     *   - directory: The directory containing the session files you want to play.
+     *   - public: Whether the drive is on the Public Sessions list.  It should be.  This is more fun when we're all doing it together.
+     *   - driverName: The displayed name to show as the driver
+     *   - driverComments: Whatever message you want to display to the riders`
+     *   - camUrl: A URL where riders can cam together.  If camUrlList is enabled above, this should be the 'name' field of one of those items.
+     *   - channels: An array containing a set of the electron channel names, ['left', 'right', 'bottle', 'pain-left', 'pain-right'].  
+     *     If you leave the pain ones out, it won't processes pain steps from the files.  If you leave bottle out, it won't do bottle prompts, etc.
+     *     NOTE: Currently the pain channels aren't supported anyway, so those are left out below by default.
+     */
+//    playlistSession: {
+//        sessId: 'jukeboxbot', // Must be 10 characters exactly
+//        directory: './session_files',
+//        public: true,
+//        driverName: 'Jukebox Driver',
+//        driverComments: 'Playing the greatest hits 24/7',
+//        camUrl: 'eStimStation Stimroom',
+//        channels: ['left', 'right', 'bottle']
+//    },
+
+    // Use this to include additional content at the bottom of the index page.  The file should be in the views/ folder.  Sample content
+    // can be found in views/footnotes.html-dist
+//    indexFootnotesFile: 'footnotes.html',
+
+    // If you'd like to use a different bottle image, specify the filename here.  The file goes in the public/ folder.
+//    bottleImage: 'bottle.png',
+};
+
+// vi: ft=javascript

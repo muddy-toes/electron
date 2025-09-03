@@ -16,7 +16,7 @@
     <% Object.keys(features).forEach(function(key) { %>
       const feature_<%= key %> = <%= features[key] %>;
     <% }) %>
-    const camUrlList = <%- JSON.stringify(camUrlList) || [] %>;
+    const camUrlList = <%- JSON.stringify(camUrlList) || '[]' %>;
   </script>
 
   <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
@@ -68,6 +68,7 @@
         <a target="_blank" href=""></a>
       </span>
       <br/>
+      <span class='cam-url-warning' style='display:none'><b>WARNING:</b> Use your judgement before clicking.<br/>If the cam link looks sketchy and you don't know your driver, don't click on it.</span>
     </p>
     <p id='comments' style="<%= flags['driverComments'] ? '' : 'display:none;' %>">
       Session info from driver:
@@ -96,7 +97,7 @@
         </div>
         <div class="field">
           <label for="driver-cam-url">Room for camming:</label>
-          <% if (camUrlList.length == 0) { %>
+          <% if (!camUrlList || camUrlList.length == 0) { %>
             <input type="text" maxlength="100" id="driver-cam-url" placeholder="https://"/>
           <% } else { %>
             <select id="driver-cam-url" required>
@@ -381,7 +382,7 @@
 
   <div id="rider-bottle-countdown-container">
     <div id="rider-bottle-countdown" style="display:none">
-      <img class="bottle" src="/bottle.png"/>
+      <img class="bottle" src="/<%= bottleImage %>"/>
       <div class="bottle-countdown" style="display:none">
         <span class="seconds"></span>
       </div>

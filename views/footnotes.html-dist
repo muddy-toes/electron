@@ -1,0 +1,6 @@
+<div class="footnotes" style="display:none;">
+  <h2>Example Footnotes</h2>
+  <p>This is an example of what footnotes could look like in code. By removing the <a href="#">display:none;</a> attribute, you can add whatever you need to and it will be styled cohesively with the rest of electron.</p>
+  <p>You can add as many as you need by copying and pasting this div below this one.</p>
+</div>
+

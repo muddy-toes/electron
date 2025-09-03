@@ -1,34 +1,29 @@
-const config = {
+let config = {
     // if true, log all actions to console instead of just join/part sessions
-    verbose: true,
+    verbose: false,
 
     // Feature flags.  Set to false to disable.  Accessible in player.ejs via features['name'] and in client js via feature_name
     features: {
         promode: true
     },
 
-    camUrlList: [
-        { name: 'eStimStation Stimroom', url: 'https://discord.com/channels/786142403987505182/1309514473157165177', default: true },
-        { name: 'eStimStation Sunday Drive', url: 'https://discord.com/channels/786142403987505182/1060818089547157555' },
-        { name: 'eStimStation Hangout', url: 'https://discord.com/channels/786142403987505182/1124800414978674828' },
-        { name: 'Ask your driver', message: 'Ask your driver' }
-    ],
-
+    // These are the keys to enable/disable when switching promode on/off
     promodeKeys: [
         'amType2', 'amDepth2', 'amFreq2', 'tOn', 'tOff', 'tAtt'
-    ],
-
-    // Comment this section to disable it
-    playlistSession: {
-        sessId: 'goon_drive', // Must be 10 characters exactly
-        directory: './session_files',
-        public: true,
-        driverName: 'GoonDriver',
-        driverComments: 'The files never stop, so you never have to.  No pain tools.',
-        camUrl: 'eStimStation Stimroom',
-        channels: ['left', 'right', 'bottle']
-    }
+    ]
 };
+
+const { logger } = require('./utils');
+
+try {
+    const siteConfig = require('./config.js');
+    if (siteConfig && typeof siteConfig == 'object')
+        Object.assign(config, siteConfig);
+} catch(err) {
+    if (err.code != 'MODULE_NOT_FOUND') {
+        logger('[] Error loading site.js: %s', err);
+    }
+}
 
 const express = require('express');
 const path = require('path');
@@ -46,8 +41,6 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-const { logger } = require('./utils');
-
 function remote_ip(req) {
   return req.header('x-forwarded-for') || req.socket.remoteAddress;
 }
@@ -62,7 +55,7 @@ app.set('views', path.join(__dirname, 'views'));
 // home page
 app.get('/', function (req, res) {
     logger("[] %s GET /", remote_ip(req));
-    res.render('index', { publicSessions: electronState.getPublicSessions() });
+    res.render('index', { publicSessions: electronState.getPublicSessions(), indexFootnotesFile: config.indexFootnotesFile });
 });
 
 // actually start new automated driver
@@ -144,11 +137,23 @@ app.get('/player/:mode/:sessId', function (req, res) {
     if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
-        res.render('player', { flags: flags, features: config.features, camUrlList: config.camUrlList, playlistSession: (config.playlistSession !== undefined && config.playlistSession.sessId == sessId) });
+        res.render('player', { 
+            flags: flags,
+            features: config.features,
+            camUrlList: config.camUrlList,
+            bottleImage: config.bottleImage || 'bottle.png',
+            playlistSession: (config.playlistSession !== undefined && config.playlistSession.sessId == sessId)
+        });
     } else if (mode === 'play' && sessId === 'solo') {
         logger('[] User playing solo');
         // solo play
-        res.render('player', { flags: { driverName: 'Yourself' }, features: config.features, camUrlList: [], playlistSession: false });
+        res.render('player', {
+            flags: { driverName: 'Yourself' },
+            features: config.features,
+            camUrlList: [],
+            bottleImage: config.bottleImage || 'bottle.png',
+            playlistSession: false
+        });
     } else {
         // something went wrong -> 404!
         res.status(404);
