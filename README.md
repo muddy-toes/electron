@@ -38,14 +38,15 @@ enabled/disabled with the new "pro mode" button at the very top right of the int
 
 If you want to update your electron but don't want to enable SmartStim support or the "pro mode" features, you can disable it by setting the "promode" feature flag to false at the top of index.js.
 
-Based on the > 1000 example files I have from the Stimaddict archive, I've decided not to bother supporting certain features that it seems aren't widely used:
+Based on the > 1000 example files I have from the Stimaddict archive, I've decided not to bother supporting certain features that it seems aren't widely used or would make the UI a mess:
 
   - Three scripts used a square wave and otherwise it's all sine, so I didn't worry about support for the sine/square hybrid or the uni- and bi-polar waveforms.
 
   - Volume ramp is supported, but no one ever sets Max or Min values, so I just set the ramp target to 0 or 100 based on whether the ramp rate is negative or positive.  It seems that it gates how far
     it ramps based on the length of time that step is playing.
 
-  - SS4 supports ramping not only for volume but also for every other setting.  I'd like to support that as well, but haven't done it yet.
+  - SS4 supports ramping not only for volume but also for every other setting.  I played with supporting this, as you can see partly done in branch all_the_ramps, but it was way too much UI for a
+    realtime driver, so I abandoned it.
 
 
 ## Automated Driver Feature
@@ -78,6 +79,23 @@ The configuration parameters are as follows:
 - `painMinShocks` and `painMaxShocks`: How many shocks will be administered in one go when the optional pain feature kicks in.
 - `painMinShockLength` and `painMaxShockLength`: Length of each individual shock when the optional pain feature kicks in.
 - `painMinTimeBetweenShocks` and `painMaxTimeBetweenShocks`: Rest between each individual shock when the optional pain feature kicks in.
+
+
+## Playlist Driver feature
+
+This is an always-running drive that plays session files randomly from a specified directory.  See the `playlistSession` config section at the top of `index.js` for options.
+
+The options are:
+
+- `sessId`: The static session ID.  It MUST be exactly 10 characters long.
+- `directory`: The directory containing the session files you want to play.
+- `public`: Whether the drive is on the Public Sessions list.  It should be.  This is more fun when we're all doing it together.
+- `driverName`: The displayed name to show as the driver
+- `driverComments`: Whatever message you want to display to the riders`
+- `camUrl`: A URL where riders can cam together
+- `channels`: An array containing a set of the electron channel names, ['left', 'right', 'bottle', 'pain-left', 'pain-right'].  If you leave the pain ones out, it won't processes pain steps from the
+  files.  If you leave bottle out, it won't do bottle prompts, etc.
+
 
 ## License
 

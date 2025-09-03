@@ -16,8 +16,19 @@ const config = {
 
     promodeKeys: [
         'amType2', 'amDepth2', 'amFreq2', 'tOn', 'tOff', 'tAtt'
-    ]
-    };
+    ],
+
+    // Comment this section to disable it
+    playlistSession: {
+        sessId: 'goon_drive', // Must be 10 characters exactly
+        directory: './session_files',
+        public: true,
+        driverName: 'GoonDriver',
+        driverComments: 'The files never stop, so you never have to.  No pain tools.',
+        camUrl: 'https://discord.com/channels/786142403987505182/1309514473157165177',
+        channels: ['left', 'right', 'bottle']
+    }
+};
 
 const express = require('express');
 const path = require('path');
@@ -133,11 +144,11 @@ app.get('/player/:mode/:sessId', function (req, res) {
     if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
-        res.render('player', { flags: flags, features: config.features, camUrlList: config.camUrlList });
+        res.render('player', { flags: flags, features: config.features, camUrlList: config.camUrlList, playlistSession: (config.playlistSession !== undefined && config.playlistSession.sessId == sessId) });
     } else if (mode === 'play' && sessId === 'solo') {
         logger('[] User playing solo');
         // solo play
-        res.render('player', { flags: { driverName: 'Yourself' }, features: config.features, camUrlList: [] });
+        res.render('player', { flags: { driverName: 'Yourself' }, features: config.features, camUrlList: [], playlistSession: false });
     } else {
         // something went wrong -> 404!
         res.status(404);
@@ -152,3 +163,9 @@ io.on('connection', socketHandler(electronState));
 // init the server!
 app.use(express.static('public'));
 server.listen(PORT, () => logger('[] e l e c t r o n initialized and server now listening on port %d', PORT));
+
+if (config.playlistSession !== undefined) {
+    logger('[] Starting playlistSession with %o', config.playlistSession);
+    electronState.startPlaylistDriver(config.playlistSession);
+}
+

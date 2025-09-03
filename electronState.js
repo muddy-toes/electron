@@ -1,6 +1,8 @@
 // places to store the current state of the application
 // as we don't use a database of any kind (it's all in memory!)
+const fs = require('fs');
 const AutomatedDriver = require('./automatedDriver');
+const PlaylistDriver = require('./playlistDriver');
 const { logger } = require('./utils');
 
 class ElectronState {
@@ -15,7 +17,7 @@ class ElectronState {
         this.automatedDrivers = {};     // stores automated drivers by their session ids
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
         this.sessionFlags = {};         // sessionFlags[sessId][flagname]
-                                        // flagnames in use: blindfoldRiders, publicSession, driverName, proMode
+                                        // flagnames in use: blindfoldRiders, publicSession, driverName, proMode, camUrl, driverComments
         logger("[] startup");
         if (this.config.verbose) logger("[] verbose logging enabled");
     }
@@ -88,7 +90,7 @@ class ElectronState {
             return;
 
           if (sessionFlags[sessId]['publicSession']) {
-            const ridercount = (riders[sessId] || []).length;
+            const ridercount = riders[sessId]?.length || 0;
             publiclist.push({ sessId: sessId, name: sessionFlags[sessId]['driverName'] || sessId, riders: ridercount });
           }
         });
@@ -117,6 +119,14 @@ class ElectronState {
             this.riders[sessId].push(socket);
         } else {
             this.riders[sessId] = [socket];
+        }
+    }
+
+    validateRider(sessId, socket) {
+        if (this.riders[sessId]) {
+          return this.riders[sessId].includes(socket)
+        } else {
+          return false;
         }
     }
 
@@ -215,6 +225,7 @@ class ElectronState {
 
     onDisconnect(socket) {
         let found_rider = false;
+        const remote_ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
 
         for (const sessId in this.riders) {
             const index = this.riders[sessId].indexOf(socket);
@@ -222,7 +233,8 @@ class ElectronState {
                 found_rider = true;
                 this.riders[sessId].splice(index, 1);
                 delete this.trafficLights[socket.id];
-                if (! this.driverSockets[sessId]) {
+                logger('[%s] Rider left from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId]?.length || 0);
+                if (! this.driverSockets[sessId] && ! this.automatedDrivers[sessId]) {
                     logger('[%s] Last rider left, no driver present, ending session', sessId);
                     this.cleanupSessionData(sessId);
                 }
@@ -232,12 +244,13 @@ class ElectronState {
         if (! found_rider) {
             for (const sessId in this.driverSockets) {
                 if (this.driverSockets[sessId] === socket) {
-                    logger('[%s] Driver disconnected', sessId);
+                    logger('[%s] Driver disconnected from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId]?.length || 0);
                     delete this.driverSockets[sessId];
                     delete this.driverTokens[sessId];
                     if (this.riders[sessId] && this.riders[sessId].length > 0) {
                         this.riders[sessId].forEach(function(s) {
-                            logger('[%s] Send driverLost to rider socket id %s', sessId, s.id);
+                            const rider_ip = s.handshake.headers['x-forwarded-for'] || s.handshake.address;
+                            logger('[%s] Send driverLost to rider at %s', sessId, rider_ip);
                             s.emit('driverLost');
                         });
                     } else {
@@ -272,6 +285,26 @@ class ElectronState {
     unregisterAutomatedDriver(sessId) {
         delete this.automatedDrivers[sessId];
         this.cleanupSessionData(sessId);
+    }
+
+    startPlaylistDriver(playlistConfig) {
+        const sessId = playlistConfig.sessId;
+        const dir = playlistConfig.directory;
+        if( ! fs.lstatSync(dir).isDirectory() ) {
+          logger('[] Configured playlist directory is not a directory: %s', dir);
+          return false;
+        }
+        this.automatedDrivers[sessId] = new PlaylistDriver(sessId, playlistConfig);
+        this.initSessionData(sessId);
+        this.setSessionFlag(sessId, 'driverName', playlistConfig.driverName || 'Playlistdriver');
+        this.setSessionFlag(sessId, 'publicSession', playlistConfig.public);
+        this.setSessionFlag(sessId, 'blindfoldRiders', false);
+        this.setSessionFlag(sessId, 'proMode', true);
+        this.setSessionFlag(sessId, 'driverComments', playlistConfig.driverComments);
+        this.setSessionFlag(sessId, 'camUrl', playlistConfig.camUrl);
+        this.automatedDrivers[sessId].run(this);
+        return true;
+
     }
 
 }

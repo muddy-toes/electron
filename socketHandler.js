@@ -2,7 +2,11 @@ const { logger, generateToken } = require('./utils');
 
 module.exports = function (electronState) {
     return function (socket) {
-        if (electronState.getVerbose()) logger('[] Socket connected from %s', socket.request.connection.remoteAddress);
+        if (electronState.getVerbose()) logger('[] Socket connected from %s', remote_ip());
+
+        function remote_ip() {
+            return socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+        }
 
         function updateRidersFlags(sessId) {
             const flags = electronState.getSessionFlags(sessId)
@@ -20,31 +24,34 @@ module.exports = function (electronState) {
             if (!electronState.driverTokenExists(sessId)) {
                 // this session doesn't exist, apparently
                 socket.emit('riderRejected');
-                logger('[%s] User REJECTED as rider', sessId);
+                logger('[%s] User REJECTED as rider from %s', sessId, remote_ip());
                 return;
             }
 
             // store the socket for this new rider
-            logger('[%s] User APPROVED as rider from %s', sessId, socket.request.connection.remoteAddress);
             electronState.addRiderSocket(sessId, socket);
+            logger('[%s] User APPROVED as rider from %s (session riders: %d)', sessId, remote_ip(), electronState.getRiderSockets(sessId).length);
         });
 
         // ====== requestLast ======
         // send the last status for the left & right channels so this new rider
         // is synchronized with the current status
         socket.on('requestLast', function (msg) {
+            if (!msg.sessId || !electronState.validateRider(msg.sessId, socket)) {
+                return;
+            }
             const sessId = msg.sessId;
             const lastLeft = electronState.getLastMessage(sessId, 'left');
             const lastRight = electronState.getLastMessage(sessId, 'right');
             // logger("[%s] sending lastLeft: %o", sessId, lastLeft);
             // logger("[%s] sending lastRight: %o", sessId, lastRight);
-            if (lastLeft) {
+            if (lastLeft !== undefined && lastLeft !== null) {
                 socket.emit('left', lastLeft.message);
             }
-            if (lastRight) {
+            if (lastRight !== undefined && lastRight !== null) {
                 socket.emit('right', lastRight.message);
             }
-            // logger("[%s] sending updateFlags: %o", sessId, electronState.getSessionFlags(sessId));
+            logger("[%s] sending updateFlags: %o", sessId, electronState.getSessionFlags(sessId));
             socket.emit('updateFlags', electronState.getSessionFlags(sessId));
         });
 
@@ -58,14 +65,14 @@ module.exports = function (electronState) {
                 const token = generateToken();
                 electronState.addDriverToken(sessId, token, socket);
                 socket.emit('driverToken', token);
-                logger('[%s] User APPROVED as driver from %s', sessId, socket.request.connection.remoteAddress);
+                logger('[%s] User APPROVED as driver from %s (session riders: %d)', sessId, remote_ip(), electronState.getRiderSockets(msg.sessId).length);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('driverGained');
                 });
                 socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
             } else {
                 socket.emit('driverRejected');
-                logger('[%s] User REJECTED as driver', sessId);
+                logger('[%s] User REJECTED as driver from %s', sessId, remote_ip());
             }
         });
 
@@ -285,6 +292,9 @@ module.exports = function (electronState) {
         // handles the red / yellow / green traffic light system that riders
         // use to inform drivers about how they are doing
         socket.on('trafficLight', function (msg) {
+            if (!msg.sessId || !electronState.validateRider(msg.sessId, socket)) {
+                return;
+            }
             electronState.setRiderTrafficLight(msg.sessId, socket, msg.color);
             const riderData = electronState.getRiderData(msg.sessId);
             const driverSocket = electronState.getDriverSocket(msg.sessId);
@@ -296,7 +306,7 @@ module.exports = function (electronState) {
         // ====== disconnect ======
         // remove person from list of riders if they close the connection
         socket.on('disconnect', function () {
-            if (electronState.getVerbose()) logger('[] Socket disconnected from %s', socket.request.connection.remoteAddress);
+            if (electronState.getVerbose()) logger('[] Socket disconnected from %s', remote_ip());
             electronState.onDisconnect(socket);
         });
     };

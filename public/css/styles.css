@@ -636,6 +636,11 @@ ul.public-session-list li {
   margin-bottom: 0;
 }
 
+#lastBottle {
+  text-align: left;
+  margin-bottom: 0;
+}
+
 #bottle-duration, #bottle-duration-val {
   vertical-align: middle;
 }
