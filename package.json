@@ -1,10 +1,11 @@
 {
   "name": "electron",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Web-based collaborative audio generation software",
   "dependencies": {
-    "ejs": "^3.1.9",
-    "express": "^4.16.2",
-    "socket.io": "^2.0.4"
+    "ejs": "^3.1",
+    "express": "^5.0",
+    "socket.io": "^4.0",
+    "jsdom": "^26.1"
   }
 }
