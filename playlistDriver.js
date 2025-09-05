@@ -1,6 +1,42 @@
 const fs = require('fs');
 const path = require('path');
+const { JSDOM } = require('jsdom');
 const { logger } = require('./utils');
+
+const ss4TagMap = {
+    volume: 'Vol',
+    rampRate: 'VolC',
+    freq: 'BF',
+    amType: 'PAM_Pattern',
+    amDepth: 'PAM_MD',
+    amFreq: 'PAM_MF',
+    amType2: 'SAM_Pattern',
+    amDepth2: 'SAM_MD',
+    amFreq2: 'SAM_MF',
+    fmType: 'BFM_Pattern',
+    fmDepth: 'BFM_MD',
+    fmFreq: 'BFM_MF',
+    tOn: 'tOn',
+    tOff: 'tOff',
+    tAtt: 'tAtt'
+};
+
+const ss4DefaultStep = {
+    active: true,
+    rampRate: 0,
+    amType: 'none',
+    amFreq: 0,
+    amDepth: 10,
+    amType2: 'none',
+    amFreq2: 0,
+    amDepth2: 10,
+    fmType: 'none',
+    fmFreq: 0,
+    fmDepth: 10,
+    tOn: 0.1,
+    tAtt: 0.1,
+    tOff: 0
+};
 
 class PlaylistDriver {
     constructor(sessId, config) {
@@ -61,7 +97,90 @@ class PlaylistDriver {
         return path.join(this.directory, this.playlist[this.playlist_index]);
     }
 
+    getSubtrackValue(xml, tagName) {
+        const tag = xml.getElementsByTagName(tagName)[0];
+        if (tag === undefined || tag.length === 0) return;
+        const val = tag.getAttribute('V');
+        if (tagName.match(/_Pattern$/)) return tag.getAttribute('Type');
+        if (val.match(/[0-9]/)) return parseFloat(val.replace(/,/, '.'));
+        if (val.match(/True/)) return true;
+        if (val.match(/False/)) return false;
+    }
+
+    convertSS4Step(step) {
+        const self = this;
+        let out = {};
+        Object.keys(ss4TagMap).forEach(function(key) {
+          let val = self.getSubtrackValue(step, ss4TagMap[key]);
+          if (val === undefined)
+              return;
+
+          /* ss4 expresses volume as 0-1 */
+          if (key == 'volume')
+              val *= 100;
+
+          out[key] = val;
+        });
+
+        if (Number.isFinite(out['rampRate']))
+          if (out['rampRate'] > 0)
+              out['rampTarget'] = 100;
+          else
+              out['rampTarget'] = 0;
+
+        if (out['amType'] === undefined && out['amFreq'] !== 0 && out['amDepth'] !== 0)
+            out['amType'] = 'sine';
+
+        if (out['amType2'] === undefined && out['amFreq2'] !== 0 && out['amDepth2'] !== 0)
+            out['amType2'] = 'sine';
+
+        if (out['fmType'] === undefined && out['fmFreq'] !== 0 && out['fmDepth'] !== 0)
+            out['fmType'] = 'sine';
+
+        return out;
+    }
+
+    /* Compatibility Note:
+     *   This does not support the SineSquare modulation types because
+     *   in the > 1000 SmrtStim4 files I have, not one uses them.
+     */
+    convertSS4ToElectron(xmlstring) {
+        const self = this;
+        const dom = new JSDOM();
+        const parser = new dom.window.DOMParser();
+        const xml = parser.parseFromString(xmlstring, 'text/xml');
+        let out = { meta: { version: 2 }, left: [], right: [] };
+        let scriptTime = 0;
+
+        const session = xml.getElementsByTagName('Session')[0];
+        if (session !== undefined) {
+            out['meta']['driverName'] = session.getAttribute('Creator')
+            out['meta']['driverComments'] = session.getAttribute('Name') + " " + session.getAttribute('Description')
         }
+
+        const tracks = xml.getElementsByTagName('Track');
+        let firstStep = true;
+        Array.from(tracks).forEach(function(track) {
+            const trackTime = parseFloat(track.getAttribute('Time').replace(/,/g, '.')) * 1000;
+            if (isNaN(trackTime)) return;
+            const subtracks = track.getElementsByTagName('Subtrack')
+            const left = subtracks[0];
+            const leftstep = { ...ss4DefaultStep, ...self.convertSS4Step(left) };
+            if (firstStep && leftstep['volume'] === undefined) leftstep['volume'] = 50;
+            if (Object.keys(leftstep).length > 0)
+                out['left'].push({ stamp: scriptTime, message: leftstep });
+
+            const right = subtracks[1];
+            const rightstep = { ...ss4DefaultStep, ...self.convertSS4Step(right) };
+            if (firstStep && rightstep['volume'] === undefined) rightstep['volume'] = 50;
+            if (Object.keys(rightstep).length > 0)
+                out['right'].push({ stamp: scriptTime, message: rightstep });
+
+            scriptTime += trackTime + 1000;
+            firstStep = false;
+        });
+        
+        return out;
     }
 
     run(electronState) {
@@ -86,7 +205,7 @@ class PlaylistDriver {
                     filepath = self.nextFile();
                     const scriptRaw = fs.readFileSync(filepath);
                     if (filepath.match(/\.(SmrtStm4|ss4)$/)) {
-                        script = convertSS4ToElectron(scriptRaw);
+                        script = self.convertSS4ToElectron(scriptRaw);
                     } else {
                         script = JSON.parse(scriptRaw);
                     }
