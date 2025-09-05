@@ -21,29 +21,46 @@ class PlaylistDriver {
         this.scriptTimer = 0;
         this.scriptDuration = 0;
         this.channel_pos = {};
+        this.filenames_joined = '';
+        this.playlist = [];
+        this.playlist_index = 0;
 
         // Don't repeat files from the playlist within the past N entries:
         this.lastNFiles = [];
         this.noRepeatNFiles = 10;
+        this.shufflePlaylist();
     }
 
-    chooseFile() {
-        // logger("chooseFile directory=%o", this.directory);
+    shufflePlaylist(force=false) {
         try {
 						const filenames = fs.readdirSync(path.resolve(this.directory));
+            if (!force && this.filenames_joined === filenames.join()) {
+                return;
+            } else {
+                console.log('Files in playlist directory changed, resetting playlist.');
+                this.playlist_index = 0;
+                this.filenames_joined = filenames.join();
+                if (filenames.length === 0) {
+                    console.log('The directory is empty.');
+                    this.playlist = [];
+                    return;
+                }
 
-						if (filenames.length === 0) {
-								console.log('The directory is empty.');
-								return null;
-						}
-
-						const randomIndex = Math.floor(Math.random() * filenames.length);
-						const randomFilename = filenames[randomIndex];
-
-						return path.join(this.directory, randomFilename);
+                this.playlist = Array.from(Array(filenames.length).keys()).sort((a, b) => Math.random() - 0.5).map((i) => filenames[i]);
+            }
         } catch (error) {
 						logger('[] Error reading directory: %s', error);
-						return null;
+						return;
+        }
+    }
+
+    nextFile() {
+        this.shufflePlaylist();
+        this.playlist_index++;
+        if (this.playlist_index >= this.playlist.length) this.playlist_index = 0;
+        return path.join(this.directory, this.playlist[this.playlist_index]);
+    }
+
         }
     }
 
@@ -66,11 +83,7 @@ class PlaylistDriver {
                 electronState.clearLastMessages(sessId);
 
                 try {
-                    let tries = 0;
-                    while (tries < 5 && (filepath === undefined || self.lastNFiles.includes(filepath))) {
-                        filepath = self.chooseFile();
-                        tries++;
-                    } 
+                    filepath = self.nextFile();
                     const scriptRaw = fs.readFileSync(filepath);
                     if (filepath.match(/\.(SmrtStm4|ss4)$/)) {
                         script = convertSS4ToElectron(scriptRaw);
