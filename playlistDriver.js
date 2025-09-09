@@ -196,8 +196,29 @@ class PlaylistDriver {
         let firstStepStamp = this.firstStepStamp;
         let scriptDuration = this.scriptDuration;
         let scriptTimer = this.scriptTimer;
+        let playing = false;
+        let stoppedPlayingAt = 0;
 
         this.intervalId = setInterval(() => {
+            const riderCount = electronState.getRiderSockets(sessId).length;
+            if (riderCount === 0) {
+                if (playing) {
+                    stoppedPlayingAt = Date.now();
+                    if (electronState.getVerbose()) logger('Last rider left, stop playing at %s', (new Date()));
+                }
+                playing = false;
+                return;
+            } else if (riderCount > 0 && !playing) {
+                playing = true;
+                // If we were stopped for  more than a minute, start a new file
+                if (Date.now() - stoppedPlayingAt > 60000) {
+                    if (electronState.getVerbose()) logger('Starting new file for new rider, was stopped for %f mins', ((Date.now() - stoppedPlayingAt) / 60000).toFixed(1));
+                    script = false;
+                } else {
+                    if (electronState.getVerbose()) logger('Resuming play for new rider');
+                }
+            }
+
             if (!script) {
                 electronState.clearLastMessages(sessId);
 
