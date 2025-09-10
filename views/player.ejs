@@ -212,10 +212,11 @@
           </div>
           <div class="form-row">
             <label title="The number of times per second the wave oscillates. Higher values usually feel smoother and lower values feel harsher." style="cursor:help">Frequency</label>
-            <input name="frequency" value="2000" class="spinner-frequency"> Hz.
+            <input name="frequency" value="2000.0" class="spinner-frequency"> Hz.
           </div>
           <div class="form-row">
             <div class="slider-wrapper" data-target-field="frequency" data-slider-type="frequency"></div>
+            <input type="hidden" name="freq-ramp-rate" value="0">
           </div>
 
           <h3>Volume Ramp</h3>

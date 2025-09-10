@@ -38,6 +38,7 @@ $(function () {
         volume: 'Vol',
         rampRate: 'VolC',
         freq: 'BF',
+        freqRampRate: 'BFC',
         amType: 'PAM_Pattern',
         amDepth: 'PAM_MD',
         amFreq: 'PAM_MF',
@@ -259,6 +260,7 @@ $(function () {
             if (step['amType2'] === undefined) step['amType2'] = 'none';
             if (step['tOn'] === undefined) step['tOn'] = 0.1;
             if (step['tOff'] === undefined) step['tOff'] = 0;
+            if (step['freqRampRate'] === undefined) step['freqRampRate'] = 0;
 
             const $channelCol = $(`#${channel}-channel-column`);
             if (step['volume'] !== undefined) $channelCol.find('input[name="volume"]').val(step['volume']);
@@ -274,6 +276,7 @@ $(function () {
             if (step['fmFreq'] !== undefined) $channelCol.find('input[name="fm-frequency"]').val(step['fmFreq']);
             if (step['rampTarget'] !== undefined) $channelCol.find('input[name="ramp-target"]').val(step['rampTarget']);
             if (step['rampRate'] !== undefined) $channelCol.find('input[name="ramp-rate"]').val(step['rampRate']);
+            if (step['freqRampRate'] !== undefined) $channelCol.find('input[name="freq-ramp-rate"]').val(step['freqRampRate']);
             if (step['tOn'] !== undefined) $channelCol.find('input[name="ton"]').val(step['tOn']);
             if (step['tOff'] !== undefined) $channelCol.find('input[name="toff"]').val(step['tOff']);
             if (step['tAtt'] !== undefined) $channelCol.find('input[name="tatt"]').val(step['tAtt']);
@@ -538,6 +541,7 @@ $(function () {
             $channelCol.find('input[name="fm-frequency"]').val(clamp(msg.fmFreq, 0, 100));
             $channelCol.find('input[name="ramp-rate"]').val(clamp(msg.rampRate, 0, 10));
             $channelCol.find('input[name="ramp-target"]').val(clamp(msg.rampTarget, 0, 100));
+            $channelCol.find('input[name="freq-ramp-rate"]').val(clamp(msg.freqRampRate, -10, 10));
             $channelCol.find('input[name="ton"]').val(clamp(msg.tOn, 0, 60));
             const ton_current = parseFloat($channelCol.find('input[name="ton"]').val());
             $channelCol.find('input[name="toff"]').val(clamp(msg.tOff, 0, 60));
@@ -817,6 +821,7 @@ $(function () {
                     fmFreq: parseFloat($(channelSel + 'input[name="fm-frequency"]').val()),
                     rampTarget: parseFloat($(channelSel + 'input[name="ramp-target"]').val()),
                     rampRate: parseFloat($(channelSel + 'input[name="ramp-rate"]').val()),
+                    freqRampRate: parseFloat($(channelSel + 'input[name="freq-ramp-rate"]').val()),
                     tOn: parseFloat($(channelSel + 'input[name="ton"]').val()),
                     tOff: parseFloat($(channelSel + 'input[name="toff"]').val()),
                     tAtt: parseFloat($(channelSel + 'input[name="tatt"]').val())

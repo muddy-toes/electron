@@ -86,6 +86,7 @@ $(document).ready(function () {
         validateRange($(chSelector + 'input[name="fm-frequency"]'), 0, 100);
         validateRange($(chSelector + 'input[name="ramp-rate"]'), 0, 10);
         validateRange($(chSelector + 'input[name="ramp-target"]'), 0, 100);
+        validateRange($(chSelector + 'input[name="freq-ramp-rate"]'), -40, 40);
         validateRange($(chSelector + 'input[name="toff"]'), 0, 60);
         validateRange($(chSelector + 'input[name="ton"]'), 0, 60);
         tOn[channelName] = parseFloat($(chSelector + 'input[name=ton]').val());
@@ -110,6 +111,8 @@ $(document).ready(function () {
 
         rampInfo[channelName].rate = parseFloat($(chSelector + 'input[name="ramp-rate"]').val());
         rampInfo[channelName].target = parseFloat($(chSelector + 'input[name="ramp-target"]').val());
+
+        freqRampInfo[channelName].rate = parseFloat($(chSelector + 'input[name="freq-ramp-rate"]').val());
 
         // handle A.M.
         if (amFrequency > 0 && amDepth > 0 && amType != 'none') {
@@ -306,11 +309,21 @@ $(document).ready(function () {
         }
     };
 
+    let freqRampInfo = {
+        left: {
+            rate: 0
+        },
+        right: {
+            rate: 0
+        }
+    };
 
     // monitor volume ramps every 100 ms
     setInterval(function () {
         ['left', 'right'].forEach(function (channelName) {
+            const osc = channelName == 'left' ? leftOsc : rightOsc;
             const chSelector = '#' + channelName + '-channel-column ';
+
             const rampRate = rampInfo[channelName].rate;
             if (rampRate > 0) {
                 const rampTarget = rampInfo[channelName].target;
@@ -333,12 +346,28 @@ $(document).ready(function () {
                     rampInfo[channelName].rate = 0;
                 }
 
-                if (channelName == 'left') {
-                    leftOsc.amp(volume / 100);
-                } else if (channelName == 'right') {
-                    rightOsc.amp(volume / 100);
+                osc.amp(volume / 100);
+            }
+
+            const freqRampRate = freqRampInfo[channelName].rate;
+            if (freqRampRate != 0) {
+                let freq = parseFloat($(chSelector + 'input[name="frequency"]').val());
+                freq = freq + freqRampRate;
+                freq = Math.min(electronConfig.dataTypes.frequency.max, freq);
+
+                $(chSelector + 'input[name="frequency"]').val(freq.toFixed(1));
+                $(chSelector + 'input[name="frequency"]').change();
+
+                if (! isNaN(freq)) {
+                    osc.freq(freq);
+                    const fmFrequency = parseFloat($(chSelector + 'input[name=fm-frequency]').val());
+                    const fmDepth = parseFloat($(chSelector + 'input[name=fm-depth]').val());
+                    const fmType = $(chSelector + 'select[name=fm-type]').val();
+                    if (fmFrequency > 0 && fmDepth > 0 && fmType != 'none')
+                        osc.freq(freqModulator);
                 }
             }
+
         });
     }, 100);
 
@@ -359,10 +388,12 @@ $(document).ready(function () {
             leftOsc.stop();
             clearTimeout(onOffTimeouts['left']);
             rampInfo.left.rate = 0;
+            freqRampInfo.left.rate = 0;
         } else if (channelName == 'right') {
             rightOsc.stop();
             clearTimeout(onOffTimeouts['right']);
             rampInfo.right.rate = 0;
+            freqRampInfo.right.rate = 0;
         }
     };
 

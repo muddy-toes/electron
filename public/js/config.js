@@ -1,5 +1,5 @@
 // just a few configuration variables for the spinners in the main UI
-var electronConfig = {
+const electronConfig = {
     dataTypes: {
         'volume': {
             step: 1,
@@ -7,7 +7,7 @@ var electronConfig = {
             max: 100
         },
         'frequency': {
-            step: 1,
+            step: 0.1,
             min: 100,
             max: 3000
         },

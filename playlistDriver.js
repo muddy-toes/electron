@@ -7,6 +7,7 @@ const ss4TagMap = {
     volume: 'Vol',
     rampRate: 'VolC',
     freq: 'BF',
+    freqRampRate: 'BFC',
     amType: 'PAM_Pattern',
     amDepth: 'PAM_MD',
     amFreq: 'PAM_MF',
@@ -24,6 +25,7 @@ const ss4TagMap = {
 const ss4DefaultStep = {
     active: true,
     rampRate: 0,
+    freqRampRate: 0,
     amType: 'none',
     amFreq: 0,
     amDepth: 10,
