@@ -35,7 +35,6 @@ module.exports = {
      *   - camUrl: A URL where riders can cam together.  If camUrlList is enabled above, this should be the 'name' field of one of those items.
      *   - channels: An array containing a set of the electron channel names, ['left', 'right', 'bottle', 'pain-left', 'pain-right'].  
      *     If you leave the pain ones out, it won't processes pain steps from the files.  If you leave bottle out, it won't do bottle prompts, etc.
-     *     NOTE: Currently the pain channels aren't supported anyway, so those are left out below by default.
      */
 //    playlistSession: {
 //        sessId: 'jukeboxbot', // Must be 10 characters exactly

@@ -322,9 +322,7 @@ class PlaylistDriver {
                     channel_pos[ch]++;
 
                     // if (electronState.getVerbose()) logger("[%s] Step %s: %o", sessId, ch, step);
-                    if (ch.match(/^pain-/)) {
-                        // TODO
-                    } else if (ch == 'bottle' && step['bottleDuration']) {
+                    if (ch == 'bottle' && step['bottleDuration']) {
                         const secs = parseInt(step['bottleDuration']) || 0;
                         // if (electronState.getVerbose()) logger("[%s] triggerBottle, duration=%d", sessId, secs);
                         electronState.storeLastMessage(sessId, 'bottle', { bottleDuration: secs });
