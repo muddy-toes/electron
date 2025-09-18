@@ -34,6 +34,7 @@ const automatedDriverConfig = require('./automatedDriverConfig');
 const inputValidationMiddleware = require('./inputValidation');
 const socketHandler = require('./socketHandler');
 const { generateAutomatedSessId } = require('./utils');
+const { execSync } = require('child_process');
 
 const PORT = process.env.PORT || 5000;
 const electronState = new ElectronState(config);
@@ -43,6 +44,10 @@ const io = socketIo(server);
 
 function remote_ip(req) {
   return req.header('x-forwarded-for') || req.socket.remoteAddress;
+}
+
+function version() {
+	return execSync('git rev-parse --short HEAD');
 }
 
 // middleware we need for form submission
@@ -142,7 +147,8 @@ app.get('/player/:mode/:sessId', function (req, res) {
             features: config.features,
             camUrlList: config.camUrlList,
             bottleImage: config.bottleImage || 'bottle.png',
-            playlistSession: (config.playlistSession !== undefined && config.playlistSession.sessId == sessId)
+            playlistSession: (config.playlistSession !== undefined && config.playlistSession.sessId == sessId),
+            version: version()
         });
     } else if (mode === 'play' && sessId === 'solo') {
         logger('[] User playing solo');
@@ -152,7 +158,8 @@ app.get('/player/:mode/:sessId', function (req, res) {
             features: config.features,
             camUrlList: [],
             bottleImage: config.bottleImage || 'bottle.png',
-            playlistSession: false
+            playlistSession: false,
+            version: version()
         });
     } else {
         // something went wrong -> 404!
@@ -168,6 +175,7 @@ io.on('connection', socketHandler(electronState));
 // init the server!
 app.use(express.static('public'));
 server.listen(PORT, () => logger('[] e l e c t r o n initialized and server now listening on port %d', PORT));
+logger('[] Running version %s', version());
 
 if (config.playlistSession !== undefined) {
     logger('[] Starting playlistSession with %o', config.playlistSession);
