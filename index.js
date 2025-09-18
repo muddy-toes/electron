@@ -21,7 +21,7 @@ try {
         Object.assign(config, siteConfig);
 } catch(err) {
     if (err.code != 'MODULE_NOT_FOUND') {
-        logger('[] Error loading site.js: %s', err);
+        logger('[] Error loading config.js: %s', err);
     }
 }
 
