@@ -48,9 +48,9 @@ $(function () {
         fmType: 'BFM_Pattern',
         fmDepth: 'BFM_MD',
         fmFreq: 'BFM_MF',
-        tOn: 'tOn',
-        tOff: 'tOff',
-        tAtt: 'tAtt'
+        tOn: 'TOn',
+        tOff: 'TOff',
+        tAtt: 'TAtt'
     };
 
     function getSubtrackValue(xml, tagName) {
@@ -73,6 +73,8 @@ $(function () {
           /* ss4 expresses volume as 0-1 */
           if (key == 'volume')
               val *= 100;
+          else if (key.match(/Depth$/) && typeof(val) == 'number' && val < 0)
+              val = val * -1;
 
           out[key] = val;
         });
