@@ -440,6 +440,27 @@ $(function () {
                             scriptVersion = 2;
                         }
 
+                        let scriptUsesPromode = false;
+                        try {
+                            channels.forEach(function(ch) {
+                                if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined ) {
+                                    script[ch].forEach(function(step) {
+                                        const msg = step['message'];
+                                        if ( (msg['amType2'] !== undefined && msg['amType2'] != 'none') ||
+                                           ( (msg['tOn'] !== undefined && msg['tOn'] > 0) &&
+                                             (msg['tOff'] !== undefined && msg['tOff'] > 0) &&
+                                             (msg['tAtt'] !== undefined && msg['tAtt'] > 0)    ) ) {
+                                          scriptUsesPromode = true;
+                                        }
+                                    });
+                                }
+                            });
+                        } catch(e) {
+                            if (window.console) console.log("Parse error: %o", e);
+                            $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
+                        }
+                        togglePromode(scriptUsesPromode);
+
                         // Set the script time to 1000ms prior to the first action, otherwise the thing could sit there for minutes after loading before
                         // anything happens.
                         try {

@@ -4,22 +4,17 @@ let promode = false;
 function loadPromode() {
     const savedPromode = getPromodeCookie();
     if (savedPromode) {
-        if (savedPromode === 'true') {
-            promode = false;
-        } else {
-            promode = true;
-        }
-        togglePromode();
+        togglePromode(savedPromode);
     }
 }
 
-function togglePromode() {
-    if (promode) {
+function togglePromode(forcemode=null) {
+    if (forcemode === false || promode === true) {
         promode = false;
         $('.promode').slideUp();
         setPromodeCookie("false", 30); // Save the user's choice in a cookie
         $(document).trigger('promode-off');
-    } else {
+    } else if(forcemode === true || promode === false) {
         promode = true;
         $('.promode').slideDown();
         setPromodeCookie("true", 30); // Save the user's choice in a cookie
