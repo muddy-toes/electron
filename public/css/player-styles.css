@@ -26,20 +26,25 @@
     background-color: #0056b3;
 }
 
+.player-button[title=Play] {
+    font-size: 27px;
+    padding: 4px 10px 6px 10px;
+}
+
 .player-button[title=Play]::after {
     content: '\0023F5';
 }
 
 .player-button[title=Pause] {
     font-size: 27px;
-    padding: 5px 6px 4px 6px;
+    padding: 4px 10px 6px 10px;
 }
 .player-button[title=Pause]::after {
     content: '\0023F8';
 }
 
 .player-button[title=Cancel] {
-    padding: 6px 8px 5px 9px;
+    padding: 3px 10px 8px 10px;
 }
 .player-button[title=Cancel]::after {
     content: '\0023F9';
