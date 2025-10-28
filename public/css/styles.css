@@ -479,7 +479,7 @@ div.mode-selector-box p {
   text-align: left;
   .fields {
     display: inline-block;
-    width: 45%;
+    width: 44%;
     .field {
       display: flex;
       justify-content: space-between;
@@ -496,7 +496,7 @@ div.mode-selector-box p {
   .toggles {
     display: inline-block;
     margin-left: 8%;
-    width: 45%;
+    width: 46%;
   }
 }
 

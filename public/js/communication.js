@@ -294,6 +294,7 @@ $(function () {
         if (hours >= 13) hours -= 12;
         const timestr = `${hours}:${now.getMinutes()} ${ampm}`;
         $('.lastBottle').text(`Last bottle prompt at: ${timestr}`);
+        $('.lastBottleTime').text(timestr);
     }
 
     function bottleCountdown(secs=0) {
@@ -323,7 +324,7 @@ $(function () {
         $('.bottle-countdown .seconds').text(bottleSecs.toString());
         const rider_seconds_div = $('#rider-bottle-countdown .seconds');
         rider_seconds_div.css('opacity', '0.01')
-        $('.bottle-countdown').show();
+        $('.bottle-countdown').css('display', 'inline-block');
         rider_seconds_div.css('left', `${center_line_px - (rider_seconds_div.width() / 2)}px`).css('opacity', '1');
         $('.bottle-countdown').fadeOut(800);
         setTimeout(function() {

@@ -127,7 +127,10 @@
         <input type="range" id="bottle-duration" min="1" max="10" step="1" value="5"/>
         <span id="bottle-duration-val">5</span>
         <button id="trigger-bottle-prompt" class="small roundy-btn">Bottle Prompt</button>
-        <span class="bottle-countdown"><span class='seconds'></span></span>
+        <div style="display:inline-block;width:1em">
+          <span class="bottle-countdown"><span class='seconds'></span></span>
+        </div>
+        <span style='vertical-align:bottom'>&nbsp;&nbsp;Last:&nbsp;</span><span class="lastBottleTime" style='vertical-align:bottom'>none</span>
       </div>
     </div>
   </div>
@@ -346,6 +349,7 @@
     <div id="Lissajous" class="tabcontent"></div>
 
     <div id="sketch-holder"></div>
+    <div class="lastBottle"></div>
   </div>
 
   <div id="pain-dialog" title="Pain Tool">
