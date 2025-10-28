@@ -293,7 +293,7 @@ $(function () {
         if (hours >= 12) ampm = 'PM';
         if (hours >= 13) hours -= 12;
         const timestr = `${hours}:${now.getMinutes()} ${ampm}`;
-        $('#lastBottle').text(`Last bottle prompt at: ${timestr}`);
+        $('.lastBottle').text(`Last bottle prompt at: ${timestr}`);
     }
 
     function bottleCountdown(secs=0) {
