@@ -36,6 +36,10 @@ class AutomatedDriver {
         this.rightChannel = { ...defaultChannelState };
     }
 
+    minutesRemaining() {
+      return ((new Date(this.startTime.getTime() + this.sessionDuration * 60000) - new Date()) / 60000).toFixed(2);
+    }
+
     setNextBottle() {
         const now = Date.now();
         this.next_bottle = parseInt(now + (Math.random() * (this.bottlePromptingMax - this.bottlePromptingMin) + this.bottlePromptingMin) * 1000);
@@ -229,7 +233,7 @@ class AutomatedDriver {
 
         this.varyFrequency(channel, otherChannel.freq);
         this.emitToRiders(channel, channelName, electronState);
-        if (electronState.getVerbose()) logger('[%s] Automated driver made changes to the %s channel. Elapsed minutes: %f', this.sessId, channelName.toUpperCase(), elapsedMinutes.toFixed(2));
+        if (electronState.getVerbose()) logger('[%s] Automated driver made changes to the %s channel. Elapsed minutes: %f, remaining: %f', this.sessId, channelName.toUpperCase(), elapsedMinutes.toFixed(2), this.minutesRemaining());
     }
 
     processPain(channel, channelName, electronState) {
@@ -250,7 +254,7 @@ class AutomatedDriver {
         if (this.bottlePromptingMin > 0 && Math.random() < this.bottlePromptingProbability && Date.now() > this.next_bottle) {
             const duration = parseInt(Math.random() * 5 + 5);
             this.setNextBottle();
-            if (electronState.getVerbose()) logger('[%s] Automated driver sending bottle prompt for %ds.  Next eligible in %ds.  Elapsed minutes: %f', this.sessId, duration, parseInt((this.next_bottle - Date.now()) / 1000), elapsedMinutes.toFixed(2));
+            if (electronState.getVerbose()) logger('[%s] Automated driver sending bottle prompt for %ds.  Next eligible in %ds.  Elapsed minutes: %f, remaining: %f', this.sessId, duration, parseInt((this.next_bottle - Date.now()) / 1000), elapsedMinutes.toFixed(2), this.minutesRemaining());
             electronState.getRiderSockets(this.sessId).forEach(function (s) {
                 s.emit('bottle', { bottleDuration: duration });
             });
