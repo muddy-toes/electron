@@ -95,7 +95,7 @@ app.post('/start-automated-driver', function (req, res) {
         10: 'High',
         15: 'Very High'
     };
-    let driverComments = `${sessionDuration}m session. `;
+    let driverComments = `${sessionDuration}m ${publicSession ? 'public ' : ''}session. `;
     driverComments += painProbability == 0 ? 'No pain tools. ' : `Pain tools ${painProbDesc[painProbability]} probability at a ${painLevelDesc[painIntensity]} level. `;
     driverComments += bottlePromptingMax == 0 ? 'No bottle prompting. ' : 'Bottle prompting used. '
 
