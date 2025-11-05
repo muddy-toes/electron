@@ -61,7 +61,10 @@ module.exports = function (electronState) {
         socket.on('registerDriver', function (msg) {
             const sessId = msg.sessId;
             logger('[%s] User request to drive', sessId);
-            if (!electronState.driverTokenExists(sessId)) {
+            if (sessId.match(/^AUTO/)) {
+                socket.emit('driverRejected');
+                logger('[%s] User REJECTED as driver from %s.  Cannot manually drive an AUTO session.', sessId, remote_ip());
+            } else if (!electronState.driverTokenExists(sessId)) {
                 const token = generateToken();
                 electronState.addDriverToken(sessId, token, socket);
                 socket.emit('driverToken', token);

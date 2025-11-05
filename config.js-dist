@@ -46,6 +46,13 @@ module.exports = {
 //        channels: ['left', 'right', 'bottle']
 //    },
 
+//     /* See also automatedDriverConfig.js for session defaults */
+//     automatedSession: {
+//         driverNames: [
+//             'Autodriver'
+//         ]
+//     },
+
     // Use this to include additional content at the bottom of the index page.  The file should be in the views/ folder.  Sample content
     // can be found in views/footnotes.html-dist
 //    indexFootnotesFile: 'footnotes.html',

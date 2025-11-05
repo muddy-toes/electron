@@ -49,7 +49,13 @@
               <li><i>No public sessions</i></li>
             <% } else { %>
               <% publicSessions.forEach(function(ps) { %>
-                <li><a href="/player/play/<%= ps['sessId'] %>"><%= ps['name'] %></a> (<%= ps['riders'] %> riders)</li>
+                <li><a href="/player/play/<%= ps['sessId'] %>">
+                  <% if (ps['sessId'].match(/^AUTO/)) { %>
+                    &#x1F916;&nbsp;<%= ps['name'] %>
+                  <% } else { %>
+                    <%= ps['name'] %>
+                  <% } %>
+                  </a> (<%= ps['riders'] %> riders)</li>
               <% }); %>
             <% } %>
           </ul>

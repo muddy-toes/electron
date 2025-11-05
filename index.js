@@ -80,6 +80,7 @@ app.post('/start-automated-driver', function (req, res) {
     const bottlePromptingRaw = req.body['bottle-prompting'].split(/-/);
     const bottlePromptingMin = bottlePromptingRaw[0] == '0' ? 0 : parseInt(bottlePromptingRaw[0]);
     const bottlePromptingMax = bottlePromptingRaw[0] == '0' ? 0 : parseInt(bottlePromptingRaw[1]);
+    const publicSession = (req.body['public-session'] == 'Yes');
     const sessId = generateAutomatedSessId();
 
     const painProbDesc = {
@@ -117,7 +118,8 @@ app.post('/start-automated-driver', function (req, res) {
         painProbability: painProbability,
         painIntensity: painIntensity,
         proMode: (amPreset2 != 0),
-        driverComments: driverComments
+        driverComments: driverComments,
+        publicSession: publicSession
     };
 
     if (config.verbose) logger("[%s] Starting AutomatedDriver with config: %o", sessId, sessionConfig);
@@ -143,6 +145,7 @@ app.get('/player/:mode/:sessId', function (req, res) {
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
         res.render('player', { 
+            automatedSession: sessId.match(/^AUTO/) ? true : false,
             flags: flags,
             features: config.features,
             camUrlList: config.camUrlList,

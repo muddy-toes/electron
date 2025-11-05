@@ -1,4 +1,5 @@
 const automatedDriverConfig = {
+    publicSession: false,
     startMaxVolumeChange: 2,
     endMaxVolumeChange: 5,
     noChangesProbability: 0.3,
