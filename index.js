@@ -157,6 +157,7 @@ app.get('/player/:mode/:sessId', function (req, res) {
         logger('[] User playing solo');
         // solo play
         res.render('player', {
+            automatedSession: false,
             flags: { driverName: 'Yourself' },
             features: config.features,
             camUrlList: [],
