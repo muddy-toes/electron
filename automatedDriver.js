@@ -250,7 +250,7 @@ class AutomatedDriver {
         if (this.bottlePromptingMin > 0 && Math.random() < this.bottlePromptingProbability && Date.now() > this.next_bottle) {
             const duration = parseInt(Math.random() * 5 + 5);
             this.setNextBottle();
-            if (electronState.getVerbose()) logger('[%s] Automated driver %s sending bottle prompt for %ds.  Next eligible in %ds.  Elapsed minutes: %f', this.sessId, duration, parseInt((this.next_bottle - Date.now()) / 1000), elapsedMinutes.toFixed(2));
+            if (electronState.getVerbose()) logger('[%s] Automated driver sending bottle prompt for %ds.  Next eligible in %ds.  Elapsed minutes: %f', this.sessId, duration, parseInt((this.next_bottle - Date.now()) / 1000), elapsedMinutes.toFixed(2));
             electronState.getRiderSockets(this.sessId).forEach(function (s) {
                 s.emit('bottle', { bottleDuration: duration });
             });
