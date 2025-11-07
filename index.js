@@ -36,7 +36,8 @@ const socketHandler = require('./socketHandler');
 const { generateAutomatedSessId } = require('./utils');
 const { execSync } = require('child_process');
 
-const PORT = process.env.PORT || 5000;
+const LISTEN_PORT = process.env.PORT || config.listen_port || 5000;
+const LISTEN_ADDR = config.listen_addr || '0.0.0.0';
 const electronState = new ElectronState(config);
 const app = express();
 const server = http.createServer(app);
@@ -178,7 +179,7 @@ io.on('connection', socketHandler(electronState));
 
 // init the server!
 app.use(express.static('public'));
-server.listen(PORT, () => logger('[] e l e c t r o n initialized and server now listening on port %d', PORT));
+server.listen(LISTEN_PORT, LISTEN_ADDR, () => logger('[] e l e c t r o n initialized and server now listening on %s:%d', LISTEN_ADDR, LISTEN_PORT));
 logger('[] Running version %s', version());
 
 if (config.playlistSession !== undefined) {
