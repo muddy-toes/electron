@@ -9,12 +9,12 @@ function loadPromode() {
 }
 
 function togglePromode(forcemode=null) {
-    if (forcemode === false || promode === true) {
+    if (forcemode === false || (forcemode === null && promode === true)) {
         promode = false;
         $('.promode').slideUp();
         setPromodeCookie("false", 30); // Save the user's choice in a cookie
         $(document).trigger('promode-off');
-    } else if(forcemode === true || promode === false) {
+    } else if(forcemode === true || (forcemode === null && promode === false)) {
         promode = true;
         $('.promode').slideDown();
         setPromodeCookie("true", 30); // Save the user's choice in a cookie
