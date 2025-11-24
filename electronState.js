@@ -20,6 +20,7 @@ class ElectronState {
                                         // flagnames in use: blindfoldRiders, publicSession, driverName, proMode, camUrl, driverComments
         logger("[] startup");
         if (this.config.verbose) logger("[] verbose logging enabled");
+        if (this.config.memoryMonitor) logger("[] memoryMonitor logging enabled");
     }
 
     getCamUrlList() {
@@ -60,6 +61,8 @@ class ElectronState {
                 });
             }
         }
+
+        if (this.config.memoryMonitor) logger("[%s] memoryMonitor: initSessionData %o", sessId, process.memoryUsage());
     }
 
     cleanupSessionData(sessId) {
@@ -72,6 +75,7 @@ class ElectronState {
         delete this.riders[sessId];
         logger("[%s] End session", sessId);
         logger("[] Active sessions: %d", Object.keys(this.lastMessages).length);
+        if (this.config.memoryMonitor) logger("[%s] memoryMonitor: cleanupSessionData %o", sessId, process.memoryUsage());
     }
 
     setSessionFlag(sessId, flagname, flagval) {
@@ -122,6 +126,7 @@ class ElectronState {
         } else {
             this.riders[sessId] = [socket];
         }
+        if (this.config.memoryMonitor) logger("[%s] memoryMonitor: addRiderSocket %o", sessId, process.memoryUsage());
     }
 
     validateRider(sessId, socket) {
@@ -163,6 +168,7 @@ class ElectronState {
         if (! this.config?.features?.promode) this.config?.promodeKeys?.forEach(function(key) { delete m[key] });
 
         this.lastMessages[sessId][channel].push({ stamp: stamp_offset, message: m });
+        if (this.config.memoryMonitor) logger("[%s] memoryMonitor: storeLastMessage %o", sessId, process.memoryUsage());
     }
 
     clearLastMessages(sessId) {
@@ -170,6 +176,7 @@ class ElectronState {
         this.lastMessages[sessId] = {};
         this.sessionStartTimes[sessId] = now;
         this.previousMessageStamp[sessId] = { 'left': now, 'right': now, 'pain-left': now, 'pain-right': now, 'bottle': now };
+        if (this.config.memoryMonitor) logger("[%s] memoryMonitor: clearLastMessages %o", sessId, process.memoryUsage());
     }
 
     setRiderTrafficLight(sessId, socket, color) {
@@ -240,6 +247,7 @@ class ElectronState {
                     logger('[%s] Last rider left, no driver present, ending session', sessId);
                     this.cleanupSessionData(sessId);
                 }
+                if (this.config.memoryMonitor) logger("[%s] memoryMonitor: onDisconnect-rider-left %o", sessId, process.memoryUsage());
             }
         }
 
@@ -255,6 +263,7 @@ class ElectronState {
                             logger('[%s] Send driverLost to rider at %s', sessId, rider_ip);
                             s.emit('driverLost');
                         });
+                        if (this.config.memoryMonitor) logger("[%s] memoryMonitor: onDisconnect-driver-lost %o", sessId, process.memoryUsage());
                     } else {
                         logger('[%s] Driver left, no riders present, ending session', sessId);
                         this.cleanupSessionData(sessId);
