@@ -1,55 +1,142 @@
 // places to store the current state of the application
-// as we don't use a database of any kind (it's all in memory!)
+// Now using SQLite for persistence so driver can reconnect and resume
 const fs = require('fs');
+const path = require('path');
+const Database = require('better-sqlite3');
 const AutomatedDriver = require('./automatedDriver');
 const PlaylistDriver = require('./playlistDriver');
 const { logger } = require('./utils');
 
+const channels = ['left', 'right', 'pain-left', 'pain-right', 'bottle'];
+
 class ElectronState {
     constructor(config={}) {
         this.config = config;
-        this.driverTokens = {};         // stores the authentication tokens of drivers
+        
+        // Initialize SQLite database
+        const dbPath = path.resolve(config.dbPath || './electron-state.sqlite3');
+        this.db = new Database(dbPath);
+        this.db.pragma('journal_mode = WAL'); // Better concurrent access
+        
+        // Create tables if they don't exist
+        this.initDatabase();
+        
+        // In-memory caches for performance (sockets can't be serialized)
         this.driverSockets = {};        // stores sockets for people driving sessions
         this.riders = {};               // stores all sockets for people riding each session
-        this.previousMessageStamp = {}; // stores timestamp of previous message for calculating offsets
-        this.lastMessages = {};         // storage of incoming messages (setting waveform parameters, pain tool, etc.)
-        this.sessionStartTimes = {};    // storage of timestamps when each session starts
         this.automatedDrivers = {};     // stores automated drivers by their session ids
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
-        this.sessionFlags = {};         // sessionFlags[sessId][flagname]
-                                        // flagnames in use: blindfoldRiders, publicSession, driverName, proMode, camUrl, driverComments
-        logger("[] startup");
-        if (this.config.verbose) logger("[] verbose logging enabled");
-        if (this.config.memoryMonitor) logger("[] memoryMonitor logging enabled");
+        
+        logger('[] startup');
+        if (this.config.verbose) logger('[] verbose logging enabled');
+        if (this.config.memoryMonitor) logger('[] memoryMonitor logging enabled');
+        
+        this.loadActiveSessions();
+    }
+
+    initDatabase() {
+        this.db.exec(`
+            CREATE TABLE IF NOT EXISTS sessions (
+                sess_id TEXT PRIMARY KEY,
+                driver_token TEXT,
+                session_start_time INTEGER DEFAULT 0,
+                created_at INTEGER DEFAULT (strftime('%s','now') * 1000),
+                updated_at INTEGER DEFAULT (strftime('%s','now') * 1000)
+            )
+        `);
+
+        this.db.exec(`
+            CREATE TABLE IF NOT EXISTS session_flags (
+                sess_id TEXT,
+                flag_name TEXT,
+                flag_value TEXT,
+                PRIMARY KEY (sess_id, flag_name),
+                FOREIGN KEY (sess_id) REFERENCES sessions(sess_id) ON DELETE CASCADE
+            )
+        `);
+
+        this.db.exec(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sess_id TEXT,
+                channel TEXT,
+                stamp INTEGER,
+                message TEXT,
+                created_at INTEGER DEFAULT (strftime('%s','now') * 1000),
+                FOREIGN KEY (sess_id) REFERENCES sessions(sess_id) ON DELETE CASCADE
+            )
+        `);
+        
+        this.db.exec(`
+            CREATE INDEX IF NOT EXISTS idx_messages_session_channel 
+            ON messages(sess_id, channel)
+        `);
+
+        this.db.exec(`
+            CREATE TABLE IF NOT EXISTS message_stamps (
+                sess_id TEXT,
+                channel TEXT,
+                stamp INTEGER,
+                PRIMARY KEY (sess_id, channel),
+                FOREIGN KEY (sess_id) REFERENCES sessions(sess_id) ON DELETE CASCADE
+            )
+        `);
+
+        logger('[] Database initialized');
+    }
+
+    loadActiveSessions() {
+        const sessions = this.db.prepare('SELECT sess_id FROM sessions').all();
+        logger('[] Loaded %d active sessions from database', sessions.length);
+        // Driver sockets and rider sockets will need to reconnect
     }
 
     getCamUrlList() {
-      return this.config.camUrlList;
+        return this.config.camUrlList;
     }
 
     getVerbose() {
-      return this.config.verbose;
+        return this.config.verbose;
     }
 
     initSessionData(sessId) {
         const now = Date.now();
-        this.previousMessageStamp[sessId] ||= { 'left': now, 'right': now, 'pain-left': now, 'pain-right': now, 'bottle': now };
-        this.lastMessages[sessId] ||= {};
-        this.sessionStartTimes[sessId] = 0;
-        this.sessionFlags[sessId] ||= {};
+        
+        // Check if session exists
+        const existing = this.db.prepare('SELECT sess_id FROM sessions WHERE sess_id = ?').get(sessId);
+        
+        if (! existing) {
+            // Create new session
+            this.db.prepare(`
+                INSERT INTO sessions (sess_id, session_start_time) 
+                VALUES (?, 0)
+            `).run(sessId);
+            
+            // Initialize message stamps
+            const insertStamp = this.db.prepare(`
+                INSERT OR REPLACE INTO message_stamps (sess_id, channel, stamp) 
+                VALUES (?, ?, ?)
+            `);
+            
+            for (const channel of channels) {
+                insertStamp.run(sessId, channel, now);
+            }
+        }
 
-        // New driver, reset some settings...
-        this.sessionFlags[sessId]['driverName'] = 'Anonymous';
+        // Set default flags for new driver
+        this.setSessionFlag(sessId, 'driverName', 'Anonymous');
+        
         if (this.config.camUrlList && this.config.camUrlList.length > 0) {
             const defaultItem = this.config.camUrlList.filter((item) => item.default)[0];
             if (defaultItem !== undefined) {
-                this.sessionFlags[sessId]['camUrl'] = defaultItem.name;
+                this.setSessionFlag(sessId, 'camUrl', defaultItem.name);
             }
-        } else {
         }
-        delete this.sessionFlags[sessId]['camUrl'];
-        delete this.sessionFlags[sessId]['filePlaying'];
-        delete this.sessionFlags[sessId]['fileDriver'];
+        
+        // Remove certain flags
+        this.db.prepare('DELETE FROM session_flags WHERE sess_id = ? AND flag_name IN (?, ?, ?)').run(
+            sessId, 'camUrl', 'filePlaying', 'fileDriver'
+        );
 
         // Only update if we have a real driver, not automated
         if (this.driverSockets[sessId]) {
@@ -66,58 +153,90 @@ class ElectronState {
     }
 
     cleanupSessionData(sessId) {
-        delete this.lastMessages[sessId];
-        delete this.previousMessageStamp[sessId];
-        delete this.sessionStartTimes[sessId];
-        delete this.sessionFlags[sessId];
-        delete this.driverTokens[sessId];
+        // Delete from database (cascades to related tables)
+        this.db.prepare('DELETE FROM sessions WHERE sess_id = ?').run(sessId);
+        
+        // Clean up in-memory data
         delete this.driverSockets[sessId];
         delete this.riders[sessId];
+        
         logger("[%s] End session", sessId);
-        logger("[] Active sessions: %d", Object.keys(this.lastMessages).length);
+        logger("[] Active sessions: %d", this.db.prepare('SELECT COUNT(*) as count FROM sessions').get().count);
         if (this.config.memoryMonitor) logger("[%s] memoryMonitor: cleanupSessionData %o", sessId, process.memoryUsage());
     }
 
     setSessionFlag(sessId, flagname, flagval) {
-      this.sessionFlags[sessId] ||= {};
-      this.sessionFlags[sessId][flagname] = flagval;
+        this.db.prepare(`
+            INSERT OR REPLACE INTO session_flags (sess_id, flag_name, flag_value) 
+            VALUES (?, ?, ?)
+        `).run(sessId, flagname, JSON.stringify(flagval));
     }
 
     getSessionFlags(sessId) {
-      return this.sessionFlags[sessId];
+        const flags = this.db.prepare(`
+            SELECT flag_name, flag_value 
+            FROM session_flags 
+            WHERE sess_id = ?
+        `).all(sessId);
+        
+        const result = {};
+        for (const flag of flags) {
+            try {
+                result[flag.flag_name] = JSON.parse(flag.flag_value);
+            } catch (e) {
+                result[flag.flag_name] = flag.flag_value;
+            }
+        }
+        return result;
     }
 
     getPublicSessions() {
-        const publiclist = [];
-        const sessionFlags = this.sessionFlags; // because 'this' changes inside the forEach
-        const riders = this.riders;
-        Object.keys(this.sessionFlags).forEach(function(sessId) {
-          if (! sessionFlags[sessId])
-            return;
-
-          if (sessionFlags[sessId]['publicSession']) {
-            const ridercount = riders[sessId]?.length || 0;
-            publiclist.push({ sessId: sessId, name: sessionFlags[sessId]['driverName'] || sessId, riders: ridercount });
-          }
+        const publicSessions = this.db.prepare(`
+            SELECT s.sess_id, sf.flag_value as driver_name
+            FROM sessions s
+            LEFT JOIN session_flags sf ON s.sess_id = sf.sess_id AND sf.flag_name = 'driverName'
+            WHERE EXISTS (
+                SELECT 1 FROM session_flags 
+                WHERE sess_id = s.sess_id 
+                AND flag_name = 'publicSession' 
+                AND flag_value = 'true'
+            )
+        `).all();
+        
+        return publicSessions.map(session => {
+            const sessId = session.sess_id;
+            const ridercount = this.riders[sessId]?.length || 0;
+            let name = sessId;
+            try {
+                name = session.driver_name ? JSON.parse(session.driver_name) : sessId;
+            } catch (e) {
+                name = session.driver_name || sessId;
+            }
+            return { sessId: sessId, name: name, riders: ridercount };
         });
-        return publiclist;
     }
 
     addDriverToken(sessId, token, socket) {
-        this.driverTokens[sessId] = token;
+        this.db.prepare(`
+            INSERT OR REPLACE INTO sessions (sess_id, driver_token, updated_at) 
+            VALUES (?, ?, ?)
+        `).run(sessId, token, Date.now());
+        
         this.driverSockets[sessId] = socket;
         this.initSessionData(sessId);
     }
 
     driverTokenExists(sessId) {
-        return sessId in this.driverTokens || sessId in this.automatedDrivers;
+        if (sessId in this.automatedDrivers) return true;
+        
+        const result = this.db.prepare('SELECT driver_token FROM sessions WHERE sess_id = ?').get(sessId);
+        return result !== undefined && result.driverToken;
     }
 
     validateDriverToken(sessId, driverToken) {
-        if (!(sessId in this.driverTokens)) {
-            return false;
-        }
-        return this.driverTokens[sessId] == driverToken;
+        const result = this.db.prepare('SELECT driver_token FROM sessions WHERE sess_id = ?').get(sessId);
+        if (! result) return false;
+        return result.driver_token === driverToken;
     }
 
     addRiderSocket(sessId, socket) {
@@ -131,9 +250,9 @@ class ElectronState {
 
     validateRider(sessId, socket) {
         if (this.riders[sessId]) {
-          return this.riders[sessId].includes(socket)
+            return this.riders[sessId].includes(socket);
         } else {
-          return false;
+            return false;
         }
     }
 
@@ -149,33 +268,59 @@ class ElectronState {
     }
 
     storeLastMessage(sessId, channel, message) {
-        if (!this.lastMessages[sessId]) {
-            this.lastMessages[sessId] = {};
-        }
+        // Don't store messages for automated drivers
+        if (this.automatedDrivers[sessId]) return;
 
-        if (this.sessionStartTimes[sessId] == 0) {
-            this.sessionStartTimes[sessId] = Date.now();
-        }
+        // Ensure session exists
+        const session = this.db.prepare('SELECT session_start_time FROM sessions WHERE sess_id = ?').get(sessId);
+        if (! session) return;
+        
         const now = Date.now();
-        this.previousMessageStamp[sessId] ||= {};
-        this.previousMessageStamp[sessId][channel] ||= now;
-        // const abs_stamp_offset = now - this.sessionStartTimes[sessId];
-        const stamp_offset = now - this.previousMessageStamp[sessId][channel];
-        this.previousMessageStamp[sessId][channel] = now;
-        this.lastMessages[sessId][channel] ||= [];
-
+        
+        // Update session start time if needed
+        if (session.session_start_time === 0) {
+            this.db.prepare('UPDATE sessions SET session_start_time = ? WHERE sess_id = ?').run(now, sessId);
+        }
+        
+        // Get previous stamp
+        const stampRow = this.db.prepare('SELECT stamp FROM message_stamps WHERE sess_id = ? AND channel = ?').get(sessId, channel);
+        const previousStamp = stampRow ? stampRow.stamp : now;
+        const stamp_offset = now - previousStamp;
+        
+        // Update stamp
+        this.db.prepare('INSERT OR REPLACE INTO message_stamps (sess_id, channel, stamp) VALUES (?, ?, ?)').run(sessId, channel, now);
+        
+        // Filter out promode keys if needed
         let m = {...message};
-        if (! this.config?.features?.promode) this.config?.promodeKeys?.forEach(function(key) { delete m[key] });
-
-        this.lastMessages[sessId][channel].push({ stamp: stamp_offset, message: m });
+        if (! this.config?.features?.promode) {
+            this.config?.promodeKeys?.forEach(function(key) { delete m[key]; });
+        }
+        
+        // Store message
+        this.db.prepare(`
+            INSERT INTO messages (sess_id, channel, stamp, message) 
+            VALUES (?, ?, ?, ?)
+        `).run(sessId, channel, stamp_offset, JSON.stringify(m));
+        
         if (this.config.memoryMonitor) logger("[%s] memoryMonitor: storeLastMessage %o", sessId, process.memoryUsage());
     }
 
     clearLastMessages(sessId) {
         const now = Date.now();
-        this.lastMessages[sessId] = {};
-        this.sessionStartTimes[sessId] = now;
-        this.previousMessageStamp[sessId] = { 'left': now, 'right': now, 'pain-left': now, 'pain-right': now, 'bottle': now };
+        
+        // Delete all messages for this session
+        this.db.prepare('DELETE FROM messages WHERE sess_id = ?').run(sessId);
+        
+        // Reset session start time
+        this.db.prepare('UPDATE sessions SET session_start_time = ? WHERE sess_id = ?').run(now, sessId);
+        
+        // Reset all message stamps
+        const updateStamp = this.db.prepare('INSERT OR REPLACE INTO message_stamps (sess_id, channel, stamp) VALUES (?, ?, ?)');
+        
+        for (const channel of channels) {
+            updateStamp.run(sessId, channel, now);
+        }
+        
         if (this.config.memoryMonitor) logger("[%s] memoryMonitor: clearLastMessages %o", sessId, process.memoryUsage());
     }
 
@@ -197,25 +342,62 @@ class ElectronState {
     }
 
     getLastMessage(sessId, channel) {
-        if (!(sessId in this.lastMessages) || !(channel in this.lastMessages[sessId]) || !(typeof(this.lastMessages[sessId][channel]) === 'object') || !(0 in this.lastMessages[sessId][channel])) {
-            return null;
-        }
-        return this.lastMessages[sessId][channel].slice(-1)[0];
+        const result = this.db.prepare(`
+            SELECT stamp, message 
+            FROM messages 
+            WHERE sess_id = ? AND channel = ? 
+            ORDER BY id DESC 
+            LIMIT 1
+        `).get(sessId, channel);
+        
+        if (! result) return null;
+        
+        return {
+            stamp: result.stamp,
+            message: JSON.parse(result.message)
+        };
     }
 
     getSessionMessages(sessId) {
-        if (!(sessId in this.lastMessages) || (!('left' in this.lastMessages[sessId]) && !('right' in this.lastMessages[sessId]))) {
+        const sessionFlags = this.getSessionFlags(sessId);
+        
+        // Get all messages for this session grouped by channel
+        const messages = this.db.prepare(`
+            SELECT channel, stamp, message 
+            FROM messages 
+            WHERE sess_id = ? 
+            ORDER BY id ASC
+        `).all(sessId);
+        
+        if (messages.length === 0) {
             return "No messages stored";
         }
-        const lastmessages = this.lastMessages;
-        const sessionflags = this.sessionFlags;
+        
         let data_to_return = {
-            'meta': { driverName: sessionflags[sessId]['driverName'], driverComments: sessionflags[sessId]['driverComments'], version: 1, fileType: 'e l e c t r o n script' }
+            'meta': { 
+                driverName: sessionFlags['driverName'], 
+                driverComments: sessionFlags['driverComments'], 
+                version: 1, 
+                fileType: 'e l e c t r o n script' 
+            }
         };
-        ['left', 'right', 'pain-left', 'pain-right', 'bottle'].forEach(function(channel) {
-          if (lastmessages[sessId][channel])
-            data_to_return[channel] = lastmessages[sessId][channel].filter(function(m) { delete m['message'].sessId ; delete m['message'].driverToken; return m; });
-        });
+        
+        // Group messages by channel
+        for (const channel of channels) {
+            const channelMessages = messages
+                .filter(m => m.channel === channel)
+                .map(m => {
+                    const msg = JSON.parse(m.message);
+                    delete msg.sessId;
+                    delete msg.driverToken;
+                    return { stamp: m.stamp, message: msg };
+                });
+            
+            if (channelMessages.length > 0) {
+                data_to_return[channel] = channelMessages;
+            }
+        }
+        
         return JSON.stringify(data_to_return);
     }
 
@@ -255,8 +437,9 @@ class ElectronState {
             for (const sessId in this.driverSockets) {
                 if (this.driverSockets[sessId] === socket) {
                     logger('[%s] Driver disconnected from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId]?.length || 0);
+                    
                     delete this.driverSockets[sessId];
-                    delete this.driverTokens[sessId];
+                    this.db.prepare('UPDATE sessions SET driver_token = NULL WHERE sess_id = ?').run(sessId);
                     if (this.riders[sessId] && this.riders[sessId].length > 0) {
                         this.riders[sessId].forEach(function(s) {
                             const rider_ip = s.handshake.headers['x-forwarded-for'] || s.handshake.address;
@@ -264,6 +447,7 @@ class ElectronState {
                             s.emit('driverLost');
                         });
                         if (this.config.memoryMonitor) logger("[%s] memoryMonitor: onDisconnect-driver-lost %o", sessId, process.memoryUsage());
+
                     } else {
                         logger('[%s] Driver left, no riders present, ending session', sessId);
                         this.cleanupSessionData(sessId);
@@ -278,7 +462,7 @@ class ElectronState {
             return false;
         }
 
-        if (!this.automatedDrivers[sessId]) {
+        if (! this.automatedDrivers[sessId]) {
             this.automatedDrivers[sessId] = new AutomatedDriver(sessId, automatedDriverConfig);
             this.initSessionData(sessId);
             const driverNames = this.config.automatedSession?.driverNames || ['Autodriver'];
@@ -303,10 +487,11 @@ class ElectronState {
     startPlaylistDriver(playlistConfig) {
         const sessId = playlistConfig.sessId;
         const dir = playlistConfig.directory;
-        if( ! fs.lstatSync(dir).isDirectory() ) {
-          logger('[] Configured playlist directory is not a directory: %s', dir);
-          return false;
+        if (! fs.lstatSync(dir).isDirectory()) {
+            logger('[] Configured playlist directory is not a directory: %s', dir);
+            return false;
         }
+
         this.automatedDrivers[sessId] = new PlaylistDriver(sessId, playlistConfig);
         this.initSessionData(sessId);
         this.setSessionFlag(sessId, 'driverName', playlistConfig.driverName || 'Playlistdriver');
@@ -317,9 +502,13 @@ class ElectronState {
         this.setSessionFlag(sessId, 'camUrl', playlistConfig.camUrl);
         this.automatedDrivers[sessId].run(this);
         return true;
-
     }
-
+    
+    close() {
+        // Graceful shutdown
+        this.db.close();
+        logger("[] Database connection closed");
+    }
 }
 
 module.exports = ElectronState;

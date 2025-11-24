@@ -131,3 +131,6 @@ dist
 session_files
 config.js
 views/footnotes.html
+
+electron-state.sqlite3*
+

@@ -8,6 +8,8 @@ module.exports = {
     listen_addr: '0.0.0.0',
     listen_port: 5000,
 
+    dbPath: './electron-state.sqlite3',
+
     // Feature flags.  Set any one to false to disable it.
     features: {
         // Promode availability.  If false, this will disable the promode button, the additional settings, and the ability to 
