@@ -65,6 +65,10 @@ module.exports = {
 
     // If you'd like to use a different bottle image, specify the filename here.  The file goes in the public/ folder.
 //    bottleImage: 'bottle.png',
+
+    // If you want electron to save the json for every closed session before deleting it, uncomment this and set it to a path
+    // for the files.  If you have a lot of sessions, you'll probably want to clear this out periodically.
+//    savedSessionsPath: './saved_sessiens',
 };
 
 // vi: ft=javascript
