@@ -155,6 +155,7 @@
         let bottleEventTimesMs = [];
         let totalDurationMs = 0;
         let currentFilename = 'chart_export'; // Store the uploaded filename base
+        let scriptUsesPromode = false;
 
         // --- Event Listeners ---
         fileInput.addEventListener('change', handleFileSelect);
@@ -250,6 +251,27 @@
             try {
               const rawData = JSON.parse(e.target.result);
               console.log("Raw data loaded:", rawData);
+
+              scriptUsesPromode = false;
+              try {
+                  ['left', 'right'].forEach(function(ch) {
+                      if (rawData[ch] !== undefined && rawData[ch][0] !== undefined && rawData[ch][0]['stamp'] !== undefined ) {
+                          rawData[ch].forEach(function(step) {
+                              const msg = step['message'];
+                              if ( (msg['amType2'] !== undefined && msg['amType2'] != 'none') ||
+                                 ( (msg['tOn'] !== undefined && msg['tOn'] > 0) &&
+                                   (msg['tOff'] !== undefined && msg['tOff'] > 0) &&
+                                   (msg['tAtt'] !== undefined && msg['tAtt'] > 0)    ) ) {
+                                scriptUsesPromode = true;
+                              }
+                          });
+                      }
+                  });
+              } catch(e) {
+                  if (window.console) console.log("Parse error: %o", e);
+                  showError(`Error parsing script file: ${e}`);
+              }
+
               rawMetadata = rawData.meta || {};
               processedData = processAllChannels(rawData);
               bottleEventTimesMs = processBottleData(rawData);
@@ -935,7 +957,8 @@
               hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq L:</b> %{y:.2f}<extra></extra>`
             });
             console.log("PD %o", processedData);
-            if (processedData.left.params.amDepth2.filter((d) => d !== null).length > 0) {
+
+            if (scriptUsesPromode && processedData.left.params.amDepth2.filter((d) => d !== null).length > 0) {
 							traces2.push({
 								x: processedData.left.timesMs,
 								y: processedData.left.params.amDepth2,
@@ -960,6 +983,7 @@
 								hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq 2 L:</b> %{y:.2f}<extra></extra>`
 							});
             }
+
           }
           if (processedData.right?.timesMs?.length > 0) {
             traces2.push({
@@ -985,7 +1009,8 @@
               },
               hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq R:</b> %{y:.2f}<extra></extra>`
             });
-            if (processedData.right.params.amDepth2.filter((d) => d !== null).length > 0) {
+
+            if (scriptUsesPromode && processedData.right.params.amDepth2.filter((d) => d !== null).length > 0) {
                 traces2.push({
                   x: processedData.right.timesMs,
                   y: processedData.right.params.amDepth2,
@@ -1010,6 +1035,7 @@
                   hovertemplate: `<b>Time:</b> %{x|%H:%M:%S}<br><b>AM Freq 2 R:</b> %{y:.2f}<extra></extra>`
                 });
             }
+
           }
           const layout2 = {
             ...baseLayout,
