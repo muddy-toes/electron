@@ -622,7 +622,7 @@ $(function () {
         }
 
         socket.on('driverLost', function() {
-          $('#status-message').html(`<p>The driver has left.  Give this url to someone else and they can become the driver:<br/><b>${document.location.href.replace('/play/', '/drive/')}</b></p>`);
+          $('#status-message').html(`<p><b>The driver has left.</b>  Give this url to someone else and they can become the driver:<br/><b>${document.location.href.replace('/play/', '/drive/')}</b></p>`);
         });
 
         socket.on('driverGained', function() {
