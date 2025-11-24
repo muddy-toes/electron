@@ -49,28 +49,13 @@ $(document).ready(function () {
             $(window).trigger('applied-' + channelName);
         });
 
-        $(chSelector + ' input').keydown(function (e) {
-            if (e.keyCode == 13) {
-                // return key was pressed
-                applyChanges(channelName, osc, ampModulator, freqModulator, ampModulator2);
-                // send event to communication module can capture it
-                $(window).trigger('applied-' + channelName);
-            } else if (e.keyCode == 27) {
-                // escape key was pressed
-                stopChannel(channelName);
-                // send event to communication module can capture it
-                $(window).trigger('stopped-' + channelName);
-            }
-        });
-
         $('body').on('keyup', function(e) {
             if (e.keyCode === 27)
-                $('.stop-btn').click();
+                $(chSelector + ' .stop-btn').click();
             else if (e.keyCode === 13)
-                $('.apply-btn').click();
+                $(chSelector + ' .apply-btn').click();
         });
     }
-
 
     function applyChanges(channelName, osc, ampModulator, freqModulator, ampModulator2) {
         const chSelector = '#' + channelName + '-channel-column ';
