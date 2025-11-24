@@ -153,6 +153,28 @@ class ElectronState {
     }
 
     cleanupSessionData(sessId) {
+        if (this.config.savedSessionsPath && ! this.automatedDrivers[sessId]) {
+            try {
+                const sessionMessages = this.getSessionMessages(sessId);
+                if (sessionMessages !== 'No messages stored') {
+                    const savedSessionsDir = path.resolve('./saved_sessions');
+                    if (! fs.existsSync(savedSessionsDir)) {
+                        fs.mkdirSync(savedSessionsDir, { recursive: true });
+                    }
+                    let filePath;
+                    let i = 0;
+                    do {
+                        filePath = path.join(savedSessionsDir, `${sessId}${i > 0 ? ` (${i})` : ''}.json`);
+                        i++;
+                    } while (fs.existsSync(filePath));
+                    fs.writeFileSync(filePath, sessionMessages, 'utf8');
+                    logger("[%s] Session saved to %s", sessId, filePath);
+                }
+            } catch (err) {
+                logger("[%s] Error saving session to file: %s", sessId, err.message);
+            }
+        }
+
         // Delete from database (cascades to related tables)
         this.db.prepare('DELETE FROM sessions WHERE sess_id = ?').run(sessId);
         
@@ -370,7 +392,7 @@ class ElectronState {
         `).all(sessId);
         
         if (messages.length === 0) {
-            return "No messages stored";
+            return 'No messages stored';
         }
         
         let data_to_return = {
