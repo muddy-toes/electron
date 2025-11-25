@@ -9,9 +9,6 @@ $(document).ready(function () {
     const tOff = { left: 0.0, right: 0.0 };
     const onOffTimeouts = { left: null, right: null };
 
-    // UI initialization (make the right channel UI a clone of the left one)
-    $('#right-channel-column').append($('#left-channel-column .content').clone());
-
     // init all the different UI elements
     initSpinners();
     initSliders();
