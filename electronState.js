@@ -1,6 +1,7 @@
 // places to store the current state of the application
 // as we don't use a database of any kind (it's all in memory!)
 const fs = require('fs');
+const fs = require('path');
 const AutomatedDriver = require('./automatedDriver');
 const PlaylistDriver = require('./playlistDriver');
 const { logger } = require('./utils');
