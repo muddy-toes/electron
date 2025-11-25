@@ -37,7 +37,7 @@ module.exports = function (electronState) {
         // send the last status for the left & right channels so this new rider
         // is synchronized with the current status
         socket.on('requestLast', function (msg) {
-            if (!msg.sessId || !electronState.validateRider(msg.sessId, socket)) {
+            if (!msg.sessId || (!electronState.validateRider(msg.sessId, socket) && electronState.getDriverSocket(msg.sessId) !== socket)) {
                 return;
             }
             const sessId = msg.sessId;
