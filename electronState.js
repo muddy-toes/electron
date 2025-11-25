@@ -157,7 +157,7 @@ class ElectronState {
             try {
                 const sessionMessages = this.getSessionMessages(sessId);
                 if (sessionMessages !== 'No messages stored') {
-                    const savedSessionsDir = path.resolve('./saved_sessions');
+                    const savedSessionsDir = path.resolve(this.config.savedSessionsPath);
                     if (! fs.existsSync(savedSessionsDir)) {
                         fs.mkdirSync(savedSessionsDir, { recursive: true });
                     }
