@@ -173,6 +173,25 @@ class ElectronState {
             } catch (err) {
                 logger("[%s] Error saving session to file: %s", sessId, err.message);
             }
+
+            // expire old saved sessions
+            if (this.config.savedSessionsDays && this.config.savedSessionsDays > 0) {
+                try {
+                    const maxAgeMs = (this.config.savedSessionsDays || 3) * 86400000;
+                    const now = Date.now();
+                    const files = fs.readdirSync(path.resolve(this.config.savedSessionsPath));
+                    for (const file of files) {
+                        const filePath = path.join(this.config.savedSessionsPath, file);
+                        const stat = fs.statSync(filePath);
+                        if (stat.isFile() && now - stat.mtime.getTime() > maxAgeMs) {
+                          fs.unlinkSync(filePath);
+                          logger("[] Removed expired savedSession file %s", file);
+                        }
+                    }
+                } catch (e) {
+                    logger("[] Error deleting expired savedSession files: %s", e);
+                }
+            }
         }
 
         // Delete from database (cascades to related tables)

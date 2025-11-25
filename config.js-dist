@@ -71,6 +71,9 @@ module.exports = {
     // If you want electron to save the json for every closed session before deleting it, uncomment this and set it to a path
     // for the files.  If you have a lot of sessions, you'll probably want to clear this out periodically.
 //    savedSessionsPath: './saved_sessiens',
+
+    // If enabled, files in the above savedSessionsPath directory older than this many days will be deleted:
+//    savedSessionsDays: 3
 };
 
 // vi: ft=javascript
