@@ -271,7 +271,7 @@ class ElectronState {
         if (sessId in this.automatedDrivers) return true;
         
         const result = this.db.prepare('SELECT driver_token FROM sessions WHERE sess_id = ?').get(sessId);
-        return result !== undefined && result.driverToken;
+        return result !== undefined && result.driver_token;
     }
 
     validateDriverToken(sessId, driverToken) {
