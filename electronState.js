@@ -328,9 +328,6 @@ class ElectronState {
     }
 
     storeLastMessage(sessId, channel, message) {
-        // Don't store messages for automated drivers
-        if (this.automatedDrivers[sessId]) return;
-
         // Ensure session exists
         const session = this.db.prepare('SELECT session_start_time FROM sessions WHERE sess_id = ?').get(sessId);
         if (! session) return;

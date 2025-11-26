@@ -355,7 +355,7 @@ $(function () {
         $('#save-session-messages').show();
 
         socket.on('connect_error', function(msg) {
-            console.log("socket connect error: %o", msg);
+            if (window.console) console.log("socket connect error: %o", msg);
         });
 
         socket.on('sessionMessages', function(msg) {
@@ -555,7 +555,7 @@ $(function () {
 
     ['left', 'right'].forEach(function (channel) {
         socket.on(channel, function (msg) {
-            // if (window.console) console.log("UPD %s, %s, %o, %o, %o, %o", channel, mode, authorizedPlaying, msg, msg.volume, msg['volume']);
+            if (window.console) console.log("UPD %s, %s, %o, %o, %o, %o", channel, mode, authorizedPlaying, msg, msg.volume, msg['volume']);
             if (!authorizedPlaying && mode == 'play') return;
 
             const $channelCol = $(`#${channel}-channel-column`);
@@ -595,20 +595,20 @@ $(function () {
         }
 
         socket.on('disconnect', function () {
-            console.log('Disconnected, reconnecting...');
+            if (window.console) console.log('Disconnected, reconnecting...');
             socket.emit('registerRider', { sessId: sessId });
             $(window).trigger('traffic-light');
         });
         socket.on('reconnect_attempt', function (attemptNumber) {
-            console.log("Attempting reconnect (%d)", attemptNumber);
+            if (window.console) console.log("Attempting reconnect (%d)", attemptNumber);
         });
         socket.on('reconnect', function () {
-            console.log('Reconnected, re-registering with session... ');
+            if (window.console) console.log('Reconnected, re-registering with session... ');
             socket.emit('registerRider', { sessId: sessId });
             $(window).trigger('traffic-light');
         });
         socket.on('reconnect_failed', function () {
-            console.log('Reconnect failed');
+            if (window.console) console.log('Reconnect failed');
         });
 
         // let the server know we want to join this session and display an error
@@ -746,7 +746,7 @@ $(function () {
     } else {
         // ---DRIVER---
         $('#status-message').html('<p>Attempting to register as driver of Session ID ' + sessId + '.</p>');
-        console.log('Attempting to register as driver.  stored sessid %s  current sessid %s', localStorage.sessId, sessId);
+        if (window.console) console.log('Attempting to register as driver.  stored sessid %s  current sessid %s', localStorage.sessId, sessId);
         if (localStorage.sessId != sessId ) delete localStorage.storedToken;
         socket.emit('registerDriver', { sessId: sessId, driverToken: localStorage.storedToken });
 
@@ -807,17 +807,17 @@ $(function () {
             $('#rider-bottle-countdown-container').hide();
 
             socket.on('disconnect', function () {
-                console.log('Disconnected, reconnecting...');
+                if (window.console) console.log('Disconnected, reconnecting...');
                 socket.emit('registerDriver', { sessId: localStorage.sessId, driverToken: localStorage.storedToken });
             });
             socket.on('reconnect_attempt', function (attemptNumber) {
-                console.log("Attempting reconnect (%d)", attemptNumber);
+                if (window.console) console.log("Attempting reconnect (%d)", attemptNumber);
             });
             socket.on('reconnect', function () {
                 socket.emit('registerDriver', { sessId: localStorage.sessId, driverToken: localStorage.storedToken });
             });
             socket.on('reconnect_failed', function () {
-                console.log('Reconnect failed');
+                if (window.console) console.log('Reconnect failed');
             });
 
             // This is the driver updateFlags, there is another for riders
@@ -875,7 +875,7 @@ $(function () {
 
         // set listeners to send events to the server
         ['left', 'right'].forEach(function (channel) {
-            const channelSel = '#' + channel + '-channel-column ';
+            const $channelCol = $(`#${channel}-channel-column`);
 
             // helper function to assemble the data we want to send to the server,
             // including all signal generation parameters
@@ -884,23 +884,23 @@ $(function () {
                     sessId: sessId,
                     driverToken: driverToken,
                     active: true,
-                    volume: parseFloat($(channelSel + 'input[name="volume"]').val()),
-                    freq: parseFloat($(channelSel + 'input[name="frequency"]').val()),
-                    amType: $(channelSel + 'select[name="am-type"]').val(),
-                    amDepth: parseFloat($(channelSel + 'input[name="am-depth"]').val()),
-                    amFreq: parseFloat($(channelSel + 'input[name="am-frequency"]').val()),
-                    amType2: $(channelSel + 'select[name="am2-type"]').val(),
-                    amDepth2: parseFloat($(channelSel + 'input[name="am2-depth"]').val()),
-                    amFreq2: parseFloat($(channelSel + 'input[name="am2-frequency"]').val()),
-                    fmType: $(channelSel + 'select[name="fm-type"]').val(),
-                    fmDepth: parseFloat($(channelSel + 'input[name="fm-depth"]').val()),
-                    fmFreq: parseFloat($(channelSel + 'input[name="fm-frequency"]').val()),
-                    rampTarget: parseFloat($(channelSel + 'input[name="ramp-target"]').val()),
-                    rampRate: parseFloat($(channelSel + 'input[name="ramp-rate"]').val()),
-                    freqRampRate: parseFloat($(channelSel + 'input[name="freq-ramp-rate"]').val()),
-                    tOn: parseFloat($(channelSel + 'input[name="ton"]').val()),
-                    tOff: parseFloat($(channelSel + 'input[name="toff"]').val()),
-                    tAtt: parseFloat($(channelSel + 'input[name="tatt"]').val())
+                    volume: parseFloat($channelCol.find('input[name="volume"]').val()),
+                    freq: parseFloat($channelCol.find('input[name="frequency"]').val()),
+                    amType: $channelCol.find('select[name="am-type"]').val(),
+                    amDepth: parseFloat($channelCol.find('input[name="am-depth"]').val()),
+                    amFreq: parseFloat($channelCol.find('input[name="am-frequency"]').val()),
+                    amType2: $channelCol.find('select[name="am2-type"]').val(),
+                    amDepth2: parseFloat($channelCol.find('input[name="am2-depth"]').val()),
+                    amFreq2: parseFloat($channelCol.find('input[name="am2-frequency"]').val()),
+                    fmType: $channelCol.find('select[name="fm-type"]').val(),
+                    fmDepth: parseFloat($channelCol.find('input[name="fm-depth"]').val()),
+                    fmFreq: parseFloat($channelCol.find('input[name="fm-frequency"]').val()),
+                    rampTarget: parseFloat($channelCol.find('input[name="ramp-target"]').val()),
+                    rampRate: parseFloat($channelCol.find('input[name="ramp-rate"]').val()),
+                    freqRampRate: parseFloat($channelCol.find('input[name="freq-ramp-rate"]').val()),
+                    tOn: parseFloat($channelCol.find('input[name="ton"]').val()),
+                    tOff: parseFloat($channelCol.find('input[name="toff"]').val()),
+                    tAtt: parseFloat($channelCol.find('input[name="tatt"]').val())
                 };
             };
 

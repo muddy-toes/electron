@@ -38,9 +38,9 @@ $(document).ready(function () {
     });
 
     function addListenerToApply(channelName, osc, ampModulator, freqModulator, ampModulator2) {
-        const chSelector = '#' + channelName + '-channel-column ';
+        const $channelCol = $(`#${channelName}-channel-column`);
 
-        $(chSelector + '.apply-btn').click(function () {
+        $channelCol.find('.apply-btn').click(function () {
             applyChanges(channelName, osc, ampModulator, freqModulator, ampModulator2);
             // send event to communication module can capture it
             $(window).trigger('applied-' + channelName);
@@ -48,53 +48,53 @@ $(document).ready(function () {
 
         $('body').on('keyup', function(e) {
             if (e.keyCode === 27)
-                $(chSelector + ' .stop-btn').click();
+                $channelCol.find(' .stop-btn').click();
             else if (e.keyCode === 13)
-                $(chSelector + ' .apply-btn').click();
+                $channelCol.find(' .apply-btn').click();
         });
     }
 
     function applyChanges(channelName, osc, ampModulator, freqModulator, ampModulator2) {
-        const chSelector = '#' + channelName + '-channel-column ';
+        const $channelCol = $(`#${channelName}-channel-column`);
 
         // NOTE: If you change any of these ranges, also change it in in the socket.on in public/js/communication.js
-        validateRange($(chSelector + 'input[name="frequency"]'), 10, 3000);
-        validateRange($(chSelector + 'input[name="volume"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="am-depth"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="am-frequency"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="am2-depth"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="am2-frequency"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="fm-depth"]'), 0, 1000);
-        validateRange($(chSelector + 'input[name="fm-frequency"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="ramp-rate"]'), 0, 10);
-        validateRange($(chSelector + 'input[name="ramp-target"]'), 0, 100);
-        validateRange($(chSelector + 'input[name="freq-ramp-rate"]'), -40, 40);
-        validateRange($(chSelector + 'input[name="toff"]'), 0, 60);
-        validateRange($(chSelector + 'input[name="ton"]'), 0, 60);
-        tOn[channelName] = parseFloat($(chSelector + 'input[name=ton]').val());
-        validateRange($(chSelector + 'input[name="tatt"]'), 0, tOn[channelName]);
+        validateRange($channelCol.find('input[name="frequency"]'), 10, 3000);
+        validateRange($channelCol.find('input[name="volume"]'), 0, 100);
+        validateRange($channelCol.find('input[name="am-depth"]'), 0, 100);
+        validateRange($channelCol.find('input[name="am-frequency"]'), 0, 100);
+        validateRange($channelCol.find('input[name="am2-depth"]'), 0, 100);
+        validateRange($channelCol.find('input[name="am2-frequency"]'), 0, 100);
+        validateRange($channelCol.find('input[name="fm-depth"]'), 0, 1000);
+        validateRange($channelCol.find('input[name="fm-frequency"]'), 0, 100);
+        validateRange($channelCol.find('input[name="ramp-rate"]'), 0, 10);
+        validateRange($channelCol.find('input[name="ramp-target"]'), 0, 100);
+        validateRange($channelCol.find('input[name="freq-ramp-rate"]'), -40, 40);
+        validateRange($channelCol.find('input[name="toff"]'), 0, 60);
+        validateRange($channelCol.find('input[name="ton"]'), 0, 60);
+        tOn[channelName] = parseFloat($channelCol.find('input[name=ton]').val());
+        validateRange($channelCol.find('input[name="tatt"]'), 0, tOn[channelName]);
 
-        tAtt[channelName] = parseFloat($(chSelector + 'input[name=tatt]').val());
-        tOff[channelName] = parseFloat($(chSelector + 'input[name=toff]').val());
+        tAtt[channelName] = parseFloat($channelCol.find('input[name=tatt]').val());
+        tOff[channelName] = parseFloat($channelCol.find('input[name=toff]').val());
 
-        const frequency = parseFloat($(chSelector + 'input[name="frequency"]').val());
-        const volume = 0.01 * parseFloat($(chSelector + 'input[name="volume"]').val());
+        const frequency = parseFloat($channelCol.find('input[name="frequency"]').val());
+        const volume = 0.01 * parseFloat($channelCol.find('input[name="volume"]').val());
 
-        const amDepth = 0.01 * parseFloat($(chSelector + 'input[name="am-depth"]').val());
-        const amFrequency = parseFloat($(chSelector + 'input[name="am-frequency"]').val());
-        const amType = $(chSelector + 'select[name="am-type"]').val();
-        const amDepth2 = 0.01 * parseFloat($(chSelector + 'input[name="am2-depth"]').val());
-        const amFrequency2 = parseFloat($(chSelector + 'input[name="am2-frequency"]').val());
-        const amType2 = $(chSelector + 'select[name="am2-type"]').val();
+        const amDepth = 0.01 * parseFloat($channelCol.find('input[name="am-depth"]').val());
+        const amFrequency = parseFloat($channelCol.find('input[name="am-frequency"]').val());
+        const amType = $channelCol.find('select[name="am-type"]').val();
+        const amDepth2 = 0.01 * parseFloat($channelCol.find('input[name="am2-depth"]').val());
+        const amFrequency2 = parseFloat($channelCol.find('input[name="am2-frequency"]').val());
+        const amType2 = $channelCol.find('select[name="am2-type"]').val();
 
-        const fmDepth = parseFloat($(chSelector + 'input[name="fm-depth"]').val());
-        const fmFrequency = parseFloat($(chSelector + 'input[name="fm-frequency"]').val());
-        const fmType = $(chSelector + 'select[name="fm-type"]').val();
+        const fmDepth = parseFloat($channelCol.find('input[name="fm-depth"]').val());
+        const fmFrequency = parseFloat($channelCol.find('input[name="fm-frequency"]').val());
+        const fmType = $channelCol.find('select[name="fm-type"]').val();
 
-        rampInfo[channelName].rate = parseFloat($(chSelector + 'input[name="ramp-rate"]').val());
-        rampInfo[channelName].target = parseFloat($(chSelector + 'input[name="ramp-target"]').val());
+        rampInfo[channelName].rate = parseFloat($channelCol.find('input[name="ramp-rate"]').val());
+        rampInfo[channelName].target = parseFloat($channelCol.find('input[name="ramp-target"]').val());
 
-        freqRampInfo[channelName].rate = parseFloat($(chSelector + 'input[name="freq-ramp-rate"]').val());
+        freqRampInfo[channelName].rate = parseFloat($channelCol.find('input[name="freq-ramp-rate"]').val());
 
         // handle A.M.
         if (amFrequency > 0 && amDepth > 0 && amType != 'none') {
@@ -304,12 +304,12 @@ $(document).ready(function () {
     setInterval(function () {
         ['left', 'right'].forEach(function (channelName) {
             const osc = channelName == 'left' ? leftOsc : rightOsc;
-            const chSelector = '#' + channelName + '-channel-column ';
+            const $channelCol = $(`#${channelName}-channel-column`);
 
             const rampRate = rampInfo[channelName].rate;
             if (rampRate > 0) {
                 const rampTarget = rampInfo[channelName].target;
-                let volume = parseFloat($(chSelector + 'input[name="volume"]').val());
+                let volume = parseFloat($channelCol.find('input[name="volume"]').val());
                 if (rampTarget > volume) {
                     volume = volume + rampRate / 10; // 10 times every second
                     volume = Math.min(rampTarget, volume);
@@ -319,12 +319,12 @@ $(document).ready(function () {
                 }
 
                 volume = volume.toFixed(3);
-                $(chSelector + 'input[name="volume"]').val(volume);
-                $(chSelector + 'input[name="volume"]').change();
+                $channelCol.find('input[name="volume"]').val(volume);
+                $channelCol.find('input[name="volume"]').change();
 
                 if (volume == rampTarget) {
                     // ramp finished executing
-                    $(chSelector + 'input[name="ramp-rate"]').val(0);
+                    $channelCol.find('input[name="ramp-rate"]').val(0);
                     rampInfo[channelName].rate = 0;
                 }
 
@@ -332,19 +332,19 @@ $(document).ready(function () {
             }
 
             const freqRampRate = freqRampInfo[channelName].rate;
-            if (freqRampRate != 0) {
-                let freq = parseFloat($(chSelector + 'input[name="frequency"]').val());
+            if (! isNaN(freqRampRate) && freqRampRate != 0) {
+                let freq = parseFloat($channelCol.find('input[name="frequency"]').val());
                 freq = freq + freqRampRate;
                 freq = Math.min(electronConfig.dataTypes.frequency.max, freq);
 
-                $(chSelector + 'input[name="frequency"]').val(freq.toFixed(1));
-                $(chSelector + 'input[name="frequency"]').change();
+                $channelCol.find('input[name="frequency"]').val(freq.toFixed(1));
+                $channelCol.find('input[name="frequency"]').change();
 
                 if (! isNaN(freq)) {
                     osc.freq(freq);
-                    const fmFrequency = parseFloat($(chSelector + 'input[name=fm-frequency]').val());
-                    const fmDepth = parseFloat($(chSelector + 'input[name=fm-depth]').val());
-                    const fmType = $(chSelector + 'select[name=fm-type]').val();
+                    const fmFrequency = parseFloat($channelCol.find('input[name=fm-frequency]').val());
+                    const fmDepth = parseFloat($channelCol.find('input[name=fm-depth]').val());
+                    const fmType = $channelCol.find('select[name=fm-type]').val();
                     if (fmFrequency > 0 && fmDepth > 0 && fmType != 'none')
                         osc.freq(freqModulator);
                 }

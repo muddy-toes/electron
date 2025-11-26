@@ -54,12 +54,11 @@
     <h3>Ride Info</h3>
     <p id='driver-nametag'>
       Your driver's name is 
+      <% if (automatedSession) { %>
+        &#x1F916;&nbsp;
+      <% } %>
       <span class="nametag">
-        <% if (automatedSession) { %>
-          &#x1F916;&nbsp;<%= flags['driverName'] %>
-        <% } else { %>
-          <%= flags['driverName'] %>
-        <% } %>
+        <%= flags['driverName'] %>
       </span>
     </p>
     <div id='file-playing-blindfold'>
