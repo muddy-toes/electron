@@ -721,6 +721,8 @@ $(function () {
             const line2 = 'Send the following link to the people you want to drive:<br>' + '<strong>' + link + '</strong>';
             $('#status-message').html('<p>' + line1 + '<br>' + line2 + '</p>');
 
+            socket.emit('requestLast', { sessId: sessId });
+
             $('#public-session').on('change', function(e) {
                 const new_state = $(e.currentTarget).is(":checked");
                 socket.emit('setPublicSession', { sessId: sessId, driverToken: driverToken, publicSession: new_state });
