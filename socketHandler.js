@@ -16,6 +16,19 @@ module.exports = function (electronState) {
             });
         }
 
+        function sendLast(sessId, socket) {
+            const lastLeft = electronState.getLastMessage(sessId, 'left');
+            const lastRight = electronState.getLastMessage(sessId, 'right');
+            if (lastLeft !== undefined && lastLeft !== null) {
+                socket.emit('left', lastLeft.message);
+            }
+            if (lastRight !== undefined && lastRight !== null) {
+                socket.emit('right', lastRight.message);
+            }
+            logger("[%s] sending updateFlags: %o", sessId, electronState.getSessionFlags(sessId));
+            socket.emit('updateFlags', electronState.getSessionFlags(sessId));
+        }
+
         // ====== registerRider ======
         // a rider trying to join a session driven by someone else
         // (or an automated session)
@@ -40,19 +53,7 @@ module.exports = function (electronState) {
             if (!msg.sessId || (!electronState.validateRider(msg.sessId, socket) && electronState.getDriverSocket(msg.sessId) !== socket)) {
                 return;
             }
-            const sessId = msg.sessId;
-            const lastLeft = electronState.getLastMessage(sessId, 'left');
-            const lastRight = electronState.getLastMessage(sessId, 'right');
-            // logger("[%s] sending lastLeft: %o", sessId, lastLeft);
-            // logger("[%s] sending lastRight: %o", sessId, lastRight);
-            if (lastLeft !== undefined && lastLeft !== null) {
-                socket.emit('left', lastLeft.message);
-            }
-            if (lastRight !== undefined && lastRight !== null) {
-                socket.emit('right', lastRight.message);
-            }
-            logger("[%s] sending updateFlags: %o", sessId, electronState.getSessionFlags(sessId));
-            socket.emit('updateFlags', electronState.getSessionFlags(sessId));
+            sendLast(msg.sessId, socket);
         });
 
         // ====== registerDriver ======
@@ -61,13 +62,23 @@ module.exports = function (electronState) {
         socket.on('registerDriver', function (msg) {
             const sessId = msg.sessId;
             logger('[%s] User request to drive', sessId);
+
             if (sessId.match(/^AUTO/)) {
                 socket.emit('driverRejected');
                 logger('[%s] User REJECTED as driver from %s.  Cannot manually drive an AUTO session.', sessId, remote_ip());
+            } else if( electronState.validateDriverToken(sessId, msg.driverToken) ) {
+                electronState.setDriverSocket(msg.sessId, socket);
+                socket.emit('driverToken', msg.driverToken);
+                logger('[%s] User RECONNECTED as driver from %s (session riders: %d)', sessId, remote_ip(), electronState.getRiderSockets(msg.sessId).length);
+                sendLast(msg.sessId, socket);
+                electronState.getRiderSockets(msg.sessId).forEach(function (s) {
+                    s.emit('driverReturned');
+                });
             } else if (!electronState.driverTokenExists(sessId)) {
                 const token = generateToken();
                 electronState.addDriverToken(sessId, token, socket);
                 socket.emit('driverToken', token);
+                sendLast(msg.sessId, socket);
                 logger('[%s] User APPROVED as driver from %s (session riders: %d)', sessId, remote_ip(), electronState.getRiderSockets(msg.sessId).length);
                 electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                     s.emit('driverGained');
@@ -172,6 +183,7 @@ module.exports = function (electronState) {
             if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 return;
             }
+
             let fileinfo = msg.filePlaying;
             if (!fileinfo)
                 fileinfo = '';
@@ -187,16 +199,23 @@ module.exports = function (electronState) {
             if (electronState.getVerbose())
                 logger("[%s] setFilePlaying, raw_fileinfo=%o, processed_fileinfo=%o, raw_filedriver=%o, processed_filedriver=%o",
                             msg.sessId, msg.filePlaying, fileinfo, msg.fileDriver, filedriver);
+
             electronState.setSessionFlag(msg.sessId, 'filePlaying', fileinfo);
             electronState.setSessionFlag(msg.sessId, 'fileDriver', filedriver);
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
+
             if (fileinfo == '') {
                 if (electronState.getVerbose()) logger("[%s] clearLastMessages on setFilePlaying to blank", msg.sessId);
                 electronState.clearLastMessages(msg.sessId);
             }
         });
 
+        /*
+        socket.onAny((eventName, ...args) => {
+            console.log('Received event:', eventName, 'with args:', args);
+        });
+        */
 
         // ====== left ======
         // left channel updates... send them over to all riders

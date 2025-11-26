@@ -13,7 +13,13 @@ $(function () {
     const pathParts = path.split('/');
     const mode = pathParts[2];
     const sessId = pathParts[3];
-    const socket = io();
+    const socket = io({
+        reconnection: true,              // Enable auto-reconnection (default: true)
+        reconnectionAttempts: Infinity,  // Number of attempts (default: Infinity)
+        reconnectionDelay: 1000,         // Initial delay in ms (default: 1000)
+        reconnectionDelayMax: 5000,      // Maximum delay (default: 5000)
+        randomizationFactor: 0.5         // Randomization factor (default: 0.5)
+    });
     const channels = ['left', 'right', 'pain-left', 'pain-right', 'bottle'];
     const scriptInterval = 250; // ms
     const spinnersteps = ['\\', '|', '/', '&mdash;']
@@ -348,6 +354,10 @@ $(function () {
         });
         $('#save-session-messages').show();
 
+        socket.on('connect_error', function(msg) {
+            console.log("socket connect error: %o", msg);
+        });
+
         socket.on('sessionMessages', function(msg) {
             if (window.File && window.FileReader && window.FileList && window.Blob) {
                 let element = document.createElement('a');
@@ -407,7 +417,6 @@ $(function () {
                           default:
                             throw 'Invalid file type';
                         }
-                        window.script = script // DEBUG
 
                         let fileDriver = '';
                         if (script['meta']) {
@@ -585,6 +594,23 @@ $(function () {
             return;
         }
 
+        socket.on('disconnect', function () {
+            console.log('Disconnected, reconnecting...');
+            socket.emit('registerRider', { sessId: sessId });
+            $(window).trigger('traffic-light');
+        });
+        socket.on('reconnect_attempt', function (attemptNumber) {
+            console.log("Attempting reconnect (%d)", attemptNumber);
+        });
+        socket.on('reconnect', function () {
+            console.log('Reconnected, re-registering with session... ');
+            socket.emit('registerRider', { sessId: sessId });
+            $(window).trigger('traffic-light');
+        });
+        socket.on('reconnect_failed', function () {
+            console.log('Reconnect failed');
+        });
+
         // let the server know we want to join this session and display an error
         // message if it fails
         $('#status-message').html('<p>Joined session with Session ID ' + sessId + '. To start riding, click the button below.</p>');
@@ -626,7 +652,15 @@ $(function () {
         });
 
         socket.on('driverGained', function() {
+          $(window).trigger('traffic-light');
           $('#status-message').html('<p>A new driver has arrived!</p>');
+        });
+
+        socket.on('driverReturned', function() {
+          $(window).trigger('traffic-light');
+          if ($('#status-message').text().match(/driver has left/)) {
+              $('#status-message').html('<p>Your driver has returned!</p>');
+          }
         });
 
         // receive pain events
@@ -712,16 +746,18 @@ $(function () {
     } else {
         // ---DRIVER---
         $('#status-message').html('<p>Attempting to register as driver of Session ID ' + sessId + '.</p>');
-        socket.emit('registerDriver', { sessId: sessId });
+        console.log('Attempting to register as driver.  stored sessid %s  current sessid %s', localStorage.sessId, sessId);
+        if (localStorage.sessId != sessId ) delete localStorage.storedToken;
+        socket.emit('registerDriver', { sessId: sessId, driverToken: localStorage.storedToken });
 
         socket.on('driverToken', function (msg) {
             driverToken = msg;
+            localStorage.sessId = sessId;
+            localStorage.storedToken = driverToken;
             const link = ('' + window.location).replace('/drive/', '/play/');
             const line1 = 'Registered successfully on the network! Driving session with Session ID ' + sessId + '.';
             const line2 = 'Send the following link to the people you want to drive:<br>' + '<strong>' + link + '</strong>';
             $('#status-message').html('<p>' + line1 + '<br>' + line2 + '</p>');
-
-            socket.emit('requestLast', { sessId: sessId });
 
             $('#public-session').on('change', function(e) {
                 const new_state = $(e.currentTarget).is(":checked");
@@ -769,6 +805,20 @@ $(function () {
             });
 
             $('#rider-bottle-countdown-container').hide();
+
+            socket.on('disconnect', function () {
+                console.log('Disconnected, reconnecting...');
+                socket.emit('registerDriver', { sessId: localStorage.sessId, driverToken: localStorage.storedToken });
+            });
+            socket.on('reconnect_attempt', function (attemptNumber) {
+                console.log("Attempting reconnect (%d)", attemptNumber);
+            });
+            socket.on('reconnect', function () {
+                socket.emit('registerDriver', { sessId: localStorage.sessId, driverToken: localStorage.storedToken });
+            });
+            socket.on('reconnect_failed', function () {
+                console.log('Reconnect failed');
+            });
 
             // This is the driver updateFlags, there is another for riders
             socket.on('updateFlags', function(msg) {

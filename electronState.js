@@ -15,7 +15,7 @@ class ElectronState {
         
         // Initialize SQLite database
         const dbPath = path.resolve(config.dbPath || './electron-state.sqlite3');
-        this.db = new Database(dbPath);
+        this.db = new Database(dbPath); // , { verbose: logger });
         this.db.pragma('journal_mode = WAL'); // Better concurrent access
         
         // Create tables if they don't exist
@@ -101,10 +101,10 @@ class ElectronState {
 
     initSessionData(sessId) {
         const now = Date.now();
-        
+
         // Check if session exists
         const existing = this.db.prepare('SELECT sess_id FROM sessions WHERE sess_id = ?').get(sessId);
-        
+
         if (! existing) {
             // Create new session
             this.db.prepare(`
@@ -125,7 +125,7 @@ class ElectronState {
 
         // Set default flags for new driver
         this.setSessionFlag(sessId, 'driverName', 'Anonymous');
-        
+
         if (this.config.camUrlList && this.config.camUrlList.length > 0) {
             const defaultItem = this.config.camUrlList.filter((item) => item.default)[0];
             if (defaultItem !== undefined) {
@@ -134,8 +134,8 @@ class ElectronState {
         }
         
         // Remove certain flags
-        this.db.prepare('DELETE FROM session_flags WHERE sess_id = ? AND flag_name IN (?, ?, ?)').run(
-            sessId, 'camUrl', 'filePlaying', 'fileDriver'
+        this.db.prepare('DELETE FROM session_flags WHERE sess_id = ? AND flag_name IN (?, ?)').run(
+            sessId, 'filePlaying', 'fileDriver'
         );
 
         // Only update if we have a real driver, not automated
@@ -153,6 +153,7 @@ class ElectronState {
     }
 
     cleanupSessionData(sessId) {
+        if (! sessId) return;
         if (this.config.savedSessionsPath && ! this.automatedDrivers[sessId]) {
             try {
                 const sessionMessages = this.getSessionMessages(sessId);
@@ -202,6 +203,17 @@ class ElectronState {
         delete this.riders[sessId];
         
         logger("[%s] End session", sessId);
+
+        logger("[] Stale session cleanup...");
+        const sessions = this.db.prepare('SELECT sess_id from sessions').all();
+        for (const session of sessions) {
+          if (session.sess_id === sessId) continue;
+          if (!this.driverSockets[session.sess_id] && !this.automatedDrivers[session.sess_id] && 
+                 (!this.riders[session.sess_id] || (Array.isArray(this.riders[session.sess_id]) && !this.riders[session.sess_id].length))) {
+              this.cleanupSessionData(session.sess_id);
+          }
+        }
+
         logger("[] Active sessions: %d", this.db.prepare('SELECT COUNT(*) as count FROM sessions').get().count);
         if (this.config.memoryMonitor) logger("[%s] memoryMonitor: cleanupSessionData %o", sessId, process.memoryUsage());
     }
@@ -257,13 +269,20 @@ class ElectronState {
         });
     }
 
-    addDriverToken(sessId, token, socket) {
-        this.db.prepare(`
-            INSERT OR REPLACE INTO sessions (sess_id, driver_token, updated_at) 
-            VALUES (?, ?, ?)
-        `).run(sessId, token, Date.now());
-        
+    setDriverSocket(sessId, socket) {
         this.driverSockets[sessId] = socket;
+    }
+
+    addDriverToken(sessId, token, socket) {
+        // Don't turn this into an INSERT OR REPLACE or it'll blow away the FK records prematurely
+        const existing = this.db.prepare('SELECT sess_id FROM sessions WHERE sess_id = ?').get(sessId);
+        if (existing) {
+            this.db.prepare('UPDATE sessions set driver_token=?, updated_at=? where sess_id=?').run(token, Date.now(), sessId);
+        } else {
+            this.db.prepare('INSERT INTO sessions (sess_id, driver_token, updated_at) VALUES (?, ?, ?)').run(sessId, token, Date.now());
+        }
+        
+        this.setDriverSocket(sessId, socket);
         this.initSessionData(sessId);
     }
 
@@ -275,7 +294,7 @@ class ElectronState {
     }
 
     validateDriverToken(sessId, driverToken) {
-        const result = this.db.prepare('SELECT driver_token FROM sessions WHERE sess_id = ?').get(sessId);
+        const result = this.db.prepare('SELECT sess_id, driver_token FROM sessions WHERE sess_id = ?').get(sessId);
         if (! result) return false;
         return result.driver_token === driverToken;
     }
@@ -480,19 +499,23 @@ class ElectronState {
                     logger('[%s] Driver disconnected from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId]?.length || 0);
                     
                     delete this.driverSockets[sessId];
-                    this.db.prepare('UPDATE sessions SET driver_token = NULL WHERE sess_id = ?').run(sessId);
-                    if (this.riders[sessId] && this.riders[sessId].length > 0) {
-                        this.riders[sessId].forEach(function(s) {
-                            const rider_ip = s.handshake.headers['x-forwarded-for'] || s.handshake.address;
-                            logger('[%s] Send driverLost to rider at %s', sessId, rider_ip);
-                            s.emit('driverLost');
-                        });
-                        if (this.config.memoryMonitor) logger("[%s] memoryMonitor: onDisconnect-driver-lost %o", sessId, process.memoryUsage());
+                    const self = this;
+                    setTimeout(function() {
+                        if (self.driverSockets[sessId]) return;
 
-                    } else {
-                        logger('[%s] Driver left, no riders present, ending session', sessId);
-                        this.cleanupSessionData(sessId);
-                    }
+                        self.db.prepare('UPDATE sessions SET driver_token = NULL WHERE sess_id = ?').run(sessId);
+                        if (self.riders[sessId] && self.riders[sessId].length > 0) {
+                            self.riders[sessId].forEach(function(s) {
+                                const rider_ip = s.handshake.headers['x-forwarded-for'] || s.handshake.address;
+                                logger('[%s] Send driverLost to rider at %s', sessId, rider_ip);
+                                s.emit('driverLost');
+                            });
+                            if (self.config.memoryMonitor) logger("[%s] memoryMonitor: onDisconnect-driver-lost %o", sessId, process.memoryUsage());
+                        } else {
+                            logger('[%s] Driver left, no riders present, ending session', sessId);
+                            self.cleanupSessionData(sessId);
+                        }
+                    }, 5000); // Give the driver time to reconnect before opening it up
                 }
             }
         }
