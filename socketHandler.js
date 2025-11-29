@@ -27,6 +27,9 @@ module.exports = function (electronState) {
             }
             logger("[%s] sending updateFlags: %o", sessId, electronState.getSessionFlags(sessId));
             socket.emit('updateFlags', electronState.getSessionFlags(sessId));
+            if (!electronState.driverTokenExists(sessId)) {
+                socket.emit('driverLost');
+            }
         }
 
         // ====== registerRider ======
@@ -34,7 +37,7 @@ module.exports = function (electronState) {
         // (or an automated session)
         socket.on('registerRider', function (msg) {
             const sessId = msg.sessId;
-            if (!electronState.driverTokenExists(sessId)) {
+            if (!electronState.sessionActive(sessId)) {
                 // this session doesn't exist, apparently
                 socket.emit('riderRejected');
                 logger('[%s] User REJECTED as rider from %s', sessId, remote_ip());

@@ -286,6 +286,11 @@ class ElectronState {
         this.initSessionData(sessId);
     }
 
+    sessionActive(sessId) {
+        const existing = this.db.prepare('SELECT sess_id FROM sessions WHERE sess_id = ?').get(sessId);
+        return existing ? true : false;
+    }
+
     driverTokenExists(sessId) {
         if (sessId in this.automatedDrivers) return true;
         
