@@ -31,7 +31,7 @@ class ElectronState {
         if (this.config.verbose) logger('[] verbose logging enabled');
         if (this.config.memoryMonitor) logger('[] memoryMonitor logging enabled');
         
-        this.loadActiveSessions();
+        this.logActiveSessionCount();
     }
 
     initDatabase() {
@@ -85,12 +85,6 @@ class ElectronState {
         logger('[] Database initialized');
     }
 
-    loadActiveSessions() {
-        const sessions = this.db.prepare('SELECT sess_id FROM sessions').all();
-        logger('[] Loaded %d active sessions from database', sessions.length);
-        // Driver sockets and rider sockets will need to reconnect
-    }
-
     getCamUrlList() {
         return this.config.camUrlList;
     }
@@ -107,20 +101,8 @@ class ElectronState {
 
         if (! existing) {
             // Create new session
-            this.db.prepare(`
-                INSERT INTO sessions (sess_id, session_start_time) 
-                VALUES (?, 0)
-            `).run(sessId);
-            
-            // Initialize message stamps
-            const insertStamp = this.db.prepare(`
-                INSERT OR REPLACE INTO message_stamps (sess_id, channel, stamp) 
-                VALUES (?, ?, ?)
-            `);
-            
-            for (const channel of channels) {
-                insertStamp.run(sessId, channel, now);
-            }
+            this.db.prepare('INSERT INTO sessions (sess_id, session_start_time) VALUES (?, 0)').run(sessId);
+            this.updateMessageStamps(sessId);
         }
 
         // Set default flags for new driver
@@ -149,11 +131,14 @@ class ElectronState {
             }
         }
 
+        this.logActiveSessionCount();
         if (this.config.memoryMonitor) logger("[%s] memoryMonitor: initSessionData %o", sessId, process.memoryUsage());
     }
 
     cleanupSessionData(sessId) {
         if (! sessId) return;
+
+        // Save session script file if enabled
         if (this.config.savedSessionsPath && ! this.automatedDrivers[sessId]) {
             try {
                 const sessionMessages = this.getSessionMessages(sessId);
@@ -214,8 +199,12 @@ class ElectronState {
           }
         }
 
-        logger("[] Active sessions: %d", this.db.prepare('SELECT COUNT(*) as count FROM sessions').get().count);
+        this.logActiveSessionCount();
         if (this.config.memoryMonitor) logger("[%s] memoryMonitor: cleanupSessionData %o", sessId, process.memoryUsage());
+    }
+
+    logActiveSessionCount() {
+        logger("[] Active sessions: %d", this.db.prepare('SELECT COUNT(*) as count FROM sessions').get().count);
     }
 
     setSessionFlag(sessId, flagname, flagval) {
@@ -338,19 +327,15 @@ class ElectronState {
         if (! session) return;
         
         const now = Date.now();
-        
+
         // Update session start time if needed
         if (session.session_start_time === 0) {
             this.db.prepare('UPDATE sessions SET session_start_time = ? WHERE sess_id = ?').run(now, sessId);
         }
         
-        // Get previous stamp
-        const stampRow = this.db.prepare('SELECT stamp FROM message_stamps WHERE sess_id = ? AND channel = ?').get(sessId, channel);
-        const previousStamp = stampRow ? stampRow.stamp : now;
-        const stamp_offset = now - previousStamp;
+        const stamp_offset = this.getMessageOffset(sessId, channel);
         
-        // Update stamp
-        this.db.prepare('INSERT OR REPLACE INTO message_stamps (sess_id, channel, stamp) VALUES (?, ?, ?)').run(sessId, channel, now);
+        this.updateMessageStamps(sessId, channel);
         
         // Filter out promode keys if needed
         let m = {...message};
@@ -375,15 +360,30 @@ class ElectronState {
         
         // Reset session start time
         this.db.prepare('UPDATE sessions SET session_start_time = ? WHERE sess_id = ?').run(now, sessId);
-        
-        // Reset all message stamps
-        const updateStamp = this.db.prepare('INSERT OR REPLACE INTO message_stamps (sess_id, channel, stamp) VALUES (?, ?, ?)');
-        
-        for (const channel of channels) {
-            updateStamp.run(sessId, channel, now);
-        }
+
+        this.updateMessageStamps(sessId);
         
         if (this.config.memoryMonitor) logger("[%s] memoryMonitor: clearLastMessages %o", sessId, process.memoryUsage());
+    }
+
+    updateMessageStamps(sessId, channel=null) {
+        const now = Date.now();
+        const updateStamp = this.db.prepare('INSERT OR REPLACE INTO message_stamps (sess_id, channel, stamp) VALUES (?, ?, ?)');
+
+        if (channel !== null) {
+            updateStamp.run(sessId, channel, now);
+        } else {
+            for (const ch of channels) {
+                updateStamp.run(sessId, ch, now);
+            }
+        }
+    }
+
+    getMessageOffset(sessId, channel) {
+        const now = Date.now();
+        const stampRow = this.db.prepare('SELECT stamp FROM message_stamps WHERE sess_id = ? AND channel = ?').get(sessId, channel);
+        const previousStamp = stampRow?.stamp || now;
+        return now - previousStamp;
     }
 
     setRiderTrafficLight(sessId, socket, color) {
@@ -465,11 +465,10 @@ class ElectronState {
 
     getRiderData(sessId) {
         const riderSockets = this.getRiderSockets(sessId);
-        const self = this;
         let riderData = { 'G': 0, 'Y': 0, 'R': 0, 'N': 0, 'total': 0 };
 
-        riderSockets.forEach(function (s) {
-            const color = self.getRiderTrafficLight(s);
+        riderSockets.forEach((s) => { 
+            const color = this.getRiderTrafficLight(s);
             riderData[color]++;
             riderData.total++;
         });
@@ -486,12 +485,15 @@ class ElectronState {
                 found_rider = true;
                 this.riders[sessId].splice(index, 1);
                 delete this.trafficLights[socket.id];
+
                 const ridersLeft = this.riders[sessId].length;
                 logger('[%s] Rider left from %s (session riders: %d)', sessId, remote_ip, ridersLeft);
+
                 if (ridersLeft == 0 && ! this.driverSockets[sessId] && ! this.automatedDrivers[sessId]) {
                     logger('[%s] Last rider left, no driver present, ending session', sessId);
                     this.cleanupSessionData(sessId);
                 }
+
                 if (this.config.memoryMonitor) logger("[%s] memoryMonitor: onDisconnect-rider-left %o", sessId, process.memoryUsage());
             }
         }
@@ -502,23 +504,26 @@ class ElectronState {
                     logger('[%s] Driver disconnected from %s (session riders: %d)', sessId, remote_ip, this.riders[sessId]?.length || 0);
                     
                     delete this.driverSockets[sessId];
-                    const self = this;
-                    setTimeout(function() {
-                        if (self.driverSockets[sessId]) return;
 
-                        self.db.prepare('UPDATE sessions SET driver_token = NULL WHERE sess_id = ?').run(sessId);
-                        if (self.riders[sessId] && self.riders[sessId].length > 0) {
-                            self.riders[sessId].forEach(function(s) {
+                    // Give the driver time to reconnect before opening it up
+                    setTimeout(() => {
+                        if (this.driverSockets[sessId]) return;
+
+                        this.db.prepare('UPDATE sessions SET driver_token = NULL WHERE sess_id = ?').run(sessId);
+                        if (this.riders[sessId] && this.riders[sessId].length > 0) {
+                            this.riders[sessId].forEach(function(s) {
                                 const rider_ip = s.handshake.headers['x-forwarded-for'] || s.handshake.address;
                                 logger('[%s] Send driverLost to rider at %s', sessId, rider_ip);
                                 s.emit('driverLost');
                             });
-                            if (self.config.memoryMonitor) logger("[%s] memoryMonitor: onDisconnect-driver-lost %o", sessId, process.memoryUsage());
+
+                            if (this.config.memoryMonitor) logger("[%s] memoryMonitor: onDisconnect-driver-lost %o", sessId, process.memoryUsage());
+
                         } else {
                             logger('[%s] Driver left, no riders present, ending session', sessId);
-                            self.cleanupSessionData(sessId);
+                            this.cleanupSessionData(sessId);
                         }
-                    }, 5000); // Give the driver time to reconnect before opening it up
+                    }, 5000);
                 }
             }
         }

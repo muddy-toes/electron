@@ -106,6 +106,12 @@ $(function () {
     /* Compatibility Note:
      *   This does not support the SineSquare modulation types because
      *   in the > 1000 SmrtStim4 files I have, not one uses them.
+     *
+     *   It also doesn't support ramping on all settings like SmartStim
+     *   did, mostly because the extra controls in the UI are way too 
+     *   much.  I could add and hide them like with the freq-ramp which
+     *   I did add, but there hasn't been enough demand to get me to
+     *   do it yet.
      */
     function convertSS4ToElectron(xmlstring) {
         const parser = new DOMParser();
