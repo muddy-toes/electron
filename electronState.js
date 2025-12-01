@@ -184,6 +184,7 @@ class ElectronState {
         this.db.prepare('DELETE FROM sessions WHERE sess_id = ?').run(sessId);
         
         // Clean up in-memory data
+        delete this.automatedDrivers[sessId];
         delete this.driverSockets[sessId];
         delete this.riders[sessId];
         
@@ -552,7 +553,6 @@ class ElectronState {
     }
 
     unregisterAutomatedDriver(sessId) {
-        delete this.automatedDrivers[sessId];
         this.cleanupSessionData(sessId);
     }
 
