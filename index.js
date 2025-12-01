@@ -42,13 +42,14 @@ const electronState = new ElectronState(config);
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+const electronVersion = execSync('git rev-parse --short HEAD');
 
 function remote_ip(req) {
   return req.header('x-forwarded-for') || req.socket.remoteAddress;
 }
 
 function version() {
-	return execSync('git rev-parse --short HEAD');
+	return electronVersion;
 }
 
 // middleware we need for form submission
