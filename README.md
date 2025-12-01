@@ -28,11 +28,14 @@ In "solo" mode, users can experiment with waveform generation without sharing it
 
 There is also a feature that allows users to set up an automated session driven by a simple AI.
 
-
 ## Configuration
 
 Copy `config.js-dist` to `config.js` and edit it to specify your site preferences.  Options are documented in the file.
 
+## Upgrading
+
+1. Check config.js-dist for any new settings that should be copied to your config.js file.
+2. Run `npm install`
 
 ## SmartStim4 file support
 
