@@ -205,7 +205,8 @@ class ElectronState {
     }
 
     logActiveSessionCount() {
-        logger("[] Active sessions: %d", this.db.prepare('SELECT COUNT(*) as count FROM sessions').get().count);
+        const total_riders = Object.values(this.riders).map((i) => i.length).reduce((i, n) => i + n, 0)
+        logger("[] Active sessions: %d, total riders: %d", this.db.prepare('SELECT COUNT(*) as count FROM sessions').get().count, total_riders);
     }
 
     setSessionFlag(sessId, flagname, flagval) {
