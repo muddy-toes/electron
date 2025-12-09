@@ -40,6 +40,24 @@ const ss4DefaultStep = {
     tOff: 0
 };
 
+function scriptUsesPromode(script) {
+    const channels = ['left', 'right', 'pain-left', 'pain-right'];
+    for (const ch of channels) {
+        if (script[ch] && script[ch][0] && script[ch][0]['stamp'] !== undefined) {
+            for (const step of script[ch]) {
+                const msg = step['message'];
+                if ((msg['amType2'] !== undefined && msg['amType2'] !== 'none') ||
+                    ((msg['tOn'] !== undefined && msg['tOn'] > 0) &&
+                     (msg['tOff'] !== undefined && msg['tOff'] > 0) &&
+                     (msg['tAtt'] !== undefined && msg['tAtt'] > 0))) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 class PlaylistDriver {
     constructor(sessId, config) {
         this.verbose = false;
@@ -301,6 +319,9 @@ class PlaylistDriver {
                 } catch(err) {
                     logger("[%s] Failed to adjust first step start times: %o", sessId, err);
                 }
+
+                const usesPromode = scriptUsesPromode(script);
+                electronState.setSessionFlag(sessId, 'proMode', usesPromode);
 
                 const fileinfo = path.basename(filepath).replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
                 electronState.setSessionFlag(sessId, 'filePlaying', fileinfo);
