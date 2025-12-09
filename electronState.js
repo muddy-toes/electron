@@ -424,28 +424,42 @@ class ElectronState {
 
     getSessionMessages(sessId) {
         const sessionFlags = this.getSessionFlags(sessId);
-        
+
         // Get all messages for this session grouped by channel
         const messages = this.db.prepare(`
-            SELECT channel, stamp, message 
-            FROM messages 
-            WHERE sess_id = ? 
+            SELECT channel, stamp, message
+            FROM messages
+            WHERE sess_id = ?
             ORDER BY id ASC
         `).all(sessId);
-        
+
         if (messages.length === 0) {
             return 'No messages stored';
         }
-        
+
+        // Detect if promode was used in any message
+        const promodeKeys = this.config?.promodeKeys || ['amType2', 'amDepth2', 'amFreq2', 'tOn', 'tOff', 'tAtt'];
+        let usesPromode = false;
+        for (const m of messages) {
+            const msg = JSON.parse(m.message);
+            if ((msg.amType2 !== undefined && msg.amType2 !== 'none') ||
+                ((msg.tOn !== undefined && msg.tOn > 0) &&
+                 (msg.tOff !== undefined && msg.tOff > 0) &&
+                 (msg.tAtt !== undefined && msg.tAtt > 0))) {
+                usesPromode = true;
+                break;
+            }
+        }
+
         let data_to_return = {
-            'meta': { 
-                driverName: sessionFlags['driverName'], 
-                driverComments: sessionFlags['driverComments'], 
-                version: 1, 
-                fileType: 'e l e c t r o n script' 
+            'meta': {
+                driverName: sessionFlags['driverName'],
+                driverComments: sessionFlags['driverComments'],
+                version: 1,
+                fileType: 'e l e c t r o n script'
             }
         };
-        
+
         // Group messages by channel
         for (const channel of channels) {
             const channelMessages = messages
@@ -454,14 +468,18 @@ class ElectronState {
                     const msg = JSON.parse(m.message);
                     delete msg.sessId;
                     delete msg.driverToken;
+                    // Filter promode keys if not used
+                    if (!usesPromode) {
+                        promodeKeys.forEach(key => delete msg[key]);
+                    }
                     return { stamp: m.stamp, message: msg };
                 });
-            
+
             if (channelMessages.length > 0) {
                 data_to_return[channel] = channelMessages;
             }
         }
-        
+
         return JSON.stringify(data_to_return);
     }
 
