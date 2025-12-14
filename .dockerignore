@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# Database files (should be mounted as volumes)
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Local configuration (use environment variables or mount)
+config.js
+
+# Session data
+saved_sessions/
+session_files/
+
+# Development files
+# Note: .git is NOT ignored - needed for version extraction during build
+.gitignore
+.beads/
+*.md
+!README.md
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+
+# CI/CD configs (not needed in container)
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Deployment configs (not needed in container)
+fly.toml
+render.yaml
+railway.json
+docker-compose*.yml
+Procfile
+app.json
+DEPLOY.md

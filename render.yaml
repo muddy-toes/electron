@@ -1,0 +1,21 @@
+# render.yaml - Render Blueprint
+# Deploy by connecting your repo to Render and selecting this blueprint
+# Or use: render blueprint launch
+
+services:
+  - type: web
+    name: electron-waveform
+    runtime: node
+    plan: starter  # Or 'free' for hobby projects (has limitations)
+    buildCommand: npm ci --only=production
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+    disk:
+      name: electron-data
+      mountPath: /app/data
+      sizeGB: 1
+    healthCheckPath: /

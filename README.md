@@ -37,6 +37,10 @@ Copy `config.js-dist` to `config.js` and edit it to specify your site preference
 1. Check config.js-dist for any new settings that should be copied to your config.js file.
 2. Run `npm install`
 
+## Cloud deployment
+
+See [DEPLOY.md](DEPLOY.md) for instructions.
+
 ## SmartStim4 file support
 
 Electron now supports playback of SS4 files in limited fashion.

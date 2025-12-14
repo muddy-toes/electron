@@ -1,0 +1,23 @@
+{
+  "name": "e l e c t r o n",
+  "description": "Web-based collaborative audio waveform generator",
+  "repository": "https://github.com/muddy-toes/electron",
+  "keywords": ["node", "express", "websocket", "audio"],
+  "env": {
+    "NODE_ENV": {
+      "value": "production"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}

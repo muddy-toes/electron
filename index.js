@@ -34,7 +34,22 @@ const automatedDriverConfig = require('./automatedDriverConfig');
 const inputValidationMiddleware = require('./inputValidation');
 const socketHandler = require('./socketHandler');
 const { generateAutomatedSessId } = require('./utils');
-const { execSync } = require('child_process');
+const fs = require('fs');
+
+// Get git version by reading .git directory directly
+function getGitVersion() {
+    try {
+        let ref = fs.readFileSync(path.join(__dirname, '.git', 'HEAD'), 'utf8').trim();
+        if (ref.startsWith('ref: ')) {
+            // It's a symbolic ref like "ref: refs/heads/main"
+            const refPath = path.join(__dirname, '.git', ref.slice(5));
+            ref = fs.readFileSync(refPath, 'utf8').trim();
+        }
+        return ref.slice(0, 7); // Short hash
+    } catch (e) {
+        return 'unknown';
+    }
+}
 
 const LISTEN_PORT = process.env.PORT || config.listen_port || 5000;
 const LISTEN_ADDR = config.listen_addr || '0.0.0.0';
@@ -42,7 +57,7 @@ const electronState = new ElectronState(config);
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
-const electronVersion = execSync('git rev-parse --short HEAD');
+const electronVersion = getGitVersion();
 
 function remote_ip(req) {
   return req.header('x-forwarded-for') || req.socket.remoteAddress;

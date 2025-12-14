@@ -8,6 +8,7 @@ module.exports = {
     listen_addr: '0.0.0.0',
     listen_port: 5000,
 
+    // Database path. For cloud deployments with mounted volumes, use '/app/data/electron-state.sqlite3'
     dbPath: './electron-state.sqlite3',
 
     // Feature flags.  Set any one to false to disable it.
