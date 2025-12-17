@@ -167,7 +167,7 @@ module.exports = function (electronState) {
             if (!name)
                 name = ""
             else
-                name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+                name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
 
             if (name === "")
               name = "Anonymous";
@@ -212,13 +212,13 @@ module.exports = function (electronState) {
             if (!fileinfo)
                 fileinfo = '';
             else
-                fileinfo = fileinfo.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+                fileinfo = fileinfo.replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
 
             let filedriver = msg.fileDriver;
             if (!filedriver)
                 filedriver = '';
             else
-                filedriver = filedriver.replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+                filedriver = filedriver.replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
 
             if (electronState.getVerbose())
                 logger("[%s] setFilePlaying, raw_fileinfo=%o, processed_fileinfo=%o, raw_filedriver=%o, processed_filedriver=%o",

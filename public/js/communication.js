@@ -430,7 +430,7 @@ $(function () {
                                 scriptVersion = parseInt(script['meta']['version']) || 1;
                             }
                             if (script['meta']['driverName']) {
-                                fileDriver = script['meta']['driverName'].replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+                                fileDriver = script['meta']['driverName'].replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
                                 transient_message(`Loaded file is by driver "${fileDriver}"`);
                             }
                             if (script['meta']['driverComments']) {
@@ -654,7 +654,9 @@ $(function () {
         }
 
         socket.on('driverLost', function() {
-          $('#status-message').html(`<p><b>The driver has left.</b>  Give this url to someone else and they can become the driver:<br/><b>${document.location.href.replace('/play/', '/drive/')}</b></p>`);
+          const driveUrl = document.location.href.replace('/play/', '/drive/');
+          $('#status-message').html('<p><b>The driver has left.</b>  Give this url to someone else and they can become the driver:<br/><b></b></p>');
+          $('#status-message b:last').text(driveUrl);
         });
 
         socket.on('driverGained', function() {
@@ -704,12 +706,15 @@ $(function () {
                     $('.promode').slideUp();
             }
 
-            const name = (msg['driverName'] || 'Anonymous').replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+            const name = (msg['driverName'] || 'Anonymous').replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
             $("#driver-nametag .nametag").text(name);
 
             if (msg['camUrl']) {
                 if (!camUrlList || camUrlList.length == 0) {
-                    $('#cam-url .cam-url-link').html(`<a target="_blank" href="${msg['camUrl']}">${msg['camUrl']}</a>`);
+                    const $camLink = $('<a target="_blank"></a>');
+                    $camLink.attr('href', msg['camUrl']);
+                    $camLink.text(msg['camUrl']);
+                    $('#cam-url .cam-url-link').empty().append($camLink);
                     initialize_cam_url_warning_dismissal();
                     $('#cam-url .cam-url-warning').show();
                 } else {
@@ -718,7 +723,10 @@ $(function () {
                         if (camlistItem['url'] === undefined && camlistItem['message'] !== undefined) {
                             $('#cam-url .cam-url-link').text(camlistItem['message']);
                         } else {
-                            $('#cam-url .cam-url-link').html(`<a target="_blank" href="${camlistItem['url']}">${camlistItem['name']}</a>`);
+                            const $camListLink = $('<a target="_blank"></a>');
+                            $camListLink.attr('href', camlistItem['url']);
+                            $camListLink.text(camlistItem['name']);
+                            $('#cam-url .cam-url-link').empty().append($camListLink);
                         }
                     }
                 }
@@ -783,7 +791,7 @@ $(function () {
             });
 
             $('.set-settings').on('click', function() {
-                const name = $('#driver-name').val().replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
+                const name = $('#driver-name').val().replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
                 const comments = $('#driver-comments').val().slice(0, 100);
                 const url = $('#driver-cam-url').val();
                 if (camUrlList.length == 0) {
