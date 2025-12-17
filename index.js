@@ -29,6 +29,8 @@ const express = require('express');
 const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const ElectronState = require('./electronState');
 const automatedDriverConfig = require('./automatedDriverConfig');
 const inputValidationMiddleware = require('./inputValidation');
@@ -56,7 +58,18 @@ const LISTEN_ADDR = config.listen_addr || '0.0.0.0';
 const electronState = new ElectronState(config);
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+
+// Configure Socket.IO with CORS based on config
+const socketIoOptions = {};
+const securityConfig = config.security || {};
+if (securityConfig.allowedOrigins) {
+    if (securityConfig.allowedOrigins === '*') {
+        socketIoOptions.cors = { origin: '*', methods: ['GET', 'POST'] };
+    } else if (Array.isArray(securityConfig.allowedOrigins)) {
+        socketIoOptions.cors = { origin: securityConfig.allowedOrigins, methods: ['GET', 'POST'] };
+    }
+}
+const io = socketIo(server, socketIoOptions);
 const electronVersion = getGitVersion();
 
 function remote_ip(req) {
@@ -70,6 +83,21 @@ function version() {
 // middleware we need for form submission
 app.use(express.urlencoded({ extended: false }));
 
+// Security headers via helmet
+app.use(helmet({
+    contentSecurityPolicy: false  // Disable CSP as it would break inline scripts
+}));
+
+// Rate limiting for automated session creation
+const rateLimitConfig = (securityConfig.rateLimit || {});
+const automatedDriverLimiter = rateLimit({
+    windowMs: rateLimitConfig.windowMs || 60000,
+    max: rateLimitConfig.maxRequests || 5,
+    message: 'Too many automated sessions created, please try again later',
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
 // set template engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -81,6 +109,7 @@ app.get('/', function (req, res) {
 });
 
 // actually start new automated driver
+app.use('/start-automated-driver', automatedDriverLimiter);
 app.use('/start-automated-driver', inputValidationMiddleware.validateAutomatedDriverInput);
 app.post('/start-automated-driver', function (req, res) {
     logger("[] %s GET /start-automated-driver", remote_ip(req));

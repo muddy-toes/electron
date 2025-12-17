@@ -18,6 +18,23 @@ module.exports = {
         promode: true
     },
 
+    // Security settings
+    security: {
+        // Allowed origins for WebSocket connections (CORS).
+        // Set to an array of allowed origins, e.g., ['https://example.com', 'https://www.example.com']
+        // Set to '*' to allow all origins (not recommended for production)
+        // Set to false or omit to use Socket.IO defaults (same-origin only)
+        // allowedOrigins: ['https://yourdomain.com'],
+
+        // Rate limiting for automated session creation (/start-automated-driver)
+        // windowMs: time window in milliseconds
+        // maxRequests: maximum requests per window per IP
+        rateLimit: {
+            windowMs: 60000,    // 1 minute
+            maxRequests: 5      // 5 requests per minute per IP
+        }
+    },
+
     /* If this section is enabled, instead of the driver typing any URL for camming, they'll be given a list of options.
      * If this section is commented, the driver will be given a text box to enter any URL.
      *
