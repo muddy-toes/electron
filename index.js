@@ -57,6 +57,9 @@ const LISTEN_PORT = process.env.PORT || config.listen_port || 5000;
 const LISTEN_ADDR = config.listen_addr || '0.0.0.0';
 const electronState = new ElectronState(config);
 const app = express();
+if (config.security && config.security.trustProxy) {
+    app.set('trust proxy', config.security.trustProxy);
+}
 const server = http.createServer(app);
 
 // Configure Socket.IO with CORS based on config

@@ -26,6 +26,11 @@ module.exports = {
         // Set to false or omit to use Socket.IO defaults (same-origin only)
         // allowedOrigins: ['https://yourdomain.com'],
 
+        // Trust proxy setting for Express. Required if running behind a reverse proxy (nginx, Apache, etc.)
+        // Set to 1 to trust one proxy hop, 2 for two hops, etc.
+        // Only enable this if you're behind a proxy - without a proxy, clients could spoof their IP.
+        // trustProxy: 1,
+
         // Rate limiting for automated session creation (/start-automated-driver)
         // windowMs: time window in milliseconds
         // maxRequests: maximum requests per window per IP
