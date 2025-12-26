@@ -1,5 +1,8 @@
 module.exports = {
     validateAutomatedDriverInput: function (req, res, next) {
+        if (req.body === undefined)
+            return res.status(400).send('Invalid input values');
+
         const minFrequency = parseInt(req.body['min-frequency']);
         const maxFrequency = parseInt(req.body['max-frequency']);
         const startFrequency = parseInt(req.body['start-frequency']);
