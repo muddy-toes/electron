@@ -261,7 +261,9 @@ $(function () {
 
     function applyStep(channel, step) {
         if (window.console) console.log("Step %s: %o", channel, step);
-        if (channel.match(/^pain-/)) {
+        const chmatch = channel.match(/^pain-(left|right)/);
+        if (chmatch) {
+            executePain(chmatch[1], step);
             step['sessId'] = sessId;
             step['driverToken'] = driverToken;
             socket.emit(channel, step);
