@@ -294,7 +294,7 @@ module.exports = function (electronState) {
             }
 
             delete msg.driverToken;
-            if (electronState.getVerbose()) logger("[%s] pain-left, %o", msg.sessId, JSON.stringify(msg));
+            if (electronState.getVerbose()) logger("[%s] pain-right, %o", msg.sessId, JSON.stringify(msg));
             electronState.storeLastMessage(msg.sessId, 'pain-right', msg);
             electronState.getRiderSockets(msg.sessId).forEach(function (s) {
                 s.emit('pain-right', msg);
