@@ -13,9 +13,14 @@ module.exports = {
 
     // Feature flags.  Set any one to false to disable it.
     features: {
-        // Promode availability.  If false, this will disable the promode button, the additional settings, and the ability to 
+        // Promode availability.  If false, this will disable the promode button, the additional settings, and the ability to
         // playback SmrtStm4 files.
-        promode: true
+        promode: true,
+
+        // Web Bluetooth Coyote device support.  If true, shows a panel allowing users to connect Coyote V2/V3 e-stim
+        // devices via Web Bluetooth and drive them with the audio signal.  Requires Chrome/Edge (Firefox/Safari don't
+        // support Web Bluetooth).  The panel auto-hides on unsupported browsers.
+        coyote: false
     },
 
     // Security settings
