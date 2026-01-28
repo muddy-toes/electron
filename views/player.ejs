@@ -11,6 +11,9 @@
   <link href='https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css' rel='stylesheet' type='text/css' id='jqueryui-stylesheet'>
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="/css/player-styles.css">
+  <% if (features['coyote']) { %>
+  <link rel="stylesheet" href="/css/coyote.css">
+  <% } %>
   <link rel="stylesheet" href="" id='darkmode-stylesheet'>
 
   <script type="text/javascript">
@@ -40,9 +43,14 @@
 
 <body>
   <button onclick="toggleTheme()" id="theme-toggler">Toggle Theme</button>
-  <% if (features['promode']) { %>
-    <button onclick="togglePromode()" id="promode-toggler" title="Pro Mode adds additional features useful for SS4 compatibility" style="position:absolute;top:0;right:0">Toggle Pro Mode</button>
-  <% } %>
+  <div style="position:absolute;top:0;right:0;display:flex;gap:5px;">
+    <% if (features['coyote']) { %>
+      <button onclick="enableCoyoteBT()" id="coyote-toggler" title="Enable Web Bluetooth connection to Coyote devices">Enable Coyote BT</button>
+    <% } %>
+    <% if (features['promode']) { %>
+      <button onclick="togglePromode()" id="promode-toggler" title="Pro Mode adds additional features useful for SS4 compatibility">Toggle Pro Mode</button>
+    <% } %>
+  </div>
   <h1 class="electron-title"><a href="/">electron</a></h1>
 
   <div id="status-message">
@@ -140,6 +148,10 @@
       </div>
     </div>
   </div>
+
+  <% if (features['coyote']) { %>
+  <%- include('coyote-panel.ejs'); %>
+  <% } %>
 
   <div style="display:none;" id="initialize-audio">
     <a href="#">Click here to start audio output for this session</a>
@@ -311,5 +323,10 @@
   <script src="/js/electron.js"></script>
   <script src="/js/communication.js"></script>
   <script src="/js/trafficlight.js"></script>
+  <% if (features['coyote']) { %>
+  <script src="/js/coyote-protocol.js"></script>
+  <script src="/js/coyote.js"></script>
+  <script src="/js/coyote-ui.js"></script>
+  <% } %>
 </body>
 </html>

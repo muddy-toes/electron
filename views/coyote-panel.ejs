@@ -1,0 +1,78 @@
+<div id="coyote-panel" class="hidden">
+    <div class="coyote-header" onclick="toggleCoyotePanel()">
+        <h3>
+            <span class="toggle-icon">&#9658;</span>
+            Coyote Device
+        </h3>
+        <div class="coyote-header-buttons">
+            <button class="coyote-resume" id="coyote-resume-btn" onclick="event.stopPropagation(); coyoteResume()" style="display: none;">Resume</button>
+            <button class="coyote-estop" onclick="event.stopPropagation(); coyoteEmergencyStop()">E-STOP</button>
+        </div>
+    </div>
+
+    <div class="coyote-content">
+        <div class="coyote-browser-warning" id="coyote-browser-warning" style="display: none;">
+            Web Bluetooth is not supported in this browser. Please use Chrome, Edge, or Opera.
+        </div>
+
+        <div class="coyote-status">
+            <div class="coyote-status-text disconnected" id="coyote-status-text">
+                Status: Disconnected
+            </div>
+            <div class="coyote-live-values" id="coyote-live-values" style="display: none;">
+                A: <span id="coyote-val-a">0</span>/<span id="coyote-max-a">200</span>
+                &nbsp;|&nbsp;
+                B: <span id="coyote-val-b">0</span>/<span id="coyote-max-b">200</span>
+            </div>
+        </div>
+
+        <div class="coyote-scan-buttons" id="coyote-scan-buttons">
+            <button class="coyote-scan-btn" onclick="coyoteScan('v2')">Scan V2 (D-LAB)</button>
+            <button class="coyote-scan-btn" onclick="coyoteScan('v3')">Scan V3 (47L)</button>
+        </div>
+
+        <div class="coyote-disconnect-buttons" id="coyote-disconnect-buttons" style="display: none;">
+            <button class="coyote-disconnect-btn" onclick="coyoteDisconnect()">Disconnect</button>
+        </div>
+
+        <div class="coyote-settings">
+            <div class="coyote-setting">
+                <label for="coyote-max-a-slider">Channel A (Left) Max Intensity</label>
+                <div class="coyote-setting-row">
+                    <input type="range" id="coyote-max-a-slider" min="0" max="100" value="50"
+                           oninput="updateCoyoteSetting('maxIntensityA', this.value)">
+                    <span class="value-display" id="coyote-max-a-display">50%</span>
+                </div>
+            </div>
+
+            <div class="coyote-setting">
+                <label for="coyote-max-b-slider">Channel B (Right) Max Intensity</label>
+                <div class="coyote-setting-row">
+                    <input type="range" id="coyote-max-b-slider" min="0" max="100" value="50"
+                           oninput="updateCoyoteSetting('maxIntensityB', this.value)">
+                    <span class="value-display" id="coyote-max-b-display">50%</span>
+                </div>
+            </div>
+
+            <div class="coyote-setting coyote-freq-band">
+                <label>Frequency Band (Hz)</label>
+                <div class="coyote-freq-inputs">
+                    <input type="number" id="coyote-freq-low" min="10" max="3000" value="200"
+                           onchange="updateCoyoteSetting('freqBandLow', this.value)">
+                    <span>to</span>
+                    <input type="number" id="coyote-freq-high" min="10" max="3000" value="800"
+                           onchange="updateCoyoteSetting('freqBandHigh', this.value)">
+                    <span>(maps to 10-100ms pulse period)</span>
+                </div>
+            </div>
+
+            <div class="coyote-setting">
+                <div class="coyote-checkbox-setting">
+                    <input type="checkbox" id="coyote-soft-ramp" checked
+                           onchange="updateCoyoteSetting('softRampEnabled', this.checked)">
+                    <label for="coyote-soft-ramp">Soft ramp on connect (5 seconds)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
