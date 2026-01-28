@@ -10,9 +10,11 @@
 }
 
 .player-button {
-    padding: 4px 7px 2px 10px;
-    font-size: 30px;
-    line-height: 0.9em;
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
     cursor: pointer;
     border: none;
     border-radius: 5px;
@@ -26,28 +28,33 @@
     background-color: #0056b3;
 }
 
-.player-button[title=Play] {
-    font-size: 27px;
-    padding: 4px 10px 6px 10px;
-}
-
+/* Play triangle using borders */
 .player-button[title=Play]::after {
-    content: '\0023F5';
+    content: '';
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 10px 0 10px 16px;
+    border-color: transparent transparent transparent white;
+    margin-left: 3px;
 }
 
-.player-button[title=Pause] {
-    font-size: 27px;
-    padding: 4px 10px 6px 10px;
-}
+/* Pause: two vertical bars */
 .player-button[title=Pause]::after {
-    content: '\0023F8';
+    content: '';
+    width: 6px;
+    height: 18px;
+    margin-left: -8px;
+    background: white;
+    box-shadow: 10px 0 0 white;
 }
 
-.player-button[title=Cancel] {
-    padding: 3px 10px 8px 10px;
-}
+/* Stop: square */
 .player-button[title=Cancel]::after {
-    content: '\0023F9';
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: white;
 }
 
 .progress-container {
