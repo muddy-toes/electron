@@ -45,10 +45,10 @@ class CoyoteDevice {
     // Default settings
     static get defaultSettings() {
         return {
-            maxIntensityA: 50,        // 0-100 percentage
-            maxIntensityB: 50,
-            freqBandLow: 200,         // Hz
-            freqBandHigh: 800,        // Hz
+            maxIntensityA: 0,        // 0-100 percentage
+            maxIntensityB: 0,
+            freqBandLow: 300,         // Hz
+            freqBandHigh: 700,        // Hz
             softRampEnabled: true,
             softRampDuration: 5000,   // ms
             panelCollapsed: true
