@@ -275,4 +275,42 @@
             document.getElementById('coyote-max-b-display').textContent = value + '%';
         }
     };
+
+    // Keyboard shortcuts for max intensity adjustment
+    // V/B = Channel A down/up, N/M = Channel B down/up
+    document.addEventListener('keydown', function(e) {
+        // Skip if Coyote feature not enabled or panel not visible
+        if (typeof feature_coyote === 'undefined' || !feature_coyote) return;
+        const panel = document.getElementById('coyote-panel');
+        if (!panel || panel.classList.contains('hidden')) return;
+
+        // Skip if focus is in an input/textarea/select
+        const tag = document.activeElement.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+        if (!window.coyoteDevice) return;
+
+        const key = e.key.toLowerCase();
+        let setting = null;
+        let delta = 0;
+
+        switch (key) {
+            case 'v': setting = 'maxIntensityA'; delta = -1; break;
+            case 'b': setting = 'maxIntensityA'; delta = 1; break;
+            case 'n': setting = 'maxIntensityB'; delta = -1; break;
+            case 'm': setting = 'maxIntensityB'; delta = 1; break;
+            default: return;
+        }
+
+        e.preventDefault();
+
+        const current = window.coyoteDevice.settings[setting];
+        const newVal = Math.max(0, Math.min(100, current + delta));
+        window.updateCoyoteSetting(setting, newVal);
+
+        // Also update the slider to match
+        const sliderId = setting === 'maxIntensityA' ? 'coyote-max-a-slider' : 'coyote-max-b-slider';
+        const slider = document.getElementById(sliderId);
+        if (slider) slider.value = newVal;
+    });
 })();
