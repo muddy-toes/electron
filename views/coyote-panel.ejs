@@ -44,7 +44,7 @@
                     <input type="range" id="coyote-max-a-slider" min="0" max="100" value="50" oninput="updateCoyoteSetting('maxIntensityA', this.value)">
                     <span class="value-display" id="coyote-max-a-display">50%</span>
                 </div>
-                <span class="coyote-key-hint">V/B for Down/Up</span>
+                <span class="coyote-key-hint">V/B for Down/Up &mdash; only when this panel is open</span>
             </div>
 
             <div class="coyote-setting">
@@ -54,18 +54,43 @@
                            oninput="updateCoyoteSetting('maxIntensityB', this.value)">
                     <span class="value-display" id="coyote-max-b-display">50%</span>
                 </div>
-                <span class="coyote-key-hint">N/M for Down/Up</span>
+                <span class="coyote-key-hint">N/M for Down/Up &mdash; only when this panel is open</span>
             </div>
 
             <div class="coyote-setting coyote-freq-band">
-                <label>Frequency Band (Hz)</label>
-                <div class="coyote-freq-inputs">
-                    <input type="number" id="coyote-freq-low" min="10" max="3000" value="200"
-                           onchange="updateCoyoteSetting('freqBandLow', this.value)">
-                    <span>to</span>
-                    <input type="number" id="coyote-freq-high" min="10" max="3000" value="800"
-                           onchange="updateCoyoteSetting('freqBandHigh', this.value)">
-                    <span>(maps to 10-100ms pulse period)</span>
+                <div class="coyote-freq-label-row">
+                    <div class="coyote-freq-mapping-label">
+                        <label>Frequency Mapping</label>
+                        <span class="coyote-help-icon" id="coyote-freq-help">?</span>
+                    </div>
+                    <div class="coyote-freq-note">(maps to 10-100Hz pulses)</div>
+                    <div class="coyote-help-tooltip" id="coyote-freq-help-tooltip">
+                        <strong>Choose how audio frequency maps to pulse speed:</strong><br><br>
+                        <strong>Fixed Range:</strong> Set exact frequency limits for both channels.  At 300/700, 300 or below will be 10Hz pulses, 700 or above will be 100Hz pulses, and in between will map between them.<br><br>
+                        <strong>Centered Width:</strong> Uses a range of this width centered on each channel's base frequency.  Makes the base frequency not matter.  With FM controls disabled, will output 55Hz pulses.  This will only change based on FM modulation.
+                    </div>
+                </div>
+                <div class="coyote-freq-mapping">
+                    <div class="coyote-freq-option" id="coyote-freq-fixed-option" onclick="setFreqMappingMode('fixed')">
+                        <input type="checkbox" id="coyote-freq-fixed-check" onclick="setFreqMappingMode('fixed'); event.stopPropagation();">
+                        <input type="number" id="coyote-freq-low" min="10" max="3000" value="300"
+                               onfocus="setFreqMappingMode('fixed')"
+                               onchange="updateCoyoteSetting('freqBandLow', this.value)">
+                        <span>to</span>
+                        <input type="number" id="coyote-freq-high" min="10" max="3000" value="700"
+                               onfocus="setFreqMappingMode('fixed')"
+                               onchange="updateCoyoteSetting('freqBandHigh', this.value)">
+                        <span>Hz</span>
+                    </div>
+                    <div class="coyote-freq-divider">- or -</div>
+                    <div class="coyote-freq-option" id="coyote-freq-centered-option" onclick="setFreqMappingMode('centered')">
+                        <input type="checkbox" id="coyote-freq-centered-check" onclick="setFreqMappingMode('centered'); event.stopPropagation();">
+                        <span>Width:</span>
+                        <input type="number" id="coyote-freq-width" min="10" max="2000" value="200"
+                               onfocus="setFreqMappingMode('centered')"
+                               onchange="updateCoyoteSetting('freqCenterWidth', this.value)">
+                        <span>Hz</span>
+                    </div>
                 </div>
             </div>
 

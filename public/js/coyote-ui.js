@@ -82,11 +82,18 @@
             document.getElementById('coyote-max-b-display').textContent = settings.maxIntensityB + '%';
         }
 
-        // Frequency band
+        // Frequency band (fixed mode)
         const freqLow = document.getElementById('coyote-freq-low');
         const freqHigh = document.getElementById('coyote-freq-high');
         if (freqLow) freqLow.value = settings.freqBandLow;
         if (freqHigh) freqHigh.value = settings.freqBandHigh;
+
+        // Frequency width (centered mode)
+        const freqWidth = document.getElementById('coyote-freq-width');
+        if (freqWidth) freqWidth.value = settings.freqCenterWidth;
+
+        // Set active frequency mapping mode
+        updateFreqMappingModeUI(settings.freqMappingMode || 'fixed');
 
         // Soft ramp checkbox
         const softRamp = document.getElementById('coyote-soft-ramp');
@@ -284,6 +291,12 @@
         const panel = document.getElementById('coyote-panel');
         if (!panel || panel.classList.contains('hidden')) return;
 
+        const content = document.querySelector('#coyote-panel .coyote-content');
+        if (!content) return;
+
+        const isExpanded = content.classList.contains('expanded');
+        if (!isExpanded) return;
+
         // Skip if focus is in an input/textarea/select
         const tag = document.activeElement.tagName.toLowerCase();
         if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
@@ -312,5 +325,53 @@
         const sliderId = setting === 'maxIntensityA' ? 'coyote-max-a-slider' : 'coyote-max-b-slider';
         const slider = document.getElementById(sliderId);
         if (slider) slider.value = newVal;
+    });
+
+    // Frequency mapping mode toggle
+    window.setFreqMappingMode = function(mode) {
+        if (!window.coyoteDevice) return;
+
+        window.coyoteDevice.settings.freqMappingMode = mode;
+        window.coyoteDevice.saveSettings();
+        updateFreqMappingModeUI(mode);
+    };
+
+    function updateFreqMappingModeUI(mode) {
+        const fixedOption = document.getElementById('coyote-freq-fixed-option');
+        const centeredOption = document.getElementById('coyote-freq-centered-option');
+        const fixedCheck = document.getElementById('coyote-freq-fixed-check');
+        const centeredCheck = document.getElementById('coyote-freq-centered-check');
+
+        if (!fixedOption || !centeredOption) return;
+
+        if (mode === 'centered') {
+            fixedOption.classList.remove('active');
+            fixedOption.classList.add('inactive');
+            centeredOption.classList.add('active');
+            centeredOption.classList.remove('inactive');
+            if (fixedCheck) fixedCheck.checked = false;
+            if (centeredCheck) centeredCheck.checked = true;
+        } else {
+            fixedOption.classList.add('active');
+            fixedOption.classList.remove('inactive');
+            centeredOption.classList.remove('active');
+            centeredOption.classList.add('inactive');
+            if (fixedCheck) fixedCheck.checked = true;
+            if (centeredCheck) centeredCheck.checked = false;
+        }
+    }
+
+    // Help tooltip toggle
+    document.addEventListener('click', function(e) {
+        const helpIcon = document.getElementById('coyote-freq-help');
+        const helpTooltip = document.getElementById('coyote-freq-help-tooltip');
+
+        if (!helpIcon || !helpTooltip) return;
+
+        if (e.target === helpIcon) {
+            helpTooltip.classList.toggle('visible');
+        } else if (!helpTooltip.contains(e.target)) {
+            helpTooltip.classList.remove('visible');
+        }
     });
 })();
