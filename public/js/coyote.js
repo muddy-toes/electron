@@ -36,6 +36,8 @@ class CoyoteDevice {
 
         // Load settings
         this.settings = this.loadSettings();
+        this.settings.maxIntensityA = 0;
+        this.settings.maxIntensityB = 0;
 
         // Callbacks
         this.onStatusChange = null;
@@ -49,6 +51,8 @@ class CoyoteDevice {
             maxIntensityB: 0,
             freqBandLow: 300,         // Hz
             freqBandHigh: 700,        // Hz
+            freqMappingMode: 'fixed', // 'fixed' or 'centered'
+            freqCenterWidth: 200,     // Hz (total width, so +/- half this from center)
             softRampEnabled: true,
             softRampDuration: 5000,   // ms
             panelCollapsed: true
@@ -308,8 +312,27 @@ class CoyoteDevice {
         let targetA = mapAmplitudeToIntensity(leftAmp, this.settings.maxIntensityA, deviceMax);
         let targetB = mapAmplitudeToIntensity(rightAmp, this.settings.maxIntensityB, deviceMax);
 
-        const periodA = mapFrequencyToPeriod(leftFreq, this.settings.freqBandLow, this.settings.freqBandHigh);
-        const periodB = mapFrequencyToPeriod(rightFreq, this.settings.freqBandLow, this.settings.freqBandHigh);
+        // Calculate frequency bands based on mapping mode
+        let bandLowA, bandHighA, bandLowB, bandHighB;
+
+        if (this.settings.freqMappingMode === 'centered') {
+            // Centered mode: band follows each channel's base frequency
+            const halfWidth = this.settings.freqCenterWidth / 2;
+            const baseFreqL = typeof leftOsc !== 'undefined' && leftOsc.started ? leftOsc.getFreq() : 200;
+            const baseFreqR = typeof rightOsc !== 'undefined' && rightOsc.started ? rightOsc.getFreq() : 200;
+
+            bandLowA = Math.max(10, baseFreqL - halfWidth);
+            bandHighA = baseFreqL + halfWidth;
+            bandLowB = Math.max(10, baseFreqR - halfWidth);
+            bandHighB = baseFreqR + halfWidth;
+        } else {
+            // Fixed mode: use static frequency band
+            bandLowA = bandLowB = this.settings.freqBandLow;
+            bandHighA = bandHighB = this.settings.freqBandHigh;
+        }
+
+        const periodA = mapFrequencyToPeriod(leftFreq, bandLowA, bandHighA);
+        const periodB = mapFrequencyToPeriod(rightFreq, bandLowB, bandHighB);
 
         // Apply soft ramp if active
         if (this.ramping) {
