@@ -19,6 +19,10 @@ function generateAutomatedSessId() {
     return text;
 }
 
+function validSessId(sessId) {
+  return sessId.match(/^[a-z0-9_-]{10}$/);
+}
+
 function logger(...args) {
     args[0] = '[%s] ' + args[0];
     args.splice(1, 0, (new Date()).toLocaleString());
@@ -28,5 +32,6 @@ function logger(...args) {
 module.exports = {
     generateToken,
     generateAutomatedSessId,
+    validSessId,
     logger
 };

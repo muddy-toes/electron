@@ -35,7 +35,7 @@ const ElectronState = require('./electronState');
 const automatedDriverConfig = require('./automatedDriverConfig');
 const inputValidationMiddleware = require('./inputValidation');
 const socketHandler = require('./socketHandler');
-const { generateAutomatedSessId } = require('./utils');
+const { generateAutomatedSessId, validSessId } = require('./utils');
 const fs = require('fs');
 
 // Get git version by reading .git directory directly
@@ -190,7 +190,7 @@ app.get('/player/:mode/:sessId', function (req, res) {
     const mode = req.params.mode;
     const sessId = req.params.sessId;
     logger('[%s] %s GET /player/%s/%s', sessId, remote_ip(req), mode, sessId);
-    if ((mode === 'play' || mode === 'drive') && sessId.length === 10) {
+    if ((mode === 'play' || mode === 'drive') && validSessId(sessId)){
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
         res.render('player', { 
