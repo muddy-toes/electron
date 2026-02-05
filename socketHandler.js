@@ -1,4 +1,4 @@
-const { logger, generateToken } = require('./utils');
+const { logger, generateToken, validSessId } = require('./utils');
 
 module.exports = function (electronState) {
     return function (socket) {
@@ -80,6 +80,9 @@ module.exports = function (electronState) {
                 socket.emit('driverRejected');
                 logger('[%s] User REJECTED as driver from %s.  Cannot manually drive an AUTO session.', sessId, remote_ip());
 
+            } else if( !validSessId(sessId) ) {
+                socket.emit('driverRejected');
+                logger('[%s] Invalid sessId received.  REJECTED driver from %s.', sessId, remote_ip());
             } else if( electronState.validateDriverToken(sessId, msg.driverToken) ) {
                 electronState.setDriverSocket(msg.sessId, socket);
                 socket.emit('driverToken', msg.driverToken);

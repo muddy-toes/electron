@@ -400,7 +400,8 @@ $(function () {
                 transient_message('Cancelled script');
                 socket.emit('setFilePlaying', { sessId: sessId, driverToken: driverToken, filePlaying: '', fileDriver: '', duration: 0 });
             } catch(e) {
-                $('#status-message').append(`<p>Error cancelling script: ${e}</p>`);
+                if (window.console) console.log("Error cancelling script: %o", e);
+                $('#status-message').append(`<p>Error cancelling script</p>`);
             };
         });
 
@@ -475,7 +476,7 @@ $(function () {
                             });
                         } catch(e) {
                             if (window.console) console.log("Parse error: %o", e);
-                            $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
+                            $('#status-message').append(`<p>Error parsing script file</p>`);
                         }
                         togglePromode(scriptUsesPromode);
 
@@ -515,7 +516,7 @@ $(function () {
                         startScriptPlaying(false);
                     } catch(e) {
                         if (window.console) console.log("Parse error: %o", e);
-                        $('#status-message').append(`<p>Error parsing script file: ${e}</p>`);
+                        $('#status-message').append(`<p>Error parsing script file</p>`);
                     }
                 };
                 reader.readAsText(this.files[0]);
