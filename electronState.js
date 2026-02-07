@@ -5,7 +5,7 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const AutomatedDriver = require('./automatedDriver');
 const PlaylistDriver = require('./playlistDriver');
-const { logger } = require('./utils');
+const { logger, validSessId } = require('./utils');
 
 const channels = ['left', 'right', 'pain-left', 'pain-right', 'bottle'];
 
@@ -137,6 +137,10 @@ class ElectronState {
 
     cleanupSessionData(sessId) {
         if (! sessId) return;
+        if (! validSessId(sessId)) {
+          logger("[%s] Invalid session id in cleanupSessionData, refusing to cleanup.", sessId);
+          return;
+        }
 
         // Save session script file if enabled
         if (this.config.savedSessionsPath && ! this.automatedDrivers[sessId]) {

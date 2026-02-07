@@ -1,0 +1,106 @@
+<div id="coyote-panel" class="hidden">
+    <div class="coyote-header" onclick="toggleCoyotePanel()">
+        <h3>
+            <span class="toggle-icon">&#9658;</span>
+            Coyote Device
+            &mdash; EXPERIMENTAL &nbsp;&nbsp;&nbsp;&nbsp;
+            <span style='font-size:0.8em'>Feedback requested, especially for Coyote 3 devices.  Find me on Discord @muddy.toes</span>
+        </h3>
+        <div class="coyote-header-buttons">
+            <button class="coyote-resume" id="coyote-resume-btn" onclick="event.stopPropagation(); coyoteResume()" style="display: none;">Resume</button>
+            <button class="coyote-estop" onclick="event.stopPropagation(); coyoteEmergencyStop()">E-STOP</button>
+        </div>
+    </div>
+
+    <div class="coyote-content">
+        <div class="coyote-browser-warning" id="coyote-browser-warning" style="display: none;">
+            Web Bluetooth is not supported in this browser. Please use Chrome, Edge, or Opera.
+        </div>
+
+        <div class="coyote-status">
+            <div class="coyote-status-text disconnected" id="coyote-status-text">
+                Status: Disconnected
+            </div>
+            <div class="coyote-live-values" id="coyote-live-values" style="display: none;">
+                A: <span id="coyote-val-a">0</span>/<span id="coyote-max-a">200</span>
+                &nbsp;|&nbsp;
+                B: <span id="coyote-val-b">0</span>/<span id="coyote-max-b">200</span>
+            </div>
+        </div>
+
+        <div class="coyote-scan-buttons" id="coyote-scan-buttons">
+            <button class="coyote-scan-btn" onclick="coyoteScan('v2')">Scan V2 (D-LAB)</button>
+            <button class="coyote-scan-btn" onclick="coyoteScan('v3')">Scan V3 (47L)</button>
+        </div>
+
+        <div class="coyote-disconnect-buttons" id="coyote-disconnect-buttons" style="display: none;">
+            <button class="coyote-disconnect-btn" onclick="coyoteDisconnect()">Disconnect</button>
+        </div>
+
+        <div class="coyote-settings">
+            <div class="coyote-setting">
+                <label for="coyote-max-a-slider">Channel A (Left) Max Intensity</label>
+                <div class="coyote-setting-row">
+                    <input type="range" id="coyote-max-a-slider" min="0" max="100" value="50" oninput="updateCoyoteSetting('maxIntensityA', this.value)">
+                    <span class="value-display" id="coyote-max-a-display">50%</span>
+                </div>
+                <span class="coyote-key-hint">V/B for Down/Up &mdash; only when this panel is open</span>
+            </div>
+
+            <div class="coyote-setting">
+                <label for="coyote-max-b-slider">Channel B (Right) Max Intensity</label>
+                <div class="coyote-setting-row">
+                    <input type="range" id="coyote-max-b-slider" min="0" max="100" value="50"
+                           oninput="updateCoyoteSetting('maxIntensityB', this.value)">
+                    <span class="value-display" id="coyote-max-b-display">50%</span>
+                </div>
+                <span class="coyote-key-hint">N/M for Down/Up &mdash; only when this panel is open</span>
+            </div>
+
+            <div class="coyote-setting coyote-freq-band">
+                <div class="coyote-freq-label-row">
+                    <div class="coyote-freq-mapping-label">
+                        <label>Frequency Mapping</label>
+                        <span class="coyote-help-icon" id="coyote-freq-help">?</span>
+                    </div>
+                    <div class="coyote-freq-note">(maps to 10-100Hz pulses)</div>
+                    <div class="coyote-help-tooltip" id="coyote-freq-help-tooltip">
+                        <strong>Choose how audio frequency maps to pulse speed:</strong><br><br>
+                        <strong>Fixed Range:</strong> Set exact frequency limits for both channels.  At 300/700, 300 or below will be 10Hz pulses, 700 or above will be 100Hz pulses, and in between will map between them.<br><br>
+                        <strong>Centered Width:</strong> Uses a range of this width centered on each channel's base frequency.  Makes the base frequency not matter.  With FM controls disabled, will output 55Hz pulses.  This will only change based on FM modulation.
+                    </div>
+                </div>
+                <div class="coyote-freq-mapping">
+                    <div class="coyote-freq-option" id="coyote-freq-fixed-option" onclick="setFreqMappingMode('fixed')">
+                        <input type="checkbox" id="coyote-freq-fixed-check" onclick="setFreqMappingMode('fixed'); event.stopPropagation();">
+                        <input type="number" id="coyote-freq-low" min="10" max="3000" value="300"
+                               onfocus="setFreqMappingMode('fixed')"
+                               onchange="updateCoyoteSetting('freqBandLow', this.value)">
+                        <span>to</span>
+                        <input type="number" id="coyote-freq-high" min="10" max="3000" value="700"
+                               onfocus="setFreqMappingMode('fixed')"
+                               onchange="updateCoyoteSetting('freqBandHigh', this.value)">
+                        <span>Hz</span>
+                    </div>
+                    <div class="coyote-freq-divider">- or -</div>
+                    <div class="coyote-freq-option" id="coyote-freq-centered-option" onclick="setFreqMappingMode('centered')">
+                        <input type="checkbox" id="coyote-freq-centered-check" onclick="setFreqMappingMode('centered'); event.stopPropagation();">
+                        <span>Width:</span>
+                        <input type="number" id="coyote-freq-width" min="10" max="2000" value="200"
+                               onfocus="setFreqMappingMode('centered')"
+                               onchange="updateCoyoteSetting('freqCenterWidth', this.value)">
+                        <span>Hz</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="coyote-setting">
+                <div class="coyote-checkbox-setting">
+                    <input type="checkbox" id="coyote-soft-ramp" checked
+                           onchange="updateCoyoteSetting('softRampEnabled', this.checked)">
+                    <label for="coyote-soft-ramp">Soft ramp on connect (5 seconds)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
