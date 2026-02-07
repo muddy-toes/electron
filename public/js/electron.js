@@ -8,6 +8,7 @@ $(document).ready(function () {
     const tOn = { left: 0.1, right: 0.1 };
     const tOff = { left: 0.0, right: 0.0 };
     const onOffTimeouts = { left: null, right: null };
+    const onOffPhase = { left: 'on', right: 'on' };
 
     // init all the different UI elements
     initSpinners();
@@ -155,6 +156,7 @@ $(document).ready(function () {
     }
 
     function onOffCycle_On(ch) {
+        onOffPhase[ch] = 'on';
         const $col = $('#' + ch + '-channel-column');
         const osc = ch == 'left' ? leftOsc : rightOsc;
         if (tOn[ch] > 0) {
@@ -166,10 +168,11 @@ $(document).ready(function () {
     }
 
     function onOffCycle_Off(ch) {
+        onOffPhase[ch] = 'off';
         const $col = $('#' + ch + '-channel-column');
         const osc = ch == 'left' ? leftOsc : rightOsc;
         if (tOff[ch] > 0) {
-            osc.amp(0);
+            osc.amp(0, 0.005);  // 5ms fade-out for snappy response
         }
         clearTimeout(onOffTimeouts[ch]);
         onOffTimeouts[ch] = setTimeout(function(){ onOffCycle_On(ch) }, tOff[ch] * 1000);
@@ -328,7 +331,11 @@ $(document).ready(function () {
                     rampInfo[channelName].rate = 0;
                 }
 
-                osc.amp(volume / 100);
+                // Only update oscillator directly if tOn/tOff cycle is disabled
+                // When tOn > 0, the cycle manages amplitude (with proper fades) and reads from UI
+                if (tOn[channelName] === 0) {
+                    osc.amp(volume / 100);
+                }
             }
 
             const freqRampRate = freqRampInfo[channelName].rate;
@@ -387,6 +394,11 @@ $(document).ready(function () {
             return;
         }
 
+        // Save tOn/tOff state before clearing it
+        const savedState = {
+            tOnOffActive: onOffTimeouts[channelName] !== null
+        };
+
         let osc;
         if (channelName == 'left') {
             osc = leftOsc;
@@ -395,6 +407,10 @@ $(document).ready(function () {
             osc = rightOsc;
             rampInfo.right.rate = 0;
         }
+
+        // Clear tOn/tOff timeout to prevent interference during pain
+        clearTimeout(onOffTimeouts[channelName]);
+        onOffTimeouts[channelName] = null;
 
         const wasRunning = osc.started;
 
@@ -418,6 +434,12 @@ $(document).ready(function () {
                     painInProgress = false;
                     if (wasRunning) {
                         window.applyChanges(channelName);
+
+                        // Only restore tOn/tOff if it was running before pain
+                        if (!savedState.tOnOffActive) {
+                            clearTimeout(onOffTimeouts[channelName]);
+                            onOffTimeouts[channelName] = null;
+                        }
                     } else {
                         osc.stop();
                     }
