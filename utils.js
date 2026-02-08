@@ -20,7 +20,7 @@ function generateAutomatedSessId() {
 }
 
 function validSessId(sessId) {
-  return sessId.match(/^[a-z0-9_-]{10}$/);
+  return sessId.match(/^[a-z0-9_-]{10}$/i);
 }
 
 function logger(...args) {
