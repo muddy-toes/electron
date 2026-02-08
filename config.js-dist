@@ -28,7 +28,7 @@ module.exports = {
 
         // Emoji responses.  If true, riders can send an emoji reaction that the driver sees above the traffic bars.
         emojiResponses: false
-    },
+  },
 
     // Security settings
     security: {
