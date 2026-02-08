@@ -17,10 +17,17 @@ module.exports = {
         // playback SmrtStm4 files.
         promode: true,
 
+        // Traffic light system.  If true, riders can signal green/yellow/red to the driver and the driver
+        // sees a proportional bar showing how riders are feeling.
+        trafficLight: true,
+
         // Web Bluetooth Coyote device support.  If true, shows a panel allowing users to connect Coyote V2/V3 e-stim
         // devices via Web Bluetooth and drive them with the audio signal.  Requires Chrome/Edge (Firefox/Safari don't
         // support Web Bluetooth).  The panel auto-hides on unsupported browsers.
-        coyote: false
+        coyote: false,
+
+        // Emoji responses.  If true, riders can send an emoji reaction that the driver sees above the traffic bars.
+        emojiResponses: false
     },
 
     // Security settings

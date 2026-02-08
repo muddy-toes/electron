@@ -92,17 +92,32 @@
       <span class='message'><%= flags['driverComments'] %></span>
     </p>
     <p class='lastBottle'></p>
+    <% if (features['emojiResponses'] && !features['trafficLight']) { %>
+      <%# If this changes, there's another copy of the same thing below in the traffic light section %>
+      <div class="emoji-response-box">
+        <div class="current-emoji" id="current-emoji" title="Send an emoji to the driver"></div>
+        <button class="emoji-clear-btn" id="emoji-clear-btn" title="Clear emoji">&#10005;</button>
+        <div class="emoji-picker-popup" id="emoji-picker-popup"></div>
+      </div>
+    <% } %>
   </div>
 
   <div style="display:none;" id="drive-info">
     <div id="rider-count">
       Number of connected riders: <strong id="rider-count-number">0</strong>
-      <div class="traffic-bar-container">
-        <div class="traffic-bar none"></div>
-        <div class="traffic-bar green"></div>
-        <div class="traffic-bar yellow"></div>
-        <div class="traffic-bar red"></div>
-      </div>
+      <% if (features['emojiResponses']) { %>
+        <div id="emoji-responses-row"></div>
+      <% } %>
+      <% if (features['trafficLight']) { %>
+        <div class="traffic-bar-container">
+          <div class="traffic-bar none"></div>
+          <div class="traffic-bar green"></div>
+          <div class="traffic-bar yellow"></div>
+          <div class="traffic-bar red"></div>
+        </div>
+      <% } else { %>
+        <hr style='color: #555999; opacity: 0.3;'/>
+      <% } %>
     </div>
     <div class="controls-container">
       <div class="fields">
@@ -198,9 +213,10 @@
   <div id="main-container">
 
     <% if (playlistSession) { %>
-      <div class="traffic-light" id="traffic-light" style="display: none;"></div>
-    <% } else { %>
-      <div class="traffic-light" id="traffic-light" style="display: none;">
+      <div id="response-items" style="display: none;"></div>
+    <% } else if (features['trafficLight']) { %>
+      <div id="response-items" style="display: none;">
+        <% if (features['trafficLight']) { %>
         <div class="traffic-light-explanation">
           <p>Use this tool to indicate the driver how you are feeling.</p>
           <ul>
@@ -209,11 +225,20 @@
             <li>RED means you need the power to be dialed down / stop.</li>
           </ul>
         </div>
-        <div class="traffic-light-container">
+        <div id="traffic-light" class="traffic-light-container">
           <button class="green" title="Green" data-traffic-light="G"></button>
           <button class="yellow" title="Yellow" data-traffic-light="Y"></button>
           <button class="red" title="Red" data-traffic-light="R"></button>
         </div>
+        <% } %>
+        <% if (features['emojiResponses']) { %>
+          <%# If this changes, there's another copy of the same thing above in the ride-infosection %>
+          <div class="emoji-response-box">
+            <div class="current-emoji" id="current-emoji" title="Send an emoji to the driver"></div>
+            <button class="emoji-clear-btn" id="emoji-clear-btn" title="Clear emoji">&#10005;</button>
+            <div class="emoji-picker-popup" id="emoji-picker-popup"></div>
+          </div>
+        <% } %>
       </div>
     <% } %>
 
@@ -322,7 +347,12 @@
   <script src="/js/config.js"></script>
   <script src="/js/electron.js"></script>
   <script src="/js/communication.js"></script>
+  <% if (features['trafficLight']) { %>
   <script src="/js/trafficlight.js"></script>
+  <% } %>
+  <% if (features['emojiResponses']) { %>
+  <script type="module" src="/js/emojiresponse.js"></script>
+  <% } %>
   <% if (features['coyote']) { %>
   <script src="/js/coyote-protocol.js"></script>
   <script src="/js/coyote.js"></script>

@@ -25,9 +25,13 @@ body {
 #drive-info {
     border: 0;
     border-radius: 5px;
-    margin: 30px auto;
+    margin: 15px auto 15px auto;
     padding: 15px;
     width: 90vw;
+}
+
+#main-container {
+  padding-top: 0;
 }
 
 #status-message,
@@ -385,12 +389,13 @@ div.mode-selector-box p {
     background-color: #eee;
 }
 
-.traffic-light {
+#response-items {
     display: flex;
     align-items: stretch;
+    justify-content: space-around;
 }
 
-.traffic-light button {
+#traffic-light button {
     border: 3px double #333;
     border-radius: 50%;
     height: 60px;
@@ -400,27 +405,27 @@ div.mode-selector-box p {
     cursor: pointer;
 }
 
-.traffic-light button.active.green {
+#traffic-light button.active.green {
     box-shadow: 0px 2px 20px rgba(0, 255, 0, 0.6), 0px 0px 40px rgba(0, 255, 0, 0.4);
 }
 
-.traffic-light button.active.yellow {
+#traffic-light button.active.yellow {
     box-shadow: 0px 2px 20px rgba(255, 255, 0, 0.6), 0px 0px 40px rgba(255, 255, 0, 0.4);
 }
 
-.traffic-light button.active.red {
+#traffic-light button.active.red {
     box-shadow: 0px 2px 20px rgba(255, 0, 0, 0.6), 0px 0px 40px rgba(255, 0, 0, 0.4);
 }
 
-.traffic-light button.green {
+#traffic-light button.green {
     background-color: #00ff00;
 }
 
-.traffic-light button.yellow {
+#traffic-light button.yellow {
     background-color: yellow;
 }
 
-.traffic-light button.red {
+#traffic-light button.red {
     background-color: red;
 }
 
@@ -435,7 +440,7 @@ div.mode-selector-box p {
     border-radius: 5px;
     color: #555999;
     font-size: 18px;
-    margin: 30px 10px;
+    margin: 0 10px 15px 10px;
     padding: 15px;
     flex-grow: 1;
 }
@@ -443,9 +448,6 @@ div.mode-selector-box p {
 .traffic-light-container {
     background: #404040;
     flex-grow: 0;
-}
-
-.traffic-light-container {
     display: flex;
     align-items: center;
 }
@@ -476,6 +478,87 @@ div.mode-selector-box p {
 
 .traffic-bar.green {
     background-color: #00ff00;
+}
+
+/* Emoji response box (rider side) */
+.emoji-response-box {
+    position: relative;
+    background: #404040;
+    border: 1px solid #555999;
+    border-radius: 5px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    margin: 0 10px 15px 10px;
+}
+
+#response-items .emoji-response-box {
+    width: 80px;
+    min-height: 60px;
+}
+
+#ride-info .emoji-response-box {
+    position: absolute;
+    right: 7px;
+    bottom: 0;
+    height: 60px;
+    width: 60px;
+}
+
+.emoji-response-box .current-emoji {
+    font-size: 48px;
+    line-height: 1;
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.emoji-response-box .emoji-clear-btn {
+    display: block;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 14px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: #ccc;
+    padding: 0;
+    line-height: 1;
+}
+
+.emoji-picker-popup {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    z-index: 1000;
+}
+
+.emoji-picker-popup.open {
+    display: block;
+}
+
+/* Driver emoji responses row */
+#emoji-responses-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 1.2em;
+    padding: 2px 10px;
+    gap: 2px;
+}
+
+#emoji-responses-row:empty {
+    display: none;
+}
+
+#emoji-responses-row .emoji-response {
+    line-height: 1;
 }
 
 .controls-container {
@@ -682,4 +765,8 @@ ul.public-session-list li {
 
 .analyze-script-link {
   margin-left: auto;
+}
+
+.volOnOff span:not(:first-child) {
+  margin-top: 10px;
 }

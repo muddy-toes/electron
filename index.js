@@ -4,7 +4,9 @@ let config = {
 
     // Feature flags.  Set to false to disable.  Accessible in player.ejs via features['name'] and in client js via feature_name
     features: {
-        promode: true
+        promode: true,
+        trafficLight: true,
+        emojiResponses: false
     },
 
     // These are the keys to enable/disable when switching promode on/off
@@ -227,6 +229,7 @@ io.on('connection', socketHandler(electronState));
 
 // init the server!
 app.use(express.static('public'));
+app.use('/vendor/emoji-picker-element', express.static('node_modules/emoji-picker-element'));
 server.listen(LISTEN_PORT, LISTEN_ADDR, () => logger('[] e l e c t r o n initialized and server now listening on %s:%d', LISTEN_ADDR, LISTEN_PORT));
 logger('[] Running version %s', version());
 

@@ -639,17 +639,25 @@ $(function () {
 
         $('#ride-info').show();
 
-        // show traffic light container
+        // show traffic light / emoji response container
         if (! sessId.match(/^AUTO\d+/) )
-            $('#traffic-light').show();
+            $('#response-items').show();
+
         // event listeners for traffic light system
-        $(window).on('traffic-light', function () {
-            const data = {
-                sessId: sessId,
-                color: $('#traffic-light button.active').data('traffic-light')
-            };
-            socket.emit('trafficLight', data);
-            return false;
+        if (typeof feature_trafficLight !== 'undefined' && feature_trafficLight) {
+            $(window).on('traffic-light', function () {
+                const data = {
+                    sessId: sessId,
+                    color: $('#traffic-light button.active').data('traffic-light')
+                };
+                socket.emit('trafficLight', data);
+                return false;
+            });
+        }
+
+        // emoji response system
+        $(window).on('emoji-response', function (e, emoji) {
+            socket.emit('emojiResponse', { sessId: sessId, emoji: emoji });
         });
 
         function initialize_cam_url_warning_dismissal() {
@@ -862,21 +870,50 @@ $(function () {
 
             socket.on('riderCount', function (msg) {
                 // render traffic light bars, based on the status of the riders
-                const total = msg.total;
-                const bars = [
-                    { colorClass: 'red', value: msg.R },
-                    { colorClass: 'yellow', value: msg.Y },
-                    { colorClass: 'green', value: msg.G },
-                    { colorClass: 'none', value: msg.N }
-                ];
+                if (typeof feature_trafficLight !== 'undefined' && feature_trafficLight) {
+                    const total = msg.total;
+                    const bars = [
+                        { colorClass: 'red', value: msg.R },
+                        { colorClass: 'yellow', value: msg.Y },
+                        { colorClass: 'green', value: msg.G },
+                        { colorClass: 'none', value: msg.N }
+                    ];
 
-                bars.forEach(function (bar) {
-                    const element = document.querySelector(`.traffic-bar.${bar.colorClass}`);
-                    element.style.width = `${total === 0 ? 0 : (bar.value / total) * 100}%`;
-                });
+                    bars.forEach(function (bar) {
+                        const element = document.querySelector(`.traffic-bar.${bar.colorClass}`);
+                        if (element) element.style.width = `${total === 0 ? 0 : (bar.value / total) * 100}%`;
+                    });
+                }
 
                 // update the rider count on the page
-                $('#rider-count-number').text(total);
+                $('#rider-count-number').text(msg.total);
+
+                // render emoji responses if present
+                if (typeof feature_emojiResponses !== 'undefined' && feature_emojiResponses && msg.emojis) {
+                    const row = document.getElementById('emoji-responses-row');
+                    if (row) {
+                        row.innerHTML = '';
+                        msg.emojis.sort().forEach(function (emoji) {
+                            const span = document.createElement('span');
+                            span.className = 'emoji-response';
+                            span.textContent = emoji;
+                            row.appendChild(span);
+                        });
+
+                        // shrink font if needed to fit on one row
+                        const count = msg.emojis.length;
+                        if (count > 0) {
+                            const containerWidth = (row.parentElement || row).offsetWidth;
+                            const emWidth = containerWidth / count / 16; // approximate em per emoji
+                            if (emWidth < 1.6) {
+                                const size = Math.max(0.8, containerWidth / (count * 16 * 1.6));
+                                row.style.fontSize = size + 'em';
+                            } else {
+                                row.style.fontSize = '1.2em';
+                            }
+                        }
+                    }
+                }
             });
 
             initSaveLoadScript();

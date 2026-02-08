@@ -187,6 +187,15 @@ html .ui-button.ui-state-disabled:active {
     color: #ccc;
 }
 
+.emoji-response-box {
+    background: #404040;
+    border: 1px solid #888;
+}
+
+.emoji-response-box .emoji-clear-btn {
+    color: #ccc;
+}
+
 #step-ticker {
   color: #ccc;
 }

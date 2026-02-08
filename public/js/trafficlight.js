@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    const trafficLight = document.querySelector('.traffic-light');
+    const trafficLight = document.querySelector('#traffic-light');
     const buttons = trafficLight.querySelectorAll('button');
 
     buttons.forEach(button => {

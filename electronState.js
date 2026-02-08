@@ -26,6 +26,7 @@ class ElectronState {
         this.riders = {};               // stores all sockets for people riding each session
         this.automatedDrivers = {};     // stores automated drivers by their session ids
         this.trafficLights = {};        // dictionary binding sockets to red / yellow / green traffic lights
+        this.emojiResponses = {};       // dictionary binding sockets to emoji responses
         
         logger('[] startup');
         if (this.config.verbose) logger('[] verbose logging enabled');
@@ -409,6 +410,33 @@ class ElectronState {
         return 'N';
     }
 
+    setRiderEmoji(sessId, socket, emoji) {
+        const sockets = this.getRiderSockets(sessId);
+        if (sockets.indexOf(socket) === -1) return;
+        if (emoji && this.isValidEmoji(emoji)) {
+            this.emojiResponses[socket.id] = emoji;
+        } else {
+            delete this.emojiResponses[socket.id];
+        }
+    }
+
+    isValidEmoji(str) {
+        if (typeof str !== 'string' || str.length > 20) return false;
+        const emojiRegex = /^[\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]+$/u;
+        return emojiRegex.test(str);
+    }
+
+    getRiderEmojis(sessId) {
+        const riderSockets = this.getRiderSockets(sessId);
+        const emojis = [];
+        riderSockets.forEach((s) => {
+            if (this.emojiResponses[s.id]) {
+                emojis.push(this.emojiResponses[s.id]);
+            }
+        });
+        return emojis;
+    }
+
     getLastMessage(sessId, channel) {
         const result = this.db.prepare(`
             SELECT stamp, message 
@@ -509,6 +537,7 @@ class ElectronState {
                 found_rider = true;
                 this.riders[sessId].splice(index, 1);
                 delete this.trafficLights[socket.id];
+                delete this.emojiResponses[socket.id];
 
                 const ridersLeft = this.riders[sessId].length;
                 logger('[%s] Rider left from %s (session riders: %d)', sessId, remote_ip, ridersLeft);

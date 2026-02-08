@@ -334,6 +334,9 @@ module.exports = function (electronState) {
             }
 
             const riderData = electronState.getRiderData(msg.sessId);
+            if (electronState.config.features?.emojiResponses) {
+                riderData.emojis = electronState.getRiderEmojis(msg.sessId);
+            }
             socket.emit('riderCount', riderData);
         });
 
@@ -347,6 +350,27 @@ module.exports = function (electronState) {
 
             electronState.setRiderTrafficLight(msg.sessId, socket, msg.color);
             const riderData = electronState.getRiderData(msg.sessId);
+            if (electronState.config.features?.emojiResponses) {
+                riderData.emojis = electronState.getRiderEmojis(msg.sessId);
+            }
+            const driverSocket = electronState.getDriverSocket(msg.sessId);
+            if (driverSocket) {
+                driverSocket.emit('riderCount', riderData);
+            }
+        });
+
+        // ====== emojiResponse ======
+        // handles emoji reactions from riders displayed on the driver's screen
+        socket.on('emojiResponse', function (msg) {
+            if (!msg.sessId || !electronState.validateRider(msg.sessId, socket)) {
+                return;
+            }
+
+            electronState.setRiderEmoji(msg.sessId, socket, msg.emoji || null);
+            const riderData = electronState.getRiderData(msg.sessId);
+            if (electronState.config.features?.emojiResponses) {
+                riderData.emojis = electronState.getRiderEmojis(msg.sessId);
+            }
             const driverSocket = electronState.getDriverSocket(msg.sessId);
             if (driverSocket) {
                 driverSocket.emit('riderCount', riderData);
