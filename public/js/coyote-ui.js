@@ -120,6 +120,13 @@
                 liveValues.style.display = 'none';
                 enableScanButtons(true);
                 updateResumeButton();
+                // Reset intensity sliders to zero for safety
+                var sliderA = document.getElementById('coyote-max-a-slider');
+                var sliderB = document.getElementById('coyote-max-b-slider');
+                if (sliderA) sliderA.value = 0;
+                if (sliderB) sliderB.value = 0;
+                document.getElementById('coyote-max-a-display').textContent = '0%';
+                document.getElementById('coyote-max-b-display').textContent = '0%';
                 break;
             case 'scanning':
                 statusText.textContent = 'Status: Scanning...';
