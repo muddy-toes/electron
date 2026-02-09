@@ -275,6 +275,11 @@
 
         window.coyoteDevice.saveSettings();
 
+        // Push updated limits to V3 device
+        if (setting === 'maxIntensityA' || setting === 'maxIntensityB') {
+            window.coyoteDevice.updateV3Limits();
+        }
+
         // Update display
         if (setting === 'maxIntensityA') {
             document.getElementById('coyote-max-a-display').textContent = value + '%';
