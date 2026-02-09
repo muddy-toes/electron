@@ -36,6 +36,7 @@ class CoyoteDevice {
 
         // Load settings
         this.settings = this.loadSettings();
+        // Always start with zero intensity for safety - user must explicitly raise it
         this.settings.maxIntensityA = 0;
         this.settings.maxIntensityB = 0;
 
@@ -234,6 +235,17 @@ class CoyoteDevice {
     clearEmergencyStop() {
         this.eStopped = false;
         this.startSoftRamp();
+    }
+
+    // Re-send BF command to update V3 device intensity limits
+    async updateV3Limits() {
+        if (!this.connected || this.version !== 'v3' || !this.charWrite) return;
+        const bfCmd = this.v3Protocol.encodeBFCommand(
+            this.settings.maxIntensityA * 2,
+            this.settings.maxIntensityB * 2,
+            160, 160, 0, 0
+        );
+        await this.charWrite.writeValue(bfCmd);
     }
 
     // Send zero intensity

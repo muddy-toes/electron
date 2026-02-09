@@ -98,6 +98,13 @@ This is an always-running drive that plays session files randomly from a specifi
 
 See config.js-dist for config options.
 
+# Emoji Responses feature
+
+Enable `emojiResponses` in config.js to allow riders to set an emoji as their status, updated on the driver's screen.  Can be used in addition to or instead of the classic traffic lights response system.
+
+# DG-Lab Coyote support
+
+Enable `coyote` in config.js to support direct Bluetooth connection to DG-Lab Coyote devices in addition to audio output.
 
 ## License
 
