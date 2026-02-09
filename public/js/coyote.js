@@ -211,6 +211,9 @@ class CoyoteDevice {
         this.ramping = false;
         this.currentIntensityA = 0;
         this.currentIntensityB = 0;
+        this.settings.maxIntensityA = 0;
+        this.settings.maxIntensityB = 0;
+        this.saveSettings();
         this.stopSendLoop();
         this.updateStatus('disconnected');
     }
