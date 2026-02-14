@@ -37,6 +37,8 @@ Copy `config.js-dist` to `config.js` and edit it to specify your site preference
 1. Check config.js-dist for any new settings that should be copied to your config.js file.
 2. Run `npm install`
 
+If you see a `NODE_MODULE_VERSION` mismatch error for `better-sqlite3` on startup (e.g. "was compiled against a different Node.js version"), run `npm rebuild better-sqlite3` to recompile it for your current Node version.
+
 ## Cloud deployment
 
 See [DEPLOY.md](DEPLOY.md) for instructions.
