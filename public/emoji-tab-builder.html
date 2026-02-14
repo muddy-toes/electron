@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Emoji Tab Builder</title>
+  <link href='https://fonts.googleapis.com/css?family=Cabin:400,500,700' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="/css/emoji-picker.css">
+  <style>
+    body {
+      background: #1a1a1a;
+      color: #ccc;
+      font-family: Cabin, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .picker-column {
+      flex-shrink: 0;
+    }
+
+    .builder-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 600px;
+    }
+
+    h1 {
+      margin: 0 0 5px 0;
+      font-size: 22px;
+      color: #fff;
+    }
+
+    p.help {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #888;
+      line-height: 1.4;
+    }
+
+    .selected-emoji {
+      background: #303030;
+      border: 1px solid #555;
+      border-radius: 5px;
+      padding: 10px;
+      min-height: 60px;
+      font-size: 28px;
+      line-height: 1.4;
+      color: #fff;
+      resize: vertical;
+      font-family: inherit;
+      outline: none;
+      word-break: break-all;
+    }
+
+    .selected-emoji:focus {
+      border-color: #777;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #444;
+      border: 1px solid #666;
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px 16px;
+    }
+
+    button:hover {
+      background: #555;
+    }
+
+    button.primary {
+      background: #2a6496;
+      border-color: #3a7ab6;
+    }
+
+    button.primary:hover {
+      background: #3a7ab6;
+    }
+
+    .output-area {
+      background: #212121;
+      border: 1px solid #555;
+      border-radius: 5px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #8f8;
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 40px;
+      user-select: all;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .output-area.visible {
+      display: block;
+    }
+
+    .count {
+      font-size: 13px;
+      color: #777;
+    }
+
+    .copied {
+      color: #8f8;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .copied.show {
+      opacity: 1;
+    }
+
+    /* Override picker to always use dark theme on this page */
+    .emoji-picker {
+      background: #303030;
+      border-color: #888;
+      color: #ccc;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .ep-search input {
+      background: #212121;
+      color: #fff;
+      border-color: #555;
+    }
+    .ep-search input:focus { border-color: #777; }
+    .ep-search input::placeholder { color: #777; }
+    .ep-tabs { border-bottom-color: #555; }
+    .ep-tab:hover { background: #3a3a3a; }
+    .ep-tab.active { border-bottom-color: #999; }
+    .ep-grid-area { scrollbar-color: #555 #303030; }
+    .ep-grid-area::-webkit-scrollbar-track { background: #303030; }
+    .ep-grid-area::-webkit-scrollbar-thumb { background: #555; }
+    .ep-emoji:hover { background: #555; }
+    .ep-no-results { color: #777; }
+    .ep-recent { border-top-color: #555; }
+    .ep-recent-label { color: #777; }
+  </style>
+</head>
+<body>
+
+  <div class="picker-column">
+    <div id="picker-container"></div>
+  </div>
+
+  <div class="builder-column">
+    <div>
+      <h1>Emoji Tab Builder</h1>
+      <p class="help">
+        Click emoji in the picker to add them to the collection below.
+        Edit the textarea to rearrange or remove emoji, then hit "Generate Array"
+        to get a JSON array you can paste into your config.js customTabs definition.
+      </p>
+    </div>
+
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px;">
+        <label style="font-weight: 600;">Selected Emoji</label>
+        <span class="count" id="emoji-count">0 emoji</span>
+      </div>
+      <textarea class="selected-emoji" id="emoji-textarea" rows="4"
+        placeholder="Click emoji in the picker to add them here..."></textarea>
+    </div>
+
+    <div class="button-row">
+      <button class="primary" id="generate-btn">Generate Array</button>
+      <button id="copy-btn">Copy to Clipboard</button>
+      <button id="clear-btn">Clear</button>
+      <span class="copied" id="copied-msg">Copied!</span>
+    </div>
+
+    <div class="output-area" id="output"></div>
+  </div>
+
+  <script type="module">
+    import EmojiPicker from './js/emoji-picker.js';
+
+    const textarea = document.getElementById('emoji-textarea');
+    const output = document.getElementById('output');
+    const countEl = document.getElementById('emoji-count');
+    const copiedMsg = document.getElementById('copied-msg');
+
+    function updateCount() {
+      var emoji = getEmojiFromTextarea();
+      var n = emoji.length;
+      countEl.textContent = n + ' emoji';
+    }
+
+    function getEmojiFromTextarea() {
+      // Extract emoji characters from the textarea, stripping whitespace
+      var text = textarea.value.replace(/\s+/g, '');
+      if (!text) return [];
+      // Use the Unicode segmenter to properly split grapheme clusters
+      if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+        var segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+        var segments = segmenter.segment(text);
+        var result = [];
+        for (var s of segments) {
+          result.push(s.segment);
+        }
+        return result;
+      }
+      // Fallback: spread into array (works for most emoji but not all ZWJ sequences)
+      return [...text];
+    }
+
+    function toUnicodeEscape(str) {
+      var result = '';
+      for (var i = 0; i < str.length; i++) {
+        var code = str.charCodeAt(i);
+        if (code > 0x7f) {
+          result += '\\u' + code.toString(16).toUpperCase().padStart(4, '0');
+        } else {
+          result += str[i];
+        }
+      }
+      return result;
+    }
+
+    // Picker
+    new EmojiPicker(document.getElementById('picker-container'), {
+      recentlyUsed: {
+        enabled: true,
+        storageKey: 'emoji-tab-builder-recent'
+      },
+      onEmojiClick: function(emoji) {
+        textarea.value += emoji.unicode;
+        updateCount();
+        output.classList.remove('visible');
+      }
+    });
+
+    // Generate
+    document.getElementById('generate-btn').addEventListener('click', function() {
+      var emoji = getEmojiFromTextarea();
+      if (emoji.length === 0) {
+        output.textContent = '// No emoji selected';
+        output.classList.add('visible');
+        return;
+      }
+      var items = emoji.map(function(e) {
+        return "'" + toUnicodeEscape(e) + "'";
+      });
+      output.textContent = '[' + items.join(', ') + ']';
+      output.classList.add('visible');
+    });
+
+    // Copy
+    document.getElementById('copy-btn').addEventListener('click', function() {
+      if (!output.classList.contains('visible') || !output.textContent) return;
+      navigator.clipboard.writeText(output.textContent).then(function() {
+        copiedMsg.classList.add('show');
+        setTimeout(function() { copiedMsg.classList.remove('show'); }, 1500);
+      });
+    });
+
+    // Clear
+    document.getElementById('clear-btn').addEventListener('click', function() {
+      textarea.value = '';
+      output.classList.remove('visible');
+      updateCount();
+    });
+
+    // Update count on manual edits
+    textarea.addEventListener('input', updateCount);
+  </script>
+
+</body>
+</html>

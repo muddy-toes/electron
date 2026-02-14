@@ -28,7 +28,41 @@ module.exports = {
 
         // Emoji responses.  If true, riders can send an emoji reaction that the driver sees above the traffic bars.
         emojiResponses: false
-  },
+    },
+
+    // Emoji picker configuration.  Only relevant if emojiResponses is enabled.
+    // All fields are optional - omit this entire section to use defaults.
+    emojiPicker: {
+        // Custom tabs appear at the LEFT of the standard category tabs.
+        // Each tab contains a curated set of native Unicode emoji.
+        // 'id' must be unique, 'icon' is what shows in the tab button, 'label' is the tooltip,
+        // 'emoji' is an array of Unicode emoji strings.
+//        customTabs: [
+//            { id: 'reactions', label: 'Reactions', icon: '\u2B50', emoji: ['\u2764\uFE0F', '\uD83D\uDE00', '\uD83D\uDC4D', '\uD83D\uDD25', '\uD83D\uDE2D', '\uD83D\uDE31'] }
+//        ],
+
+        // Recently used emoji row at the bottom of the picker.
+        recentlyUsed: {
+            enabled: true,
+            maxCount: 32,
+            // Pre-seed with these emoji when the user has no history yet.
+            // Once they pick their own emoji, their selections replace this list.
+//            defaultEmoji: ['\u2764\uFE0F', '\uD83D\uDE00', '\uD83D\uDC4D', '\uD83D\uDD25']
+        },
+
+        // Standard category tabs to hide.  Set to an array of category names to exclude them.
+        // Valid names: 'smileys', 'people', 'animals', 'food', 'travel', 'activities', 'objects', 'symbols', 'flags'
+        // Example: ['flags', 'symbols'] hides those two tabs.
+        // Set to 'all' to hide every standard tab (leaving only custom tabs).
+//        excludeCategories: [],
+
+        // Filter which emoji appear in the standard category tabs.
+        // includeEmoji: show ONLY these emoji.  Set to an array of Unicode emoji strings.
+        // excludeEmoji: hide these emoji.  Set to an array of Unicode emoji strings.
+        // These filters do NOT affect custom tabs or recently used.
+//        includeEmoji: null,
+//        excludeEmoji: null
+    },
 
     // Security settings
     security: {

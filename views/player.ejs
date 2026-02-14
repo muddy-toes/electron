@@ -11,6 +11,9 @@
   <link href='https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css' rel='stylesheet' type='text/css' id='jqueryui-stylesheet'>
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="/css/player-styles.css">
+  <% if (features['emojiResponses']) { %>
+  <link rel="stylesheet" href="/css/emoji-picker.css">
+  <% } %>
   <% if (features['coyote']) { %>
   <link rel="stylesheet" href="/css/coyote.css">
   <% } %>
@@ -21,6 +24,7 @@
       const feature_<%= key %> = <%= features[key] %>;
     <% }) %>
     const camUrlList = <%- JSON.stringify(camUrlList) || '[]' %>;
+    const emojiPickerConfig = <%- JSON.stringify(emojiPicker) || '{}' %>;
   </script>
 
   <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>

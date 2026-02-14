@@ -104,6 +104,50 @@ See config.js-dist for config options.
 
 Enable `emojiResponses` in config.js to allow riders to set an emoji as their status, updated on the driver's screen.  Can be used in addition to or instead of the classic traffic lights response system.
 
+## Customizing the Emoji Picker
+
+The emoji picker supports extensive customization via the `emojiPicker` section in `config.js`.  See `config.js-dist` for all available options.
+
+**Custom category tabs** - Add curated tabs with hand-picked emoji that appear at the left of the tab bar:
+
+```javascript
+emojiPicker: {
+    customTabs: [
+        { id: 'reactions', label: 'Reactions', icon: '\u2B50', emoji: ['\u2764\uFE0F', '\uD83D\uDE00', '\uD83D\uDC4D', '\uD83D\uDD25'] }
+    ]
+}
+```
+
+**Pre-seed recently used** - Provide a default set of emoji that shows in the recently-used row before the user has their own history:
+
+```javascript
+emojiPicker: {
+    recentlyUsed: {
+        defaultEmoji: ['\u2764\uFE0F', '\uD83D\uDE00', '\uD83D\uDC4D', '\uD83D\uDD25']
+    }
+}
+```
+
+**Hide categories** - Remove any or all standard emoji category tabs:
+
+```javascript
+emojiPicker: {
+    excludeCategories: ['flags', 'symbols']  // or 'all' to hide every standard tab
+}
+```
+
+**Filter emoji** - Show only specific emoji, or exclude specific emoji from the standard tabs:
+
+```javascript
+emojiPicker: {
+    excludeEmoji: ['\uD83D\uDCA9']
+}
+```
+
+**Emoji Tab Builder** - Building the unicode arrays for `customTabs` by hand is tedious. Visit `/emoji-tab-builder.html` on your running server to use an interactive tool: click emoji from the picker to collect them in a textarea, rearrange or remove as needed, then hit "Generate Array" to get a JSON array of unicode escapes ready to paste into your config.
+
+For complete picker documentation including theming and reuse outside of electron, see [EMOJI-PICKER.md](EMOJI-PICKER.md).
+
 # DG-Lab Coyote support
 
 Enable `coyote` in config.js to support direct Bluetooth connection to DG-Lab Coyote devices in addition to audio output.

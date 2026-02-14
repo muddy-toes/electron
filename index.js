@@ -195,13 +195,14 @@ app.get('/player/:mode/:sessId', function (req, res) {
     if ((mode === 'play' || mode === 'drive') && validSessId(sessId)){
         // joining or driving a session
         const flags = electronState.getSessionFlags(sessId) || { driverName: 'Anonymous' };
-        res.render('player', { 
+        res.render('player', {
             automatedSession: sessId.match(/^AUTO/) ? true : false,
             flags: flags,
             features: config.features,
             camUrlList: config.camUrlList,
             bottleImage: config.bottleImage || 'bottle.png',
             playlistSession: (config.playlistSession !== undefined && config.playlistSession.sessId == sessId),
+            emojiPicker: config.emojiPicker || {},
             version: version()
         });
     } else if (mode === 'play' && sessId === 'solo') {
@@ -214,6 +215,7 @@ app.get('/player/:mode/:sessId', function (req, res) {
             camUrlList: [],
             bottleImage: config.bottleImage || 'bottle.png',
             playlistSession: false,
+            emojiPicker: config.emojiPicker || {},
             version: version()
         });
     } else {
@@ -229,7 +231,6 @@ io.on('connection', socketHandler(electronState));
 
 // init the server!
 app.use(express.static('public'));
-app.use('/vendor/emoji-picker-element', express.static('node_modules/emoji-picker-element'));
 server.listen(LISTEN_PORT, LISTEN_ADDR, () => logger('[] e l e c t r o n initialized and server now listening on %s:%d', LISTEN_ADDR, LISTEN_PORT));
 logger('[] Running version %s', version());
 

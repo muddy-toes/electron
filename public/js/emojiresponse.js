@@ -1,6 +1,6 @@
-import '/vendor/emoji-picker-element/picker.js';
+import EmojiPicker from './emoji-picker.js';
 
-const DEFAULT_EMOJI = "❔️";
+const DEFAULT_EMOJI = "\u2754\uFE0F";
 
 $(document).ready(function () {
     const currentEmoji = document.getElementById('current-emoji');
@@ -11,14 +11,43 @@ $(document).ready(function () {
 
     clearEmoji(DEFAULT_EMOJI);
 
+    function buildPickerOptions() {
+        // Read server-provided config (set in player.ejs from config.js emojiPicker section)
+        const cfg = (typeof emojiPickerConfig !== 'undefined') ? emojiPickerConfig : {};
+
+        const options = {
+            onEmojiClick: function (emoji) {
+                setEmoji(emoji.unicode);
+                closePicker();
+            }
+        };
+
+        if (cfg.customTabs) {
+            options.customTabs = cfg.customTabs;
+        }
+
+        if (cfg.recentlyUsed) {
+            options.recentlyUsed = cfg.recentlyUsed;
+        }
+
+        if (cfg.excludeCategories) {
+            options.excludeCategories = cfg.excludeCategories;
+        }
+
+        if (cfg.includeEmoji) {
+            options.includeEmoji = cfg.includeEmoji;
+        }
+
+        if (cfg.excludeEmoji) {
+            options.excludeEmoji = cfg.excludeEmoji;
+        }
+
+        return options;
+    }
+
     function openPicker() {
         if (!picker) {
-            picker = document.createElement('emoji-picker');
-            popup.appendChild(picker);
-            picker.addEventListener('emoji-click', function (e) {
-                setEmoji(e.detail.unicode);
-                closePicker();
-            });
+            picker = new EmojiPicker(popup, buildPickerOptions());
         }
         popup.classList.add('open');
 

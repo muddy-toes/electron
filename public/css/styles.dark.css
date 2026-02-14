@@ -196,6 +196,68 @@ html .ui-button.ui-state-disabled:active {
     color: #ccc;
 }
 
+/* Emoji picker dark theme */
+.emoji-picker {
+    background: #303030;
+    border-color: #888;
+    color: #ccc;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.ep-search input {
+    background: #212121;
+    color: #fff;
+    border-color: #555;
+}
+
+.ep-search input:focus {
+    border-color: #777;
+}
+
+.ep-search input::placeholder {
+    color: #777;
+}
+
+.ep-tabs {
+    border-bottom-color: #555;
+}
+
+.ep-tab:hover {
+    background: #3a3a3a;
+}
+
+.ep-tab.active {
+    border-bottom-color: #999;
+}
+
+.ep-grid-area {
+    scrollbar-color: #555 #303030;
+}
+
+.ep-grid-area::-webkit-scrollbar-track {
+    background: #303030;
+}
+
+.ep-grid-area::-webkit-scrollbar-thumb {
+    background: #555;
+}
+
+.ep-emoji:hover {
+    background: #555;
+}
+
+.ep-no-results {
+    color: #777;
+}
+
+.ep-recent {
+    border-top-color: #555;
+}
+
+.ep-recent-label {
+    color: #777;
+}
+
 #step-ticker {
   color: #ccc;
 }
