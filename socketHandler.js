@@ -370,6 +370,7 @@ module.exports = function (electronState) {
             const riderData = electronState.getRiderData(msg.sessId);
             if (electronState.config.features?.emojiResponses) {
                 riderData.emojis = electronState.getRiderEmojis(msg.sessId);
+                if (electronState.getVerbose()) logger('[%s] Emojis: %s', msg.sessId, riderData.emojis?.join(''));
             }
             const driverSocket = electronState.getDriverSocket(msg.sessId);
             if (driverSocket) {
