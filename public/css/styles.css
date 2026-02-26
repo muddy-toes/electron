@@ -601,6 +601,26 @@ div.mode-selector-box p {
   vertical-align: middle;
 }
 
+#drive-info {
+    transition: border 0.5s ease-out;
+}
+#drive-info.bottle-highlight {
+    border: 3px solid #cccc00;
+    transition: border 0.3s ease-in;
+}
+
+#auto-bottle-intensity {
+    margin-left: 0.5em;
+    vertical-align: middle;
+}
+
+#auto-bottle-status {
+    font-size: 0.85em;
+    color: #888;
+    margin-left: 0.5em;
+    vertical-align: bottom;
+}
+
 .save-load-bar {
     width: 90vw;
     margin: 0 auto;

@@ -267,3 +267,7 @@ html .ui-button.ui-state-disabled:active {
   border-color: white;
 }
 
+#auto-bottle-status {
+    color: #999;
+}
+

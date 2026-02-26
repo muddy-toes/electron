@@ -25,6 +25,7 @@
     <% }) %>
     const camUrlList = <%- JSON.stringify(camUrlList) || '[]' %>;
     const emojiPickerConfig = <%- JSON.stringify(emojiPicker) || '{}' %>;
+    const autoBottleConfig = <%- JSON.stringify(autoBottle) || 'null' %>;
   </script>
 
   <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
@@ -164,6 +165,17 @@
           <span class="bottle-countdown"><span class='seconds'></span></span>
         </div>
         <span style='vertical-align:bottom'>&nbsp;&nbsp;Last:&nbsp;</span><span class="lastBottleTime" style='vertical-align:bottom'>none</span>
+        <% if (autoBottle) { %>
+        <br/>
+        <label for="auto-bottle-intensity">Auto-bottle:</label>
+        <select id="auto-bottle-intensity">
+          <option value="off">Off</option>
+          <option value="light">Light</option>
+          <option value="medium">Medium</option>
+          <option value="heavy">Heavy</option>
+        </select>
+        <span id="auto-bottle-status"></span>
+        <% } %>
       </div>
     </div>
   </div>

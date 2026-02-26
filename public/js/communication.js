@@ -35,6 +35,9 @@ $(function () {
     let scriptTimer = 0;
     let applysteps = true;
     let bottleSecs = 0;
+    let autoBottleTimerId = null;
+    let autoBottleStatusTimerId = null;
+    let autoBottleNextFireTime = null;
     let channel_pos = {};
     resetChannelPositions();
 
@@ -347,6 +350,82 @@ $(function () {
                 bottleCountdown();
             }
         }, 1000);
+    }
+
+    function highlightDriveInfo(durationSecs) {
+        const $driveInfo = $('#drive-info');
+        $driveInfo.addClass('bottle-highlight');
+        setTimeout(function() {
+            $driveInfo.removeClass('bottle-highlight');
+        }, durationSecs * 1000);
+    }
+
+    function scheduleAutoBottle() {
+        clearAutoBottle();
+        const intensity = $('#auto-bottle-intensity').val();
+        if (intensity === 'off' || typeof autoBottleConfig === 'undefined' ||
+            !autoBottleConfig || !autoBottleConfig[intensity]) {
+            $('#auto-bottle-status').text('');
+            return;
+        }
+
+        const range = autoBottleConfig[intensity];
+        const minSecs = range[0];
+        const maxSecs = range[1];
+        const delaySecs = Math.floor(Math.random() * (maxSecs - minSecs + 1)) + minSecs;
+        autoBottleNextFireTime = Date.now() + delaySecs * 1000;
+
+        autoBottleTimerId = setTimeout(function() {
+            const secs = parseInt($('#bottle-duration').val()) || 5;
+            socket.emit('triggerBottle', { sessId: sessId, driverToken: driverToken, bottleDuration: secs });
+            bottleCountdown(secs);
+            highlightDriveInfo(secs);
+
+            // Schedule the next one after the countdown finishes
+            autoBottleTimerId = null;
+            autoBottleNextFireTime = null;
+            if (autoBottleStatusTimerId) {
+                clearInterval(autoBottleStatusTimerId);
+                autoBottleStatusTimerId = null;
+            }
+            $('#auto-bottle-status').text('');
+            const countdownMs = secs * 1000 + 500;
+            setTimeout(function() {
+                if ($('#auto-bottle-intensity').val() !== 'off') {
+                    scheduleAutoBottle();
+                }
+            }, countdownMs);
+        }, delaySecs * 1000);
+
+        updateAutoBottleStatus();
+        autoBottleStatusTimerId = setInterval(updateAutoBottleStatus, 15000);
+    }
+
+    function clearAutoBottle() {
+        if (autoBottleTimerId) {
+            clearTimeout(autoBottleTimerId);
+            autoBottleTimerId = null;
+        }
+        if (autoBottleStatusTimerId) {
+            clearInterval(autoBottleStatusTimerId);
+            autoBottleStatusTimerId = null;
+        }
+        autoBottleNextFireTime = null;
+        $('#auto-bottle-status').text('');
+    }
+
+    function updateAutoBottleStatus() {
+        if (!autoBottleNextFireTime) {
+            $('#auto-bottle-status').text('');
+            return;
+        }
+        const remainingSecs = Math.max(0, Math.round((autoBottleNextFireTime - Date.now()) / 1000));
+        const mins = Math.floor(remainingSecs / 60);
+        if (mins > 0) {
+            $('#auto-bottle-status').text('(next in ~' + mins + 'm)');
+        } else {
+            $('#auto-bottle-status').text('(next in <1m)');
+        }
     }
 
     function initSaveLoadScript() {
@@ -827,6 +906,21 @@ $(function () {
               const secs = parseInt($('#bottle-duration').val()) || 0;
               socket.emit('triggerBottle', { sessId: sessId, driverToken: driverToken, bottleDuration: secs });
               bottleCountdown(secs);
+              highlightDriveInfo(secs);
+              // Reset auto-bottle timer so we don't get back-to-back bottles
+              if ($('#auto-bottle-intensity').length && $('#auto-bottle-intensity').val() !== 'off') {
+                  clearAutoBottle();
+                  const countdownMs = secs * 1000 + 500;
+                  setTimeout(function() {
+                      if ($('#auto-bottle-intensity').val() !== 'off') {
+                          scheduleAutoBottle();
+                      }
+                  }, countdownMs);
+              }
+            });
+
+            $('#auto-bottle-intensity').on('change', function() {
+                scheduleAutoBottle();
             });
 
             $('#rider-bottle-countdown-container').hide();

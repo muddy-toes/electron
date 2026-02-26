@@ -203,6 +203,7 @@ app.get('/player/:mode/:sessId', function (req, res) {
             bottleImage: config.bottleImage || 'bottle.png',
             playlistSession: (config.playlistSession !== undefined && config.playlistSession.sessId == sessId),
             emojiPicker: config.emojiPicker || {},
+            autoBottle: config.autoBottle || null,
             version: version()
         });
     } else if (mode === 'play' && sessId === 'solo') {
@@ -216,6 +217,7 @@ app.get('/player/:mode/:sessId', function (req, res) {
             bottleImage: config.bottleImage || 'bottle.png',
             playlistSession: false,
             emojiPicker: config.emojiPicker || {},
+            autoBottle: config.autoBottle || null,
             version: version()
         });
     } else {
