@@ -68,11 +68,11 @@ module.exports = {
     // Each level defines a [min, max] range for the random delay between automatic bottle prompts.
     // The driver selects an intensity in the UI; a random time within the range is chosen for each cycle.
     // Comment this section to hide the auto-bottle controls entirely.
-    autoBottle: {
-        light:  [600, 840],   // 10-14 minutes
-        medium: [480, 660],   // 8-11 minutes
-        heavy:  [360, 540]    // 6-9 minutes
-    },
+//    autoBottle: {
+//        light:  [600, 840],   // 10-14 minutes
+//        medium: [480, 660],   // 8-11 minutes
+//        heavy:  [360, 540]    // 6-9 minutes
+//    },
 
     // Security settings
     security: {
