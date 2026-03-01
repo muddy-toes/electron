@@ -97,16 +97,8 @@ $(document).ready(function () {
 
         freqRampInfo[channelName].rate = parseFloat($channelCol.find('input[name="freq-ramp-rate"]').val());
 
-        const amActive = amFrequency > 0 && amDepth > 0 && amType != 'none';
-        const amActive2 = amFrequency2 > 0 && amDepth2 > 0 && amType2 != 'none';
-
-        if (amActive && amActive2) {
-          amDepth /= 2;
-          amDepth2 /= 2;
-        }
-
         // handle A.M.
-        if (amActive) {
+        if (amFrequency > 0 && amDepth > 0 && amType != 'none') {
             // A.M. is on
             ampModulator.freq(amFrequency);
             ampModulator.amp(amDepth);
@@ -125,7 +117,7 @@ $(document).ready(function () {
         }
 
         // second A.M.
-        if (amActive2) {
+        if (amFrequency2 > 0 && amDepth2 > 0 && amType2 != 'none') {
             // A.M. is on
             ampModulator2.freq(amFrequency2);
             ampModulator2.amp(amDepth2);
