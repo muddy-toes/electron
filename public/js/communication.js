@@ -79,8 +79,8 @@ $(function () {
           if (val === undefined)
               return;
 
-          /* ss4 expresses volume as 0-1 */
-          if (key == 'volume')
+          /* ss4 expresses volume as 0-1 and ramp rate accordingly */
+          if (key == 'volume' || key == 'rampRate')
               val *= 100;
           else if (key.match(/Depth$/) && typeof(val) == 'number' && val < 0)
               val = val * -1;
@@ -491,6 +491,7 @@ $(function () {
                 if (feature_promode && filename.match(/\.(SmrtStm4|ss4)$/)) {
                   filetype = 'ss4';
                 }
+                window.scriptFiletype = filetype;
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     try {
