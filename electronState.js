@@ -270,16 +270,14 @@ class ElectronState {
     }
 
     addDriverToken(sessId, token, socket) {
-        // Don't turn this into an INSERT OR REPLACE or it'll blow away the FK records prematurely
-        const existing = this.db.prepare('SELECT sess_id FROM sessions WHERE sess_id = ?').get(sessId);
-        if (existing) {
-            this.db.prepare('UPDATE sessions set driver_token=?, updated_at=? where sess_id=?').run(token, Date.now(), sessId);
-        } else {
-            this.db.prepare('INSERT INTO sessions (sess_id, driver_token, updated_at) VALUES (?, ?, ?)').run(sessId, token, Date.now());
-        }
-        
         this.setDriverSocket(sessId, socket);
         this.initSessionData(sessId);
+
+        // Update the token after initSessionData so we don't pre-create the
+        // session row and prevent initSessionData from detecting a new session.
+        this.db.prepare(`
+            UPDATE sessions SET driver_token = ?, updated_at = ? WHERE sess_id = ?
+        `).run(token, Date.now(), sessId);
     }
 
     sessionActive(sessId) {
