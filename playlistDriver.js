@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
-const { logger } = require('./utils');
+const { logger } = require('./utils.js');
 
 const ss4TagMap = {
     volume: 'Vol',
@@ -102,7 +102,7 @@ class PlaylistDriver {
                     return;
                 }
 
-                this.playlist = Array.from(Array(filenames.length).keys()).sort((a, b) => Math.random() - 0.5).map((i) => filenames[i]);
+                this.playlist = Array.from(Array(filenames.length).keys()).sort((_a, _b) => Math.random() - 0.5).map((i) => filenames[i]);
             }
         } catch (error) {
 						logger('[] Error reading directory: %s', error);
@@ -128,10 +128,9 @@ class PlaylistDriver {
     }
 
     convertSS4Step(step) {
-        const self = this;
-        let out = {};
-        Object.keys(ss4TagMap).forEach(function(key) {
-          let val = self.getSubtrackValue(step, ss4TagMap[key]);
+        const out = {};
+        Object.keys(ss4TagMap).forEach((key) => {
+          let val = this.getSubtrackValue(step, ss4TagMap[key]);
           if (val === undefined)
               return;
 
@@ -167,51 +166,53 @@ class PlaylistDriver {
      *   in the > 1000 SmrtStim4 files I have, not one uses them.
      */
     convertSS4ToElectron(xmlstring) {
-        const self = this;
         const dom = new JSDOM();
-        const parser = new dom.window.DOMParser();
-        const xml = parser.parseFromString(xmlstring, 'text/xml');
-        let out = { meta: { version: 2 }, left: [], right: [] };
-        let scriptTime = 0;
+        try {
+            const parser = new dom.window.DOMParser();
+            const xml = parser.parseFromString(xmlstring, 'text/xml');
+            const out = { meta: { version: 2 }, left: [], right: [] };
+            let scriptTime = 0;
 
-        const session = xml.getElementsByTagName('Session')[0];
-        if (session !== undefined) {
-            out['meta']['driverName'] = session.getAttribute('Creator')
-            out['meta']['driverComments'] = session.getAttribute('Name') + " " + session.getAttribute('Description')
+            const session = xml.getElementsByTagName('Session')[0];
+            if (session !== undefined) {
+                out['meta']['driverName'] = session.getAttribute('Creator')
+                out['meta']['driverComments'] = session.getAttribute('Name') + " " + session.getAttribute('Description')
+            }
+
+            const tracks = xml.getElementsByTagName('Track');
+            let firstStep = true;
+            Array.from(tracks).forEach((track) => {
+                const trackTime = parseFloat(track.getAttribute('Time').replace(/,/g, '.')) * 1000;
+                if (isNaN(trackTime)) return;
+                const subtracks = track.getElementsByTagName('Subtrack')
+                const left = subtracks[0];
+                const leftstep = { ...ss4DefaultStep, ...this.convertSS4Step(left) };
+                if (firstStep && leftstep['volume'] === undefined) leftstep['volume'] = 50;
+                if (Object.keys(leftstep).length > 0)
+                    out['left'].push({ stamp: scriptTime, message: leftstep });
+
+                const right = subtracks[1];
+                const rightstep = { ...ss4DefaultStep, ...this.convertSS4Step(right) };
+                if (firstStep && rightstep['volume'] === undefined) rightstep['volume'] = 50;
+                if (Object.keys(rightstep).length > 0)
+                    out['right'].push({ stamp: scriptTime, message: rightstep });
+
+                scriptTime += trackTime + 1000;
+                firstStep = false;
+            });
+
+            return out;
+        } finally {
+            dom.window.close();
         }
-
-        const tracks = xml.getElementsByTagName('Track');
-        let firstStep = true;
-        Array.from(tracks).forEach(function(track) {
-            const trackTime = parseFloat(track.getAttribute('Time').replace(/,/g, '.')) * 1000;
-            if (isNaN(trackTime)) return;
-            const subtracks = track.getElementsByTagName('Subtrack')
-            const left = subtracks[0];
-            const leftstep = { ...ss4DefaultStep, ...self.convertSS4Step(left) };
-            if (firstStep && leftstep['volume'] === undefined) leftstep['volume'] = 50;
-            if (Object.keys(leftstep).length > 0)
-                out['left'].push({ stamp: scriptTime, message: leftstep });
-
-            const right = subtracks[1];
-            const rightstep = { ...ss4DefaultStep, ...self.convertSS4Step(right) };
-            if (firstStep && rightstep['volume'] === undefined) rightstep['volume'] = 50;
-            if (Object.keys(rightstep).length > 0)
-                out['right'].push({ stamp: scriptTime, message: rightstep });
-
-            scriptTime += trackTime + 1000;
-            firstStep = false;
-        });
-        
-        return out;
     }
 
     run(electronState) {
         this.verbose = electronState.getVerbose();
-        const self = this;
         let filepath;
         const sessId = this.sessId;
         const channels = this.channels;
-        let channel_pos = this.channel_pos;
+        const channel_pos = this.channel_pos;
         let script = this.script;
         let fileDriver = this.fileDriver;
         let scriptVersion = this.scriptVersion;
@@ -245,10 +246,10 @@ class PlaylistDriver {
                 electronState.clearLastMessages(sessId);
 
                 try {
-                    filepath = self.nextFile();
+                    filepath = this.nextFile();
                     const scriptRaw = fs.readFileSync(filepath);
                     if (filepath.match(/\.(SmrtStm4|ss4)$/)) {
-                        script = self.convertSS4ToElectron(scriptRaw);
+                        script = this.convertSS4ToElectron(scriptRaw);
                     } else {
                         script = JSON.parse(scriptRaw);
                     }
@@ -256,8 +257,8 @@ class PlaylistDriver {
                     logger('[%s] Error parsing file %s: %s', sessId, filepath, err);
                     return;
                 }
-                self.lastNFiles.push(filepath)
-                if (self.lastNFiles.length > self.noRepeatNFiles) self.lastNFiles.splice(0, 1)
+                this.lastNFiles.push(filepath)
+                if (this.lastNFiles.length > this.noRepeatNFiles) this.lastNFiles.splice(0, 1)
 
                 logger('[%s] Now playing: %s', sessId, filepath);
                 fileDriver = '';
@@ -269,8 +270,8 @@ class PlaylistDriver {
                     if (script['meta']['driverName']) {
                         fileDriver = script['meta']['driverName'].replace(/[^A-Za-z0-9' !@.\^\&\-]/, '');
                     }
-                    if (script['meta']['driverComments']) {
-                    }
+                    /*if (script['meta']['driverComments']) {
+                    }*/
                     delete script['meta'];
                 }
 
@@ -282,7 +283,7 @@ class PlaylistDriver {
                     channels.forEach(function(ch) {
                         if (script[ch] !== undefined && script[ch][0] !== undefined && script[ch][0]['stamp'] !== undefined) {
                             let channelSum = 0;
-                            for (var j = 0; j < script[ch].length; j++) {
+                            for (let j = 0; j < script[ch].length; j++) {
                                 channelSum += script[ch][j]['stamp'];
                                 script[ch][j]['stamp'] = channelSum;
                             }
@@ -368,7 +369,7 @@ class PlaylistDriver {
             /*
             const currentTime = parseInt(scriptTimer / 1000) - firstStepStamp / 1000;
             const remainingTime = scriptDuration / 1000 - currentTime;
-            logger("[%s] Script playback %f / %f", self.sessId, currentTime, remainingTime);
+            logger("[%s] Script playback %f / %f", this.sessId, currentTime, remainingTime);
             */
         }, 250);
 

@@ -3,9 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
-const AutomatedDriver = require('./automatedDriver');
-const PlaylistDriver = require('./playlistDriver');
-const { logger, validSessId } = require('./utils');
+const AutomatedDriver = require('./automatedDriver.js');
+const PlaylistDriver = require('./playlistDriver.js');
+const { logger, validSessId } = require('./utils.js');
 
 const channels = ['left', 'right', 'pain-left', 'pain-right', 'bottle'];
 
@@ -95,8 +95,6 @@ class ElectronState {
     }
 
     initSessionData(sessId) {
-        const now = Date.now();
-
         // Check if session exists
         const existing = this.db.prepare('SELECT sess_id FROM sessions WHERE sess_id = ?').get(sessId);
 
@@ -191,6 +189,12 @@ class ElectronState {
         // Clean up in-memory data
         delete this.automatedDrivers[sessId];
         delete this.driverSockets[sessId];
+        if (this.riders[sessId]) {
+            for (const socket of this.riders[sessId]) {
+                delete this.trafficLights[socket.id];
+                delete this.emojiResponses[socket.id];
+            }
+        }
         delete this.riders[sessId];
         
         logger("[%s] End session", sessId);
@@ -232,7 +236,7 @@ class ElectronState {
         for (const flag of flags) {
             try {
                 result[flag.flag_name] = JSON.parse(flag.flag_value);
-            } catch (e) {
+            } catch (_e) {
                 result[flag.flag_name] = flag.flag_value;
             }
         }
@@ -258,7 +262,7 @@ class ElectronState {
             let name = sessId;
             try {
                 name = session.driver_name ? JSON.parse(session.driver_name) : sessId;
-            } catch (e) {
+            } catch (_e) {
                 name = session.driver_name || sessId;
             }
             return { sessId: sessId, name: name, riders: ridercount };
@@ -343,7 +347,7 @@ class ElectronState {
         this.updateMessageStamps(sessId, channel);
         
         // Filter out promode keys if needed
-        let m = {...message};
+        const m = {...message};
         if (! this.config?.features?.promode) {
             this.config?.promodeKeys?.forEach(function(key) { delete m[key]; });
         }
@@ -427,9 +431,9 @@ class ElectronState {
     getRiderEmojis(sessId) {
         const riderSockets = this.getRiderSockets(sessId);
         const emojis = [];
-        riderSockets.forEach((s) => {
-            if (this.emojiResponses[s.id]) {
-                emojis.push(this.emojiResponses[s.id]);
+        riderSockets.forEach((socket) => {
+            if (this.emojiResponses[socket.id]) {
+                emojis.push(this.emojiResponses[socket.id]);
             }
         });
         return emojis;
@@ -481,7 +485,7 @@ class ElectronState {
             }
         }
 
-        let data_to_return = {
+        const data_to_return = {
             'meta': {
                 driverName: sessionFlags['driverName'],
                 driverComments: sessionFlags['driverComments'],
@@ -515,7 +519,7 @@ class ElectronState {
 
     getRiderData(sessId) {
         const riderSockets = this.getRiderSockets(sessId);
-        let riderData = { 'G': 0, 'Y': 0, 'R': 0, 'N': 0, 'total': 0 };
+        const riderData = { 'G': 0, 'Y': 0, 'R': 0, 'N': 0, 'total': 0 };
 
         riderSockets.forEach((s) => { 
             const color = this.getRiderTrafficLight(s);
