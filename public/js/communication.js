@@ -309,7 +309,7 @@ $(function () {
         let ampm = 'AM';
         if (hours >= 12) ampm = 'PM';
         if (hours >= 13) hours -= 12;
-        const timestr = `${hours}:${now.getMinutes()} ${ampm}`;
+        const timestr = `${hours}:${String(now.getMinutes()).padStart(2, '0')} ${ampm}`;
         $('.lastBottle').text(`Last bottle prompt at: ${timestr}`);
         $('.lastBottleTime').text(timestr);
     }
