@@ -138,6 +138,7 @@
 
 #coyote-panel .coyote-scan-buttons {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 15px;
 }
@@ -160,6 +161,16 @@
 #coyote-panel .coyote-scan-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+#coyote-panel .coyote-pairing-hint {
+    flex-basis: 100%;
+    font-size: 11px;
+    color: #856030;
+    margin-top: -4px;
+    line-height: 1.4;
+    text-align: right;
+    padding-left: 50%;
 }
 
 #coyote-panel .coyote-disconnect-buttons {
