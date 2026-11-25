@@ -1,0 +1,285 @@
+# e l e c t r o n
+
+> e l e c t r o n is a web-based, real-time audio waveform generator for e-stim. One driver controls two audio channels (left and right) and any number of riders receive the driver's parameters over Socket.IO and synthesize the audio locally in their browsers. This file describes the Socket.IO protocol a program needs to act as a driver.
+
+Everything below describes the behavior of the server and of the rider's browser player. The server relays and records messages; it does not generate audio. All audio is synthesized on each rider's player from the last channel message it received.
+
+## Connecting
+
+- Transport: Socket.IO v4 (server 4.8). Connect to the same origin that served this file, at the default Socket.IO path `/socket.io/`. The `websocket` transport works directly.
+- Node example: `npm install socket.io-client`, then `io(serverUrl, { transports: ['websocket'] })`.
+- Every event payload must be an object with a string `sessId`; anything else is ignored. Every driver-to-server event except `registerDriver` and `requestLast` must also carry `driverToken`. Events with a missing or wrong token are ignored; there is no error reply.
+- When you have no token, leave `driverToken` out of `registerDriver`.
+- socket.io-client buffers emits made while disconnected and sends them before its `connect` handler runs. If the token changed in the meantime, those buffered messages are ignored by the server.
+
+## Sessions
+
+- A session ID is exactly 10 characters from `[A-Za-z0-9_-]`. IDs beginning with `AUTO` belong to the server's automated driver and cannot be driven.
+- The driver chooses the ID. A session is created when a driver registers an ID that has no active driver. Choose a random ID to avoid colliding with an existing session.
+- Rider URL: `/player/play/<sessId>`. Browser driver URL: `/player/drive/<sessId>`. Paths are relative to the site root.
+- Sessions flagged public are listed on the site's home page.
+
+### Lifecycle
+
+1. Connect, then emit `registerDriver` with `{ sessId }`.
+2. The server replies with `updateFlags`, then `driverToken` (a 16-character string), then any stored `left`/`right` messages and `updateFlags` again. Keep the token secret; it authorizes every driver action. If the session already has a driver, the reply is `driverRejected` instead.
+3. Emit `setSettings` to set the driver name and comments, then start sending `left` and `right` channel messages.
+4. To reconnect after a dropped connection, emit `registerDriver` with `{ sessId, driverToken }` using the saved token. Within the grace period (below) the server replies with the same token, sends the last stored `left`/`right` messages to the driver, and riders receive `driverReturned`. Messages sent while disconnected may be lost or may arrive late in a burst; send the current state of both channels again after reconnecting.
+5. There is no "end session" event. To end, ramp both channels to 0, send each channel with `active: false`, then disconnect. Volume 0 alone is not silent while AM is active (see Modulation).
+
+When the driver's socket disconnects, the server waits 5 seconds. After an unclean network drop, the server only notices the disconnect when the Socket.IO heartbeat times out (about 45 seconds with default settings), and the 5 seconds start then.
+
+- If the driver re-registered with its token in that window, nothing changes.
+- Otherwise the token is cleared. If riders are connected they receive `driverLost`, and anyone can take over the session by emitting `registerDriver` without a `driverToken` field. The new driver gets a new token and riders receive `driverGained`. A driver whose token was cleared can reclaim the seat the same way, if nobody else has.
+- If no riders are connected when the token is cleared, the session is deleted. If the last rider leaves while there is no driver, including during the 5-second window, the session is deleted. Registering that ID again creates a new session with a new token.
+- When a driver is given a new token for an existing session, `driverName` is reset to `Anonymous` and `filePlaying` and `fileDriver` are cleared. `camUrl`, `driverComments`, `publicSession`, `blindfoldRiders`, `proMode` and the recording carry over. Send `setSettings` again after any new token.
+
+Riders keep playing the last parameters they received after the driver disconnects. Disconnecting does not silence them.
+
+## Driver to server events
+
+| Event | Payload (plus `sessId`, `driverToken`) | Effect |
+|---|---|---|
+| `registerDriver` | `{ sessId }` to claim, `{ sessId, driverToken }` to reclaim | Claim or reclaim the driver seat. |
+| `setSettings` | `{ driverName, driverComments, camUrl }` | Sets display info. A missing or non-string `driverComments` or `camUrl` leaves that value unchanged; `''` clears it. |
+| `left` / `right` | channel message (see below) | Stored and relayed to every rider. |
+| `pain-left` / `pain-right` | pain message (see below) | Relayed to riders as a burst of shocks on that channel. |
+| `triggerBottle` | `{ bottleDuration }` (seconds) | Riders see a bottle prompt with a countdown. A missing, zero or non-numeric value becomes `'5'`. |
+| `setPublicSession` | `{ publicSession: bool }` | Lists or unlists the session on the home page. |
+| `setBlindfoldRiders` | `{ blindfoldRiders: bool }` | Hides (true) or shows (false) the parameter display on riders' players. |
+| `setPromode` | `{ proMode: bool }` | Shows or hides the pro-mode controls on riders' players. |
+| `setFilePlaying` | `{ filePlaying, fileDriver }` | Shows the name and author of a file being played back. A blank `filePlaying` also erases the session recording. |
+| `getRiderCount` | `{}` | Server replies with `riderCount`. |
+| `requestLast` | `{ sessId }` | Server replies with the last `left`, `right` and `updateFlags` (and `driverLost` if there is no driver). No token needed. |
+| `getSessionMessages` | `{}` | Server replies with `sessionMessages` (the session recording). |
+| `clearSessionMessages` | `{}` | Erases the session recording. Server replies `sessionMessagesCleared`. |
+
+`setSettings` details:
+
+- `driverName`: characters outside `A-Z a-z 0-9 ' ! @ . ^ & -` and space are removed, then it is truncated to 100 characters. Missing, empty or non-string becomes `Anonymous`.
+- `driverComments`: truncated to 100 characters. Shown to riders.
+- `camUrl`: truncated to 100 characters. A new session starts with the server's default camera entry, if it has one. If the server has a configured camera list, it must exactly match the name of a list entry; otherwise it must start with `http://` or `https://`. A value that fails the check is blanked.
+
+## Server to driver events
+
+| Event | Payload | When |
+|---|---|---|
+| `driverToken` | token string | Registration accepted. |
+| `driverRejected` | none | Session has another driver, the ID is invalid, or the ID starts with `AUTO`. |
+| `updateFlags` | flags object | During registration and after `setSettings` / `setFilePlaying`. |
+| `riderCount` | `{ G, Y, R, N, total, emojis? }` | Reply to `getRiderCount`, and pushed whenever a rider sends a traffic light or emoji update. |
+| `left` / `right` | last channel message | After registration or `requestLast`, if one is stored. |
+| `sessionMessages` | string | Reply to `getSessionMessages`. |
+| `sessionMessagesCleared` | `{ status: 'ok' }` | Reply to `clearSessionMessages`. |
+
+Flags object fields: `driverName`, `driverComments`, `camUrl`, `publicSession`, `blindfoldRiders`, `proMode`, `filePlaying`, `fileDriver`. A field is absent until it has been set.
+
+## Rider feedback
+
+`riderCount` reports how many riders are connected and their traffic-light states:
+
+- `G` (green): the rider is enjoying it.
+- `Y` (yellow): the rider is getting close to their limits or needs a break.
+- `R` (red): the rider needs the power dialed down or stopped.
+- `N`: the rider has not chosen a color.
+- `total`: number of connected riders.
+- `emojis`: an array of the emoji each rider has set, present only when the server has emoji responses enabled.
+
+The server pushes `riderCount` whenever a rider sends a traffic light or emoji update. When the server has traffic lights enabled, riders' players also re-send their light automatically when they reconnect and when a driver arrives or returns, so a push does not always mean a change. The server does not push `riderCount` when a rider joins or leaves. Poll `getRiderCount` (for example every 5 seconds) to track the rider count.
+
+## Channel messages (`left`, `right`)
+
+Each channel message carries the complete state of one channel. Send every field, every time.
+
+| Field | Type | Player range | Meaning |
+|---|---|---|---|
+| `active` | bool | | Truthy plays the channel. Falsy (including a missing field) stops the channel's oscillator on riders' players. |
+| `volume` | number | 0-100 | Base amplitude, in percent. Takes effect as soon as the message arrives. |
+| `freq` | number | 10-3000 | Carrier frequency in Hz. |
+| `amType` | string | | AM waveform: `none`, `sine`, `triangle`, `square`, `sawtooth`. |
+| `amDepth` | number | 0-100 | AM depth, in percent of full amplitude. |
+| `amFreq` | number | 0-100 | AM rate in Hz. |
+| `fmType` | string | | FM waveform, same choices as `amType`. |
+| `fmDepth` | number | 0-1000 | FM deviation in Hz. |
+| `fmFreq` | number | 0-100 | FM rate in Hz. |
+| `rampTarget` | number | 0-100 | Volume the ramp moves toward. |
+| `rampRate` | number | 0-10 | Ramp speed in volume points per second. 0 means no ramp. |
+| `freqRampRate` | number | -10 to 10 | Carrier drift in Hz per 100 ms. 0 means no drift. |
+| `amType2` | string | | Pro mode: secondary AM waveform. |
+| `amDepth2` | number | 0-100 | Pro mode: secondary AM depth. |
+| `amFreq2` | number | 0-100 | Pro mode: secondary AM rate in Hz. |
+| `tOn` | number | 0-60 | Pro mode: pulse on time in seconds. |
+| `tOff` | number | 0-60 | Pro mode: pulse off time in seconds. 0 means continuous, no pulsing. |
+| `tAtt` | number | 0 to `tOn` | Pro mode: pulse attack (fade-in) time in seconds. |
+
+Values outside the player range are clamped by the rider's player. The neutral pro-mode values are `amType2: 'none', amDepth2: 0, amFreq2: 0, tOn: 0.1, tOff: 0, tAtt: 0.1`.
+
+### How the rider's player applies a channel message
+
+- The message replaces the channel's whole state. A missing field is not "unchanged"; it produces an invalid value on the player. Keep the full state of each channel on the driver side and send all of it.
+- `volume` and `freq` take effect immediately. A message with `volume: 70` jumps the rider to 70 regardless of any ramp in progress, and a message's `freq` replaces any drift produced by `freqRampRate`.
+- Every message with `active` true restarts the carrier and any active AM and FM oscillators (their phases reset) and restarts the pulse cycle at the beginning of an on phase.
+- A rider who starts audio after the driver has begun receives the most recent stored message for each channel and starts from it.
+- A rider whose connection drops and reconnects keeps playing its local state. It receives nothing it missed, and catches up only when the driver sends the next message on each channel.
+
+### Volume ramps
+
+- On receipt, the player sets the volume to `volume`, then moves it toward `rampTarget` by `rampRate / 10` every 100 ms (`rampRate` points per second) until it reaches the target.
+- When the target is reached the player sets the ramp rate to 0. Sending a new `rampTarget` with `rampRate: 0` does nothing, so always send both together.
+- Ramp duration in seconds = |`rampTarget` - starting volume| / `rampRate`. Example: from 50 to 62 at 0.02 per second takes 600 seconds.
+- The player stores the volume rounded to 3 decimal places on every 100 ms step, so the effective rate is `rampRate` rounded to roughly the nearest 0.01 per second. A `rampRate` below 0.005 never moves the volume, and values near 0.005 behave erratically. Rates that are multiples of 0.01 run exactly.
+- Because `volume` is applied first, any message sent during a ramp must set `volume` to the level the ramp has reached at that moment. Otherwise the rider's volume jumps back (or forward) to whatever `volume` says. Track `startVolume`, `startTime`, `rampTarget` and `rampRate` on the driver side and compute the current level as `startVolume + sign(rampTarget - startVolume) * rampRate * elapsedSeconds`, stopping at `rampTarget`.
+- A rider who starts late begins at the `volume` in the last stored message and ramps from there, so they can lag behind riders who were already connected.
+
+### Modulation
+
+- AM adds a waveform to the base amplitude: effective amplitude = `volume`/100 + (`amDepth`/100) * wave(t), where wave(t) ranges from -1 to 1. AM is active when `amType` is not `none` and both `amDepth` and `amFreq` are above 0.
+- The AM term does not scale with `volume`. With AM active, the channel still produces output at `volume` 0 and during the off phase of pulsing. Only `active: false`, or AM switched off, removes it.
+- When the primary and secondary AM are both active, the player halves both depths.
+- FM adds a waveform to the carrier: effective frequency = `freq` + `fmDepth` * wave(t) Hz. FM is active when `fmType` is not `none` and both `fmDepth` and `fmFreq` are above 0.
+- `freqRampRate` has no target and no lower bound. The carrier keeps drifting by that many Hz every 100 ms (capped at 3000 Hz, and able to pass below 0) until a message sets `freqRampRate` to 0. The frequency is stored to 0.1 Hz on every step, so the effective `freqRampRate` is rounded to the nearest 0.1 Hz per step (0.06 runs as 0.1, and below 0.05 in magnitude it never moves). Rates that are multiples of 0.1 run exactly. Because each message's `freq` replaces the drifted value, a driver using drift must track the drifted frequency the same way it tracks a volume ramp.
+
+### Pulsing (pro mode)
+
+- With `tOff` above 0, the channel cycles: on for `tOn` seconds (rising to the current volume over `tAtt` seconds), then off for `tOff` seconds (base amplitude 0 with a 5 ms fade-out). The off phase is silent only when AM and AM2 are inactive.
+- `tOn` must be above 0 whenever `tOff` is above 0, and `tAtt` must not exceed `tOn`.
+- To stop pulsing, send `tOff: 0` (with `tOn: 0.1`, `tAtt: 0.1`).
+- While pulsing, a running volume ramp is picked up at the start of each on phase.
+
+### Pro mode
+
+- `setPromode` only controls whether riders see the pro-mode controls. When the server has pro mode enabled, riders' players apply the pro-mode fields whether or not the flag is set.
+- When the server has pro mode disabled, the pro-mode fields are stripped from the recording.
+
+## Pain messages (`pain-left`, `pain-right`)
+
+```json
+{ "sessId": "...", "driverToken": "...", "volume": 0.8, "frequency": 600, "shockDuration": 0.5, "timeBetweenShocks": 0.5, "numberOfShocks": 3 }
+```
+
+- `volume` is on a 0-1 scale (not 0-100). It is applied instantly, with no ramp and no clamping.
+- `frequency` is the shock carrier frequency in Hz. It is not clamped.
+- `numberOfShocks` must be a positive whole number. Zero, a fraction or a missing value leaves the rider's channel at base amplitude 0 until the next channel message, and blocks all later pain bursts on both channels until the rider reloads the page.
+- The player waits `timeBetweenShocks` seconds, plays a shock at `volume` for `shockDuration` seconds, and repeats `numberOfShocks` times. Total length = `numberOfShocks` * (`timeBetweenShocks` + `shockDuration`) seconds.
+- During the burst the channel's carrier frequency and base amplitude are replaced. AM and FM stay connected, so the gaps between shocks are not silent when AM is active.
+- A running volume ramp pauses during the burst and resumes afterwards from where it stopped, so riders' volume falls behind the driver's ramp model by the length of the burst.
+- If the channel was playing, the player restores its previous state after the burst. If it was stopped, the burst still plays and the channel stops again afterwards.
+- A `left`/`right` message for the same channel during a burst is applied immediately and interferes with the rest of the burst.
+- Only one pain burst plays at a time across both channels. A pain message that arrives during a burst is ignored.
+
+## Bottle prompts (`triggerBottle`)
+
+- Payload `{ bottleDuration: <seconds> }`. Riders receive `bottle` and their player shows the bottle prompt with a countdown of that many seconds.
+- Bottle prompts do not change the audio.
+
+## Rider player behavior
+
+- A rider's player ignores channel, pain and bottle events until the rider has clicked to start audio. At that moment it requests the last state and starts from the most recent stored channel messages.
+- The rider's device hardware controls set the final output level. The `volume` field is relative to whatever level the rider has set on their device.
+- Riders' players reconnect automatically and re-register after a network drop, without requesting the current state. A player left in a hidden browser tab disconnects after the server's configured idle timeout and keeps playing its last parameters. After the rider reconnects, it catches up only on the driver's next message for each channel.
+
+## Session recording
+
+- The server records every `left`, `right`, `pain-left`, `pain-right` and bottle message with its timing.
+- `getSessionMessages` returns the recording as a JSON string in the e l e c t r o n script format: `{ meta: { driverName, driverComments, version: 1, fileType: "e l e c t r o n script" }, left: [ { stamp, message } ], right: [...], "pain-left": [...], "pain-right": [...], bottle: [...] }`. Each `stamp` is the time in milliseconds since the previous message in the same array. A channel's first `stamp` is the time since the session was created or the recording was last cleared. An empty recording is returned as the plain string `No messages stored`, not JSON.
+- `clearSessionMessages` erases the recording, and the next message starts a new one.
+
+## Example: minimal Node driver
+
+```js
+// npm install socket.io-client
+const { io } = require('socket.io-client');
+const crypto = require('crypto');
+
+const SERVER = process.argv[2];   // the origin that served this file, e.g. https://example.org
+// camUrl and driverComments are omitted so a takeover keeps the session's existing values.
+const SETTINGS = { driverName: 'Example Driver' };
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
+const sessId = Array.from(crypto.randomBytes(10), (b) => ALPHABET[b % ALPHABET.length]).join('');
+
+const socket = io(SERVER, { transports: ['websocket'] });
+let driverToken = null;
+let started = false;
+
+// Full state per channel, plus ramp bookkeeping so `volume` is always current.
+function initialChannel(freq) {
+  return {
+    state: {
+      active: true, volume: 50, freq,
+      amType: 'sine', amDepth: 25, amFreq: 1.0,
+      fmType: 'sine', fmDepth: 30, fmFreq: 1.5,
+      amType2: 'none', amDepth2: 0, amFreq2: 0,
+      tOn: 0.1, tOff: 0, tAtt: 0.1,
+      rampTarget: 50, rampRate: 0, freqRampRate: 0
+    },
+    rampStart: { volume: 50, time: Date.now() }
+  };
+}
+const channels = { left: initialChannel(620), right: initialChannel(560) };
+
+function currentVolume(ch) {
+  const { state, rampStart } = channels[ch];
+  if (!(state.rampRate > 0)) return rampStart.volume;
+  const elapsed = (Date.now() - rampStart.time) / 1000;
+  const delta = state.rampTarget - rampStart.volume;
+  const moved = state.rampRate * elapsed;
+  return Math.abs(delta) <= moved ? state.rampTarget : rampStart.volume + Math.sign(delta) * moved;
+}
+
+// Update any channel fields except `volume` and send the full state. Change volume with
+// rampTarget + rampRate together; other changes leave a running ramp running.
+// While disconnected the state is updated but not sent; it is resent on reconnect.
+function send(ch, changes) {
+  const c = channels[ch];
+  const volume = Math.round(currentVolume(ch) * 10) / 10;
+  Object.assign(c.state, changes, { volume });
+  if (volume === c.state.rampTarget) c.state.rampRate = 0;
+  c.rampStart = { volume, time: Date.now() };
+  if (socket.connected && driverToken) socket.emit(ch, { sessId, driverToken, ...c.state });
+}
+
+socket.on('connect', () => socket.emit('registerDriver', driverToken ? { sessId, driverToken } : { sessId }));
+
+socket.on('driverToken', (token) => {
+  if (token !== driverToken) {
+    // New session, or the seat was reclaimed after the grace period: the name was reset.
+    driverToken = token;
+    socket.emit('setSettings', { sessId, driverToken, ...SETTINGS });
+  }
+  // Riders missed anything sent while disconnected, so always resend both channels.
+  send('left', {});
+  send('right', {});
+  if (!started) { started = true; start(); }
+});
+
+function start() {
+  console.log(`Riders join at ${SERVER}/player/play/${sessId}`);
+  setTimeout(() => send('left', { rampTarget: 60, rampRate: 0.05 }), 5000);   // 50 -> 60 over 200 s
+  setTimeout(() => send('left', { fmDepth: 80 }), 60000);                     // volume stays on the ramp
+  setInterval(() => {
+    if (socket.connected) socket.emit('getRiderCount', { sessId, driverToken });
+  }, 5000);
+}
+
+socket.on('driverRejected', () => { console.error('rejected'); process.exit(1); });
+socket.on('riderCount', (rc) => console.log('riders', rc));
+
+// Ramp to 0, wait for the ramps to finish, then stop both channels: volume 0 alone
+// is not silent while AM is active.
+function shutdown() {
+  if (!socket.connected) {
+    console.error('not connected: riders keep playing their last parameters');
+    socket.once('driverToken', shutdown);   // finish the shutdown after reconnecting
+    return;
+  }
+  send('left', { rampTarget: 0, rampRate: 5 });
+  send('right', { rampTarget: 0, rampRate: 5 });
+  const waitMs = (Math.max(currentVolume('left'), currentVolume('right')) / 5) * 1000 + 500;
+  setTimeout(() => {
+    send('left', { active: false });
+    send('right', { active: false });
+    setTimeout(() => { socket.disconnect(); process.exit(0); }, 500);
+  }, waitMs);
+}
+process.on('SIGINT', shutdown);
+```
