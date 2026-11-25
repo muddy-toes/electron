@@ -300,7 +300,8 @@ class ElectronState {
     validateDriverToken(sessId, driverToken) {
         const result = this.db.prepare('SELECT sess_id, driver_token FROM sessions WHERE sess_id = ?').get(sessId);
         if (! result) return false;
-        return result.driver_token === driverToken;
+        // A session without a driver has a NULL token, which must never match
+        return !!result.driver_token && result.driver_token === driverToken;
     }
 
     addRiderSocket(sessId, socket) {
