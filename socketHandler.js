@@ -161,13 +161,13 @@ module.exports = function (electronState) {
 
         // ====== setSettings ======
         socket.on('setSettings', function(msg) {
-            if (!msg.sessId || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
+            if (!msg || typeof msg.sessId !== 'string' || !electronState.validateDriverToken(msg.sessId, msg.driverToken)) {
                 return;
             }
             const currentFlags = electronState.getSessionFlags(msg.sessId);
 
             let name = msg.driverName;
-            if (!name)
+            if (!name || typeof name !== 'string')
                 name = ""
             else
                 name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
@@ -178,28 +178,33 @@ module.exports = function (electronState) {
             if (electronState.getVerbose() && currentFlags['driverName'] != name) logger("[%s] setSettings driverName, raw=%o, processed=%o", msg.sessId, msg.driverName, name);
             electronState.setSessionFlag(msg.sessId, 'driverName', name);
 
-            let url = msg.camUrl.slice(0, 100);
-            logger("Setting flags, got url=%s", url);
+            // camUrl and driverComments are left unchanged when missing or not a string
+            if (typeof msg.camUrl === 'string') {
+                let url = msg.camUrl.slice(0, 100);
+                logger("Setting flags, got url=%s", url);
 
-            // I want to try to protect riders from bad urls as much as I can but not break
-            // it either.  At least we can make sure it's an http/https url...
-            const camUrlList = electronState.getCamUrlList();
-            logger("camlist: %o", camUrlList);
-            if (!camUrlList || camUrlList.length == 0) {
-                if (!url || !url.match(/^https?:\/\//i))
-                    url = '';
-            } else {
-                if (camUrlList.map((item) => item.name).filter((name) => name === url)[0] === undefined)
-                    url = '';
+                // I want to try to protect riders from bad urls as much as I can but not break
+                // it either.  At least we can make sure it's an http/https url...
+                const camUrlList = electronState.getCamUrlList();
+                logger("camlist: %o", camUrlList);
+                if (!camUrlList || camUrlList.length == 0) {
+                    if (!url || !url.match(/^https?:\/\//i))
+                        url = '';
+                } else {
+                    if (camUrlList.map((item) => item.name).filter((name) => name === url)[0] === undefined)
+                        url = '';
+                }
+                logger('Post check url=%s', url);
+
+                if (electronState.getVerbose() && currentFlags['camUrl'] != url) logger("[%s] setSettings camUrl, raw=%o, processed=%o", msg.sessId, msg.camUrl, url);
+                electronState.setSessionFlag(msg.sessId, 'camUrl', url);
             }
-            logger('Post check url=%s', url);
 
-            if (electronState.getVerbose() && currentFlags['camUrl'] != url) logger("[%s] setSettings camUrl, raw=%o, processed=%o", msg.sessId, msg.camUrl, url);
-            electronState.setSessionFlag(msg.sessId, 'camUrl', url);
-
-            let comments = msg.driverComments.slice(0, 100);
-            if (electronState.getVerbose() && currentFlags['driverComments'] != comments) logger("[%s] setSettings driverComments, raw=%o, processed=%o", msg.sessId, msg.driverComments, comments);
-            electronState.setSessionFlag(msg.sessId, 'driverComments', comments);
+            if (typeof msg.driverComments === 'string') {
+                let comments = msg.driverComments.slice(0, 100);
+                if (electronState.getVerbose() && currentFlags['driverComments'] != comments) logger("[%s] setSettings driverComments, raw=%o, processed=%o", msg.sessId, msg.driverComments, comments);
+                electronState.setSessionFlag(msg.sessId, 'driverComments', comments);
+            }
 
             updateRidersFlags(msg.sessId);
             socket.emit('updateFlags', electronState.getSessionFlags(msg.sessId));
