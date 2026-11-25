@@ -72,11 +72,13 @@ $(document).ready(function () {
         validateRange($channelCol.find('input[name="freq-ramp-rate"]'), -40, 40);
         validateRange($channelCol.find('input[name="toff"]'), 0, 60);
         validateRange($channelCol.find('input[name="ton"]'), 0, 60);
-        tOn[channelName] = parseFloat($channelCol.find('input[name=ton]').val());
+        // The ton/tatt/toff inputs only exist when promode is enabled on the server.
+        // Without them fall back to the neutral continuous-signal values.
+        tOn[channelName] = numberOr($channelCol.find('input[name=ton]').val(), 0.1);
         validateRange($channelCol.find('input[name="tatt"]'), 0, tOn[channelName]);
 
-        tAtt[channelName] = parseFloat($channelCol.find('input[name=tatt]').val());
-        tOff[channelName] = parseFloat($channelCol.find('input[name=toff]').val());
+        tAtt[channelName] = numberOr($channelCol.find('input[name=tatt]').val(), 0.1);
+        tOff[channelName] = numberOr($channelCol.find('input[name=toff]').val(), 0);
 
         const frequency = parseFloat($channelCol.find('input[name="frequency"]').val());
         const volume = 0.01 * parseFloat($channelCol.find('input[name="volume"]').val());
@@ -184,6 +186,11 @@ $(document).ready(function () {
         }
         clearTimeout(onOffTimeouts[ch]);
         onOffTimeouts[ch] = setTimeout(function(){ onOffCycle_On(ch) }, tOff[ch] * 1000);
+    }
+
+    function numberOr(value, fallback) {
+        const n = parseFloat(value);
+        return isNaN(n) ? fallback : n;
     }
 
     function validateRange(field, min, max) {
