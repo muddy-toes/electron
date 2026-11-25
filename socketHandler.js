@@ -180,7 +180,7 @@ module.exports = function (electronState) {
             if (!name || typeof name !== 'string')
                 name = ""
             else
-                name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
+                name = name.replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '').slice(0, 100);
 
             if (name === "")
               name = "Anonymous";
