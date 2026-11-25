@@ -37,6 +37,16 @@ module.exports = function (electronState) {
             }
         }
 
+        // Every client event takes an object payload with a string sessId.  Drop
+        // anything else before it reaches a handler and throws.
+        socket.use(function ([eventName, msg], next) {
+            if (!msg || typeof msg !== 'object' || typeof msg.sessId !== 'string') {
+                if (electronState.getVerbose()) logger('[] Dropped malformed %s event from %s', eventName, remote_ip());
+                return;
+            }
+            next();
+        });
+
         // Enable this to log every incoming websocket event for debugging...
         // socket.onAny((eventName, ...args) => {
         //     console.log('Received event:', eventName, 'with args:', args);
@@ -217,13 +227,13 @@ module.exports = function (electronState) {
             }
 
             let fileinfo = msg.filePlaying;
-            if (!fileinfo)
+            if (!fileinfo || typeof fileinfo !== 'string')
                 fileinfo = '';
             else
                 fileinfo = fileinfo.replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
 
             let filedriver = msg.fileDriver;
-            if (!filedriver)
+            if (!filedriver || typeof filedriver !== 'string')
                 filedriver = '';
             else
                 filedriver = filedriver.replace(/[^A-Za-z0-9' !@.\^\&\-]/g, '');
@@ -318,7 +328,7 @@ module.exports = function (electronState) {
             delete msg.driverToken;
 
             let secs = msg.bottleDuration;
-            if (!secs || isNaN(parseInt(secs)))
+            if ((typeof secs !== 'number' && typeof secs !== 'string') || !secs || isNaN(parseInt(secs)))
               secs = '5';
 
             if (electronState.getVerbose()) logger("[%s] triggerBottle, raw_duration=%o, processed_duration=%o", msg.sessId, msg.bottleDuration, secs);
