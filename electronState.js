@@ -107,7 +107,8 @@ class ElectronState {
         // Set default flags for new driver
         this.setSessionFlag(sessId, 'driverName', 'Anonymous');
 
-        if (this.config.camUrlList && this.config.camUrlList.length > 0) {
+        // Only new sessions get the default camUrl; a new driver keeps the existing one
+        if (! existing && this.config.camUrlList && this.config.camUrlList.length > 0) {
             const defaultItem = this.config.camUrlList.filter((item) => item.default)[0];
             if (defaultItem !== undefined) {
                 this.setSessionFlag(sessId, 'camUrl', defaultItem.name);
